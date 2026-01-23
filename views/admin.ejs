@@ -1,0 +1,356 @@
+<%- include('partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* =====================
+   GLOBAL
+===================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: #f5f7fa;
+    color: #1f2933;
+}
+
+h3, h4 {
+    font-weight: 600;
+}
+
+/* =====================
+   MAIN WRAPPER
+===================== */
+.admin-dashboard {
+    padding: 1rem;
+    margin-left: 0;
+}
+
+/* =====================
+   STATS CARDS
+===================== */
+.stats-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stats-cards .card {
+    background: #0b1c2d;
+    color: #ffffff;
+    padding: 1.2rem;
+    border-radius: 10px;
+    border-left: 5px solid #d4af37;
+}
+
+.stats-cards .card p {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.stats-cards .card h3 {
+    margin-top: 0.5rem;
+    font-size: 1.4rem;
+    color: #2ecc71;
+}
+
+/* =====================
+   CHARTS SECTION
+===================== */
+.charts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.chart-card h4 {
+    margin-bottom: 1rem;
+    color: #0b1c2d;
+}
+
+/* =====================
+   RECENT TRANSACTIONS
+===================== */
+.recent-transactions {
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.recent-transactions h4 {
+    margin-bottom: 1rem;
+    color: #0b1c2d;
+}
+
+.recent-transactions table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.recent-transactions thead {
+    background: #0b1c2d;
+    color: #ffffff;
+}
+
+.recent-transactions th,
+.recent-transactions td {
+    padding: 0.6rem;
+    text-align: left;
+}
+
+.recent-transactions tbody tr:nth-child(even) {
+    background: #f0f4f8;
+}
+
+.recent-transactions tbody tr:hover {
+    background: #e6eef7;
+}
+
+/* =====================
+   TABLET VIEW (≥ 768px)
+===================== */
+@media (min-width: 768px) {
+
+    .admin-dashboard {
+        margin-left: 220px; /* must match sidebar width */
+        padding: 1.5rem 2rem;
+    }
+
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .charts {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* =====================
+   DESKTOP VIEW (≥ 1024px)
+===================== */
+@media (min-width: 1024px) {
+
+    .stats-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .charts {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .recent-transactions table {
+        font-size: 0.95rem;
+    }
+
+    .admin-dashboard {
+        margin-left: 260px; /* must match desktop sidebar width */
+        padding: 2rem 3rem;
+    }
+
+     
+}
+
+    </style>
+</head>
+<body>
+    <main class="admin-dashboard">
+
+        <!-- =====================
+             STATS CARDS
+        ====================== -->
+        <section class="stats-cards">
+
+            <div class="card">
+                <p>Total Users</p>
+                <h3><%= totalUsers %></h3>
+            </div>
+
+            <div class="card">
+                <p>Total Deposits Today</p>
+                <h3>KES <%= totalDeposits.today %></h3>
+            </div>
+
+            <div class="card">
+                <p>Total Deposits This Week</p>
+                <h3>KES <%= totalDeposits.week %></h3>
+            </div>
+
+            <div class="card">
+                <p>Total Deposits This Month</p>
+                <h3>KES <%= totalDeposits.month %></h3>
+            </div>
+
+            <div class="card">
+                <p>Total Payouts</p>
+                <h3>KES <%= totalPayouts %></h3>
+            </div>
+
+            <div class="card">
+                <p>Pending Withdrawals</p>
+                <h3>KES <%= pendingWithdrawals %></h3>
+            </div>
+
+            <div class="card">
+                <p>Total VaultJ Coins Issued</p>
+                <h3><%= totalCoinsIssued %></h3>
+            </div>
+
+            <div class="card">
+                <p>Platform Profit</p>
+                <h3>KES <%= platformProfit %></h3>
+            </div>
+
+        </section>
+
+        <!-- =====================
+             CHARTS SECTION
+        ====================== -->
+        <section class="charts">
+
+            <div class="chart-card">
+                <h4>Daily Deposits</h4>
+                <canvas id="dailyDepositsChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h4>Daily Withdrawals</h4>
+                <canvas id="dailyWithdrawalsChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h4>VaultJ Coin Price Rise/Fall</h4>
+                <canvas id="coinPriceChart"></canvas>
+            </div>
+
+        </section>
+
+        <!-- =====================
+             RECENT TRANSACTIONS
+        ====================== -->
+        <section class="recent-transactions">
+            <h4>Recent Transactions</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (!recentTransactions || recentTransactions.length === 0) { %>
+                        <tr>
+                            <td colspan="5" style="text-align:center;">No transactions found</td>
+                        </tr>
+                    <% } else { %>
+                        <% recentTransactions.forEach(tx => { %>
+                            <tr>
+                                <td><%= tx.user.username %></td>
+                                <td><%= tx.type %></td>
+                                <td>KES <%= tx.amount %></td>
+                                <td><%= tx.status %></td>
+                                <td><%= tx.createdAt.toDateString() %></td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+
+    <!-- ===== Step 1: Output EJS data safely ===== -->
+<script type="text/template" id="chart-data">
+  const dailyDepositLabels = <%- JSON.stringify(dailyDepositLabels || []) %>;
+  const dailyDepositData   = <%- JSON.stringify(dailyDepositData || []) %>;
+
+  const dailyWithdrawalLabels = <%- JSON.stringify(dailyWithdrawalLabels || []) %>;
+  const dailyWithdrawalData   = <%- JSON.stringify(dailyWithdrawalData || []) %>;
+
+  const coinPriceLabels = <%- JSON.stringify(coinPriceLabels || []) %>;
+  const coinPriceData   = <%- JSON.stringify(coinPriceData || []) %>;
+</script>
+
+<!-- ===== Step 2: Chart.js script ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Get chart data from the template
+  const template = document.getElementById('chart-data').textContent;
+  eval(template); // safely inject variables into JS
+
+  // ===== Daily Deposits Chart =====
+  const dailyDepositsCtx = document.getElementById('dailyDepositsChart').getContext('2d');
+  const dailyDepositsChart = new Chart(dailyDepositsCtx, {
+      type: 'line',
+      data: {
+          labels: dailyDepositLabels,
+          datasets: [{
+              label: 'Deposits',
+              data: dailyDepositData,
+              borderColor: 'rgba(0, 123, 255, 1)',
+              backgroundColor: 'rgba(0, 123, 255, 0.2)',
+              fill: true,
+          }]
+      },
+      options: {}
+  });
+
+  // ===== Daily Withdrawals Chart =====
+  const dailyWithdrawalsCtx = document.getElementById('dailyWithdrawalsChart').getContext('2d');
+  const dailyWithdrawalsChart = new Chart(dailyWithdrawalsCtx, {
+      type: 'line',
+      data: {
+          labels: dailyWithdrawalLabels,
+          datasets: [{
+              label: 'Withdrawals',
+              data: dailyWithdrawalData,
+              borderColor: 'rgba(255, 193, 7, 1)',
+              backgroundColor: 'rgba(255, 193, 7, 0.2)',
+              fill: true,
+          }]
+      },
+      options: {}
+  });
+
+  // ===== Coin Price Chart =====
+  const coinPriceCtx = document.getElementById('coinPriceChart').getContext('2d');
+  const coinPriceChart = new Chart(coinPriceCtx, {
+      type: 'line',
+      data: {
+          labels: coinPriceLabels,
+          datasets: [{
+              label: 'Coin Price',
+              data: coinPriceData,
+              borderColor: 'rgba(40, 167, 69, 1)',
+              backgroundColor: 'rgba(40, 167, 69, 0.2)',
+              fill: true,
+          }]
+      },
+      options: {}
+  });
+</script>
+
+
+</body>
+</html>

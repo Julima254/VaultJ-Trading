@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body, ul, li, a {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.admin-header {
+    display: flex;
+    flex-direction: column;
+    background-color: #0B2545;
+    color: #fff;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: -100%; /* 👈 hidden by default */
+    width: 100%;
+    transition: left 0.3s ease;
+    z-index: 1000;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-bottom: 2px solid #FFD700; /* gold */
+}
+
+.logo-container img {
+    max-width: 120px;
+    height: auto;
+}
+
+.admin-nav {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.admin-nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.admin-nav li {
+    width: 100%;
+}
+
+.admin-nav a {
+    display: block;
+    padding: 1rem 1.2rem;
+    color: #fff;
+    text-decoration: none;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.admin-nav a:hover {
+    background-color: #006400; /* dark green on hover */
+    border-left-color: #FFD700; /* gold border on active */
+}
+
+.admin-header.open {
+    left: 0;
+}
+
+.admin-menu-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1100;
+    background: #0B2545;
+    color: #FFD700;
+    border: 1px solid #FFD700;
+    padding: 8px 12px;
+    font-size: 22px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+
+
+/* ======================
+   Responsive Styles
+====================== */
+
+/* Mobile (default) */
+.admin-nav ul {
+    flex-direction: column;
+}
+
+/* Tablet */
+@media screen and (min-width: 768px) {
+    .admin-header {
+        width: 220px;
+    }
+    .admin-nav a {
+        padding: 1rem 1.5rem;
+    }
+}
+
+/* Desktop */
+@media screen and (min-width: 1024px) {
+    .admin-header {
+        left: 0;          /* 👈 always visible */
+        width: 250px;
+    }
+
+    .admin-menu-toggle {
+        display: none;    /* 👈 hide hamburger */
+    }
+
+    .logo-container img {
+        max-width: 150px;
+    }
+
+    .admin-nav a {
+        font-size: 1.1rem;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <button class="admin-menu-toggle" aria-label="Toggle menu">
+    ☰
+    </button>
+    <header class="admin-header">
+    <div class="logo-container">
+        <a href="/home">
+            <img src="/images/logo.png" alt="Logo" class="logo">
+        </a>
+    </div>
+
+    <nav class="admin-nav">
+        <ul>
+            <li><a href="/admin">Dashboard</a></li>
+            <li><a href="/admin/users">User Management</a></li>
+            <li><a href="/admin/payments">Payments</a></li>
+            <li><a href="/admin/withdrawals">Withdrawals</a></li>
+            <li><a href="/admin/referrals">Referrals</a></li>
+            <li><a href="/admin/packages">Packages</a></li>
+            <li><a href="/admin/spin-win">Spin & Win</a></li>
+            <li><a href="/admin/coin">VaultJ Coin</a></li>
+            <li><a href="/admin/reports">Reports</a></li>
+            <li><a href="/admin/settings">Settings</a></li>
+        </ul>
+    </nav>
+</header>
+<script>
+    const toggleBtn = document.querySelector('.admin-menu-toggle');
+    const sidebar = document.querySelector('.admin-header');
+
+    toggleBtn.addEventListener('click', function () {
+        sidebar.classList.toggle('open');
+    });
+</script>
+</body>
+</html>
+

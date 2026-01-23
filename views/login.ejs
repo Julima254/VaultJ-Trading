@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ===== GLOBAL RESET ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== BODY & BACKGROUND ===== */
+body {
+    min-height: 100vh;
+    background: url('/images/login-back.jpg') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ===== LOGIN CONTAINER ===== */
+.login-container {
+    background: rgba(29, 53, 87, 0.95); /* dark blue overlay */
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 380px; /* mobile first */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    color: #FFD700; /* gold text */
+}
+
+/* Heading */
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 5px;
+    color: #FFD700;
+    font-size: 1.8rem;
+}
+
+/* Subtitle */
+.login-container .subtitle {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #10B981; /* green */
+    font-weight: 500;
+}
+
+/* Flash messages */
+.flash-error, .flash-success {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 500;
+}
+.flash-error { background-color: #EF476F; color: #fff; }
+.flash-success { background-color: #06D6A0; color: #1D3557; }
+
+/* Labels */
+.login-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #FFD700;
+}
+
+/* Inputs */
+.login-container input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
+
+/* Input focus */
+.login-container input:focus {
+    border: 2px solid #10B981; /* green */
+    background-color: #f0f0f0;
+}
+
+/* Button */
+.login-container button {
+    width: 100%;
+    padding: 14px;
+    background-color: #FFD700; /* gold */
+    color: #1D3557;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+.login-container button:hover {
+    background-color: #10B981; /* green */
+    color: #fff;
+}
+
+/* Links */
+.login-container .links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+.login-container .links a {
+    color: #10B981;
+    text-decoration: none;
+    font-weight: 600;
+}
+.login-container .links a:hover {
+    text-decoration: underline;
+}
+
+/* ===== TABLET VIEW ===== */
+@media (min-width: 768px) {
+    .login-container {
+        max-width: 500px;
+        padding: 40px 35px;
+    }
+    .login-container h2 {
+        font-size: 2rem;
+    }
+    .login-container input {
+        font-size: 1.05rem;
+        padding: 13px 15px;
+    }
+    .login-container button {
+        font-size: 1.05rem;
+        padding: 15px;
+    }
+}
+
+/* ===== DESKTOP VIEW ===== */
+@media (min-width: 1024px) {
+    .login-container {
+        max-width: 550px;
+        padding: 50px 40px;
+    }
+    .login-container h2 {
+        font-size: 2.2rem;
+    }
+    .login-container input {
+        font-size: 1.1rem;
+        padding: 14px 16px;
+    }
+    .login-container button {
+        font-size: 1.1rem;
+        padding: 16px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="login-container">
+    <h2>Login</h2>
+    <p class="subtitle">Login to VaultJ - Trading</p>
+
+    <% if (error.length > 0) { %>
+    <div class="flash-error"><%= error[0] %></div>
+<% } %>
+
+<% if (success.length > 0) { %>
+    <div class="flash-success"><%= success[0] %></div>
+<% } %>
+
+
+    <form action="/login" method="POST">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Enter username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div class="links">
+        <a href="/forgot">Forgot password?</a>
+        <a href="/register">Create account</a>
+    </div>
+</div>
+</body>
+</html>

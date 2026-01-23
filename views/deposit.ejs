@@ -1,0 +1,282 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+      /* ===== ROOT COLORS ===== */
+:root {
+  --dark-blue: #0b1f3a;
+  --gold: #d4af37;
+  --green: #1faa59;
+  --light-bg: #f5f7fb;
+}
+
+/* ===== CONTAINER ===== */
+.deposit-container {
+  max-width: 100%;
+  padding: 16px;
+  background: var(--light-bg);
+  min-height: 100vh;
+  font-family: 'Open Sans', sans-serif;
+}
+
+/* ===== HEADINGS ===== */
+.deposit-container h2 {
+  text-align: center;
+  color: var(--dark-blue);
+  margin-bottom: 20px;
+}
+
+.deposit-container h3 {
+  color: var(--dark-blue);
+  margin-bottom: 10px;
+}
+
+/* ===== BALANCE ===== */
+.deposit-balance {
+  background: var(--dark-blue);
+  color: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.deposit-balance strong {
+  color: var(--gold);
+  font-size: 1.4rem;
+}
+
+/* ===== NOTICE ===== */
+.deposit-notice {
+  background: #eaf3ff;
+  border-left: 4px solid var(--gold);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
+/* ===== FORM ===== */
+.deposit-container form {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+
+.deposit-container label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--dark-blue);
+  font-weight: 600;
+}
+
+.deposit-container input[type="tel"],
+.deposit-container input[type="number"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* ===== ACKNOWLEDGE ===== */
+.acknowledge {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+/* ===== BUTTON ===== */
+.deposit-container button {
+  width: 100%;
+  padding: 14px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.deposit-container button:hover {
+  opacity: 0.9;
+}
+
+/* ===== TRANSACTION HISTORY ===== */
+.deposit-history {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.deposit-history table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.deposit-history th {
+  background: var(--dark-blue);
+  color: #fff;
+  padding: 10px;
+  text-align: left;
+}
+
+.deposit-history td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.deposit-history td:last-child {
+  font-weight: 600;
+  color: var(--green);
+}
+
+@media (min-width: 768px) {
+  .deposit-container {
+    max-width: 700px;
+    margin: auto;
+    padding: 24px;
+  }
+
+  .deposit-balance strong {
+    font-size: 1.6rem;
+  }
+
+  .deposit-container form {
+    padding: 24px;
+  }
+}
+
+
+@media (min-width: 1024px) {
+  .deposit-container {
+    max-width: 900px;
+  }
+
+  .deposit-container h2 {
+    font-size: 2rem;
+  }
+
+  .deposit-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+
+  .deposit-balance h3 {
+    margin: 0;
+  }
+
+  .deposit-balance p {
+    margin: 0;
+  }
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="deposit-container">
+
+  <h2>Deposit Funds</h2>
+
+  <!-- Deposit Balance -->
+  <div class="deposit-balance">
+    <h3>Deposit Balance</h3>
+    <p>
+      KES 
+      <strong>
+        <%= currentUser && currentUser.depositBalance 
+            ? currentUser.depositBalance.toFixed(2) 
+            : "0.00" %>
+      </strong>
+    </p>
+  </div>
+
+  <!-- Deposit Notice -->
+  <div class="deposit-notice">
+    <p>
+      ⏱️ Automatic deposits are approved within <strong>3 minutes</strong>.
+    </p>
+  </div>
+
+  <!-- Deposit Form -->
+  <form action="/deposit" method="POST">
+
+    <label>Phone Number</label>
+    <input 
+      type="tel" 
+      name="phone" 
+      placeholder="e.g. 2547XXXXXXXX" 
+      required 
+    >
+
+    <label>Amount (KES)</label>
+    <input 
+      type="number" 
+      name="amount" 
+      min="1" 
+      required 
+    >
+
+    <!-- Acknowledgement -->
+    <div class="acknowledge">
+      <input type="checkbox" name="acknowledge" required>
+      <span>
+        I acknowledge that <strong>VaultJ</strong> does not provide payment reversals.
+      </span>
+    </div>
+
+    <button type="submit">Deposit Now</button>
+
+  </form>
+
+  <!-- Transaction History -->
+  <div class="deposit-history">
+
+    <h3>Deposit Transaction History</h3>
+
+    <% if (deposits && deposits.length > 0) { %>
+      <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Phone</th>
+            <th>Amount (KES)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% deposits.forEach(tx => { %>
+            <tr>
+              <td><%= tx.createdAt.toDateString() %></td>
+              <td><%= tx.phone %></td>
+              <td><%= tx.amount.toFixed(2) %></td>
+              <td><%= tx.status %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>No deposit transactions yet.</p>
+    <% } %>
+
+  </div>
+
+</div>
+
+</body>
+</html>

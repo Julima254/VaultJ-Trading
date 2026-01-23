@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ===== GLOBAL RESET ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== BODY & BACKGROUND ===== */
+body {
+    min-height: 100vh;
+    background: url('/images/login-back.jpg') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    background: rgba(29, 53, 87, 0.95); /* Dark blue */
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 360px; /* Mobile first */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    color: #FFD700; /* Gold */
+}
+
+/* ===== HEADINGS ===== */
+.container h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.7rem;
+    color: #FFD700;
+}
+
+/* ===== TEXT ===== */
+.container p {
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #e0e0e0;
+    line-height: 1.5;
+}
+
+/* ===== LABEL ===== */
+.container label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #FFD700;
+}
+
+/* ===== INPUT ===== */
+.container input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 18px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
+
+/* Input focus */
+.container input:focus {
+    border: 2px solid #10B981; /* Green */
+    background-color: #f0f0f0;
+}
+
+/* ===== BUTTON ===== */
+.container button {
+    width: 100%;
+    padding: 14px;
+    background-color: #FFD700; /* Gold */
+    color: #1D3557;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.container button:hover {
+    background-color: #10B981; /* Green */
+    color: #fff;
+}
+
+/* ===== LINK ===== */
+.container a {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #10B981;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.container a:hover {
+    text-decoration: underline;
+}
+
+/* ===== TABLET VIEW ===== */
+@media (min-width: 768px) {
+    .container {
+        max-width: 480px;
+        padding: 40px 35px;
+    }
+
+    .container h2 {
+        font-size: 2rem;
+    }
+
+    .container p {
+        font-size: 1rem;
+    }
+
+    .container input,
+    .container button {
+        font-size: 1.05rem;
+    }
+}
+
+/* ===== DESKTOP VIEW ===== */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 520px;
+        padding: 50px 40px;
+    }
+
+    .container h2 {
+        font-size: 2.2rem;
+    }
+
+    .container input,
+    .container button {
+        font-size: 1.1rem;
+        padding: 15px;
+    }
+}
+
+    </style>
+</head>
+<body>
+     <div class="container">
+        <h2>Password Recovery</h2>
+        <p>
+            Please enter the email address linked to your account, and we will send your password to that email.
+        </p>
+
+        <form action="/forgot" method="POST">
+            <label>Email Address</label>
+            <input type="email" name="email" placeholder="Enter your email" required>
+            <button type="submit">Reset Password</button>
+        </form>
+
+        <p>
+            <a href="/login">Back to login</a>
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+/* =====================
+   MOBILE FIRST
+===================== */
+
+.user-dashboard {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 1rem;
+    background-color: #0B1D51; /* dark blue background */
+    color: #fff;
+    min-height: 100vh;
+}
+
+/* --- SUMMARY SECTION --- */
+.dashboard-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-item {
+    background-color: #142B6F; /* slightly lighter dark blue */
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #FFD700; /* gold for labels */
+}
+
+.summary-item h4 {
+    margin: 0.5rem 0 0;
+    font-size: 1.4rem;
+    color: #00FF7F; /* green for values */
+}
+
+.summary-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* --- ACTION BUTTONS --- */
+.dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.action-btn {
+    display: block;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    background-color: #FFD700; /* gold */
+    color: #0B1D51; /* dark blue text */
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.action-btn:hover {
+    background-color: #FFC700; 
+    transform: translateY(-2px);
+}
+
+/* --- RECENT TRANSACTIONS TABLE --- */
+.recent-transactions h4 {
+    color: #FFD700;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.recent-transactions table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #142B6F;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.recent-transactions th, .recent-transactions td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+
+.recent-transactions th {
+    background-color: #0B1D51;
+    color: #FFD700;
+}
+
+.recent-transactions td {
+    border-top: 1px solid rgba(255, 215, 0, 0.3);
+    color: #00FF7F;
+}
+
+.recent-transactions tr:nth-child(even) td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* --- MOBILE FIRST DONE --- */
+
+/* =====================
+   TABLET (768px and up)
+===================== */
+@media (min-width: 768px) {
+    .dashboard-summary {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .dashboard-actions {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+/* =====================
+   DESKTOP (1024px and up)
+===================== */
+@media (min-width: 1024px) {
+    .dashboard-summary {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    .dashboard-actions {
+        max-width: 800px;
+        margin: 0 auto 2rem;
+    }
+
+    .recent-transactions table {
+        font-size: 0.95rem;
+    }
+}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ===== GLOBAL RESET ===== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== BODY & BACKGROUND ===== */
+body {
+    min-height: 100vh;
+    background: url('/images/login-back.jpg') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ===== REGISTER CARD ===== */
+.register-card {
+    background: rgba(29, 53, 87, 0.95); /* dark blue overlay */
+    padding: 30px 25px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 380px; /* mobile first */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    color: #FFD700; /* gold text */
+}
+
+/* Heading */
+.register-card h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #FFD700;
+    font-size: 1.8rem;
+}
+
+/* Flash messages */
+.flash {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 500;
+}
+.flash.error {  color: #EF476F; }
+.flash.success { color: #06D6A0; }
+
+/* Labels */
+.register-card label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #FFD700;
+}
+
+/* Inputs */
+.register-card input,
+.register-card select {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
+
+/* Focus */
+.register-card input:focus,
+.register-card select:focus {
+    border: 2px solid #10B981; /* green accent */
+    background-color: #f0f0f0;
+}
+
+/* Button */
+.register-card button {
+    width: 100%;
+    padding: 14px;
+    background-color: #FFD700; /* gold */
+    color: #1D3557;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+.register-card button:hover {
+    background-color: #10B981; /* green */
+    color: #fff;
+}
+
+/* Login link */
+.register-card .login-link {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #10B981; /* green */
+    text-decoration: none;
+    font-weight: 600;
+}
+.register-card .login-link:hover {
+    text-decoration: underline;
+}
+
+/* ===== TABLET VIEW ===== */
+@media (min-width: 768px) {
+    .register-card {
+        max-width: 500px;
+        padding: 40px 35px;
+    }
+    .register-card h2 {
+        font-size: 2rem;
+    }
+    .register-card input,
+    .register-card select {
+        font-size: 1.05rem;
+        padding: 13px 15px;
+    }
+    .register-card button {
+        font-size: 1.05rem;
+        padding: 15px;
+    }
+}
+
+/* ===== DESKTOP VIEW ===== */
+@media (min-width: 1024px) {
+    .register-card {
+        max-width: 550px;
+        padding: 50px 40px;
+    }
+    .register-card h2 {
+        font-size: 2.2rem;
+    }
+    .register-card input,
+    .register-card select {
+        font-size: 1.1rem;
+        padding: 14px 16px;
+    }
+    .register-card button {
+        font-size: 1.1rem;
+        padding: 16px;
+    }
+}
+
+    </style>
+</head>
+<body>
+     <div class="register-card">
+        <h2>Create VaultJ Account</h2>
+
+        <!-- Flash messages -->
+        <% if (error) { %>
+            <div class="flash error"><%= error %></div>
+        <% } %>
+        <% if (success) { %>
+            <div class="flash success"><%= success %></div>
+        <% } %>
+
+        <form action="/register" method="POST">
+            <label>Username</label>
+                <input type="text" name="username" placeholder="Username" required>
+
+                <label>Email</label>
+                <input type="email" name="email" placeholder="Enter your email" required>
+
+                <label>Phone Number</label>
+                <input type="tel" name="phone" placeholder="Enter your phone number" required pattern="[0-9]{10,15}">
+
+                <label>Country</label>
+                <select name="country" required>
+                    <option value="">Select your country</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="Uganda">Uganda</option>
+                    <option value="Tanzania">Tanzania</option>
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                </select>
+
+                <label>Invitation Code</label>
+                <input type="text" name="invitationCode" placeholder="Enter invitation code">
+
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Password" required>
+
+                <label>Confirm Password</label>
+                <input type="password" name="confirmPassword" placeholder="Confirm password" required>
+
+            <button type="submit">Register</button>
+        </form>
+
+        <a href="/login" class="login-link">Already have an account? Login</a>
+    </div>
+</body>
+</html>
