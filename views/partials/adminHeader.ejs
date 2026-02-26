@@ -13,6 +13,11 @@
     font-family: 'Montserrat', sans-serif;
 }
 
+.admin-main {
+    margin-left: 0; /* no sidebar on mobile by default */
+    padding: 20px;
+}
+
 .admin-header {
     display: flex;
     flex-direction: column;
@@ -128,10 +133,25 @@
     .admin-nav a {
         font-size: 1.1rem;
     }
+
+    .admin-header {
+        left: 0;
+        width: 250px;  /* sidebar width */
+    }
+
+    .admin-main {
+        margin-left: 250px; /* push content right of sidebar */
+        padding: 30px;
+    }
+
+    .admin-menu-toggle {
+        display: none; /* hide hamburger */
+    }
 }
 
     </style>
 </head>
+<main class="admin-main">
 <body>
     <button class="admin-menu-toggle" aria-label="Toggle menu">
     ☰
@@ -166,6 +186,7 @@
         sidebar.classList.toggle('open');
     });
 </script>
+</main>
 </body>
 </html>
 

@@ -1,0 +1,228 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>account packages</title>
+       <style>
+/* === Reset & basic === */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+body {
+    background-color: #0B2545; /* dark blue background */
+    color: #f5f5f5; /* light text */
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 15px;
+}
+
+
+
+/* === Flash messages === */
+.flash {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.flash.success {
+    background-color: #4CAF50; /* green */
+    color: #fff;
+}
+
+.flash.error {
+    background-color: #FFD700; /* gold */
+    color: #0B2545; /* dark blue text for contrast */
+}
+
+/* === Headings === */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #FFD700; /* gold heading */
+}
+
+/* === Packages grid === */
+.packages {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+/* === Package Card === */
+.package-card {
+    background-color: #1B3B70; /* darker blue card */
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid #FFD700; /* gold border for pop */
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+}
+
+.package-icon {
+    margin-bottom: 10px;
+}
+
+.package-icon img {
+    width: 60px;
+    height: 60px;
+}
+
+/* === Package Name & Cost === */
+.package-card h3 {
+    font-size: 1.3rem;
+    color: #FFD700; /* gold */
+    margin-bottom: 5px;
+}
+
+.package-card p {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    color: #f5f5f5; /* light text */
+}
+
+/* === Purchase Button === */
+.package-card button {
+    background-color: #4CAF50; /* green */
+    color: #0B2545; /* dark text */
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.package-card button:hover:enabled {
+    background-color: #3e8e41;
+}
+
+.package-card button:disabled {
+    background-color: #555; /* dark gray */
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+/* === Insufficient balance text === */
+.package-card p[style*="color:red"] {
+    color: #FF6B6B; /* red accent for warning */
+    font-weight: bold;
+}
+
+/* === Responsive === */
+
+/* Tablet (600px - 991px) */
+@media(min-width: 600px) {
+    .packages {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .package-card h3 {
+        font-size: 1.4rem;
+    }
+
+    .package-card p {
+        font-size: 1.1rem;
+    }
+
+    .package-card button {
+        padding: 10px 25px;
+    }
+}
+
+/* Desktop (992px+) */
+@media(min-width: 992px) {
+    .packages {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+    }
+
+    .package-card h3 {
+        font-size: 1.5rem;
+    }
+
+    .package-card p {
+        font-size: 1.2rem;
+    }
+
+    .package-card button {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
+}
+</style>
+
+</head>
+<body>
+<div class="container">
+    <h1>Account Packages</h1>
+
+    <% if (locals.success) { %>
+        <div class="flash success"><%= success %></div>
+    <% } %>
+    <% if (locals.error) { %>
+        <div class="flash error"><%= error %></div>
+    <% } %>
+
+    <div class="packages">
+        <% packages.forEach(p => { %>
+            <div class="package-card">
+                <!-- Icon from URL -->
+                <div class="package-icon">
+                    <% if(p.name === 'Starter'){ %>
+                        <img src="https://twemoji.maxcdn.com/v/latest/72x72/1f7e2.png" alt="Starter Icon">
+                    <% } else if(p.name === 'Bronze'){ %>
+                        <img src="https://twemoji.maxcdn.com/v/latest/72x72/1f949.png" alt="Bronze Icon">
+                    <% } else if(p.name === 'Silver'){ %>
+                        <img src="https://twemoji.maxcdn.com/v/latest/72x72/1f948.png" alt="Silver Icon">
+                    <% } else if(p.name === 'Gold'){ %>
+                        <img src="https://twemoji.maxcdn.com/v/latest/72x72/1f947.png" alt="Gold Icon">
+                    <% } else if(p.name === 'Platinum'){ %>
+                        <img src="https://twemoji.maxcdn.com/v/latest/72x72/1f48e.png" alt="Platinum Icon">
+                    <% } %>
+                </div>
+
+                <h3><%= p.name %></h3>
+                <p>Cost: KES <%= p.cost %></p>
+
+                <% if (!user.depositBalance || user.depositBalance < p.cost) { %>
+                    <p style="color:red;">You must have at least KES <%= p.cost %> in your deposit balance to purchase this package.</p>
+                    <button disabled>Insufficient Balance</button>
+                <% } else { %>
+                   <form method="POST" action="/account-packages/purchase/<%= p.name %>" onsubmit="return confirmPurchase('<%= p.name %>')">
+    <button type="submit">Purchase</button>
+</form>
+
+<script>
+    function confirmPurchase(packageName) {
+        return confirm(`Are you sure you want to purchase the ${packageName} package?`);
+    }
+</script>
+
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+
+</body>
+</html>

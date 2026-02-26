@@ -6,11 +6,12 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const session = require("express-session");
 const flash = require("connect-flash");
-const User = require("./models/user"); // instead of destructuring from app
+const User = require("./models/user"); 
 const Transaction = require("./models/transaction");
 const adminRoutes = require("./routes/admin");
 const { stkPush } = require("./services/daraja");
-
+const adminPaymentsRoutes = require('./routes/adminPayments');
+const accountPackagesRoutes = require('./routes/accountPackages');
 
 
 
@@ -47,7 +48,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// ===== MongoDB Connection =====
+//MongoDB Connection 
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -58,8 +59,8 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 
-// ===== Passport Config =====
-passport.use(User.createStrategy()); // passport-local-mongoose
+//Passport Config
+passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
@@ -103,7 +104,7 @@ app.post("/register", async (req, res) => {
     }
 });
 
-// ===== LOGIN =====
+//LOGIN 
 app.get("/login", (req, res) => {
     res.render("login");
 });
@@ -116,7 +117,7 @@ app.post("/login",
     })
 );
 
-// ===== LOGOUT =====
+//  LOGOUT 
 app.get("/logout", (req, res) => {
     req.logout(err => {
         if (err) return next(err);
@@ -125,7 +126,7 @@ app.get("/logout", (req, res) => {
     });
 });
 
-// ===== FORGOT PASSWORD =====
+// FORGOT PASSWORD 
 app.get("/forgot", (req, res) => {
     res.render("forgot");
 });
@@ -151,10 +152,8 @@ app.post("/forgot", async (req, res) => {
 });
 
 
-
 app.get("/home", isLoggedIn, async (req, res) => {
     try {
-        // Fetch current user from the DB
         const user = await User.findById(req.user._id);
 
         // Count total referrals
@@ -165,11 +164,14 @@ app.get("/home", isLoggedIn, async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(10);
 
-        // Render EJS with dynamic data
+        // Calculate wallet balance dynamically
+        const walletBalance = (user.package === 'None') ? 0 : user.depositBalance;
+
         res.render("home", {
             user,
             totalReferrals,
-            transactions
+            transactions,
+            walletBalance
         });
     } catch (err) {
         console.error(err);
@@ -177,6 +179,9 @@ app.get("/home", isLoggedIn, async (req, res) => {
         res.redirect("/login");
     }
 });
+
+
+
 
 // Middleware to check if user is logged in
 function isLoggedIn(req, res, next) {
@@ -188,6 +193,7 @@ function isLoggedIn(req, res, next) {
 }
 
 //deposit
+// deposit page
 app.get("/deposit", isLoggedIn, async (req, res) => {
     try {
         const deposits = await Transaction.find({
@@ -195,13 +201,15 @@ app.get("/deposit", isLoggedIn, async (req, res) => {
             type: "deposit"
         }).sort({ createdAt: -1 });
 
-        res.render("deposit", { deposits });
+        // pass user too
+        res.render("deposit", { deposits, user: req.user });
     } catch (err) {
         console.error(err);
         req.flash("error", "Unable to load deposits");
         res.redirect("/home");
     }
 });
+
 
 
 
@@ -249,7 +257,8 @@ app.post("/mpesa/callback", (req, res) => {
     });});
 
 
-
+app.use('/admin', adminPaymentsRoutes);
+app.use('/account-packages', accountPackagesRoutes);
 
 
 

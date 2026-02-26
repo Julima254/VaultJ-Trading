@@ -8,7 +8,10 @@ const userSchema = new mongoose.Schema({
     country: { type: String, required: true },
     invitationCode: { type: String },
     referrer: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    depositBalance: { type: Number, default: 0 },
+    package: { type: String, default: "None" },
+    walletBalance: { type: Number, default: 0 }
 });
 
 userSchema.plugin(passportLocalMongoose);

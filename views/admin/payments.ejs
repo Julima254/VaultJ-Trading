@@ -1,0 +1,318 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Payments</title>
+    <style>
+        /* --- Reset & basic --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+.admin-main {
+    margin-left: 0;   /* default mobile */
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+body {
+    background-color: #f5f5f5; /* light gray bg */
+    color: #1a1a1a;
+    line-height: 1.5;
+    padding: 10px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 15px;
+}
+
+/* --- Flash messages --- */
+.flash {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.flash.success {
+    background-color: #4CAF50; /* green */
+    color: #fff;
+}
+
+.flash.error {
+    background-color: #ffcc00; /* gold */
+    color: #1a1a1a;
+}
+
+/* --- Headings --- */
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #0D1B2A; /* dark blue */
+}
+
+/* --- Filter Form --- */
+.filter-form {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.filter-form .form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.filter-form label {
+    flex: 1;
+    margin-bottom: 10px;
+}
+
+.filter-form input, .filter-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.filter-btn {
+    background-color: #0D1B2A; /* dark blue */
+    color: #FFD700; /* gold */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.filter-btn:hover {
+    background-color: #09203F;
+}
+
+/* --- Table --- */
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+}
+
+table th {
+    background-color: #0D1B2A; /* dark blue */
+    color: #FFD700; /* gold */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2; /* light gray stripe */
+}
+
+.verify-btn {
+    background-color: #4CAF50; /* green */
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.verify-btn:hover {
+    background-color: #3e8e41;
+}
+
+/* --- Status colors --- */
+td.pending {
+    color: #ff9800; /* orange/gold */
+    font-weight: bold;
+}
+td.completed {
+    color: #4CAF50; /* green */
+    font-weight: bold;
+}
+td.failed {
+    color: #f44336; /* red */
+    font-weight: bold;
+}
+
+.reject-btn {
+    background-color: #f44336; /* red */
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.reject-btn:hover {
+    background-color: #d32f2f;
+}
+
+
+/* --- Responsive --- */
+
+/* Tablet view */
+@media(min-width: 600px) {
+    .filter-form .form-row {
+        flex-direction: row;
+        gap: 10px;
+    }
+}
+
+/* Desktop view */
+@media(min-width: 992px) {
+    table th, table td {
+        padding: 12px 15px;
+    }
+
+    .filter-btn {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
+
+    .verify-btn {
+        padding: 6px 12px;
+    }
+
+     .admin-main {
+        margin-left: 250px; /* match sidebar width */
+        padding: 30px;
+    }
+
+       .reject-btn {
+        padding: 6px 12px;
+    }
+}
+
+    </style>
+</head>
+<body>
+
+<main class="admin-main">
+<div class="container">
+
+    <% if (locals.success) { %>
+        <div class="flash success"><%= success %></div>
+    <% } %>
+    <% if (locals.error) { %>
+        <div class="flash error"><%= error %></div>
+    <% } %>
+
+    <h1>Payments & Transactions</h1>
+
+    <!-- FILTER FORM -->
+    <form class="filter-form" method="GET" action="/admin/payments">
+        <div class="form-row">
+            <label>From Date:<input type="date" name="from"></label>
+            <label>To Date:<input type="date" name="to"></label>
+        </div>
+        <div class="form-row">
+            <label>Phone:<input type="text" name="phone" placeholder="2547..."></label>
+            <label>Amount:<input type="number" name="amount" placeholder="Exact amount"></label>
+        </div>
+        <div class="form-row">
+            <label>Status:
+                <select name="status">
+                    <option value="">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </label>
+            <label>Type:
+                <select name="type">
+                    <option value="">All</option>
+                    <option value="deposit">Deposit</option>
+                    <option value="withdrawal">Withdrawal</option>
+                    <option value="bonus">Bonus</option>
+                </select>
+            </label>
+        </div>
+        <button type="submit" class="filter-btn">Filter</button>
+    </form>
+
+    <hr>
+
+    <!-- PAYMENTS TABLE -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>User</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Mpesa Receipt</th>
+                    <th>CheckoutRequestID</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <% if (payments.length === 0) { %>
+                    <tr>
+                        <td colspan="10">No transactions found</td>
+                    </tr>
+                <% } %>
+
+                <% payments.forEach((p, index) => { %>
+                    <tr>
+                        <td><%= index + 1 %></td>
+                        <td>
+                            <%= p.user ? p.user.username : 'N/A' %><br>
+                            <small><%= p.user ? p.user.email : '' %></small>
+                        </td>
+                        <td><%= p.phone || '-' %></td>
+                        <td><%= p.type %></td>
+                        <td><%= p.amount %></td>
+                        <td class="<%= p.status %>"><%= p.status %></td>
+                        <td><%= p.code || 'Not verified' %></td>
+                        <td><%= p.checkoutRequestID || '-' %></td>
+                        <td><%= p.createdAt.toLocaleString() %></td>
+                       <td>
+  <% if (p.type === 'deposit' && p.status === 'pending') { %>
+      <form method="POST" action="/admin/payments/verify/<%= p._id %>" style="display:inline-block;">
+          <input type="text" name="receipt" placeholder="Mpesa Receipt">
+          <button type="submit" class="verify-btn">Verify</button>
+      </form>
+
+      <form method="POST" action="/admin/payments/reject/<%= p._id %>" style="display:inline-block; margin-left:5px;">
+          <button type="submit" class="reject-btn">Reject</button>
+      </form>
+  <% } else { %>
+      -
+  <% } %>
+</td>
+
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+</main>
+</body>
+</html>

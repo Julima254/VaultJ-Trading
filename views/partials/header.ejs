@@ -228,9 +228,11 @@
   <% if(currentUser){ %>
     <span class="username"><%= currentUser.username %></span>
   <% } %>
-  <p class="status inactive">
-    <span class="status-dot"></span> Inactive
+  <p class="status <%= user.package && user.package !== 'None' ? 'active' : 'inactive' %>">
+    <span class="status-dot"></span>
+    <%= user.package && user.package !== 'None' ? 'Active' : 'Inactive' %>
 </p>
+
 
 </div>
     <!-- Hamburger menu (always visible) -->
