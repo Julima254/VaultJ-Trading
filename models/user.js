@@ -11,8 +11,9 @@ const userSchema = new mongoose.Schema({
     isAdmin: { type: Boolean, default: false },
     depositBalance: { type: Number, default: 0 },
     package: { type: String, default: "None" },
-    walletBalance: { type: Number, default: 0 }
-});
+    walletBalance: { type: Number, default: 0 },
+    referralEarnings: { type: Number, default: 0 },
+}, { timestamps: true }); 
 
 userSchema.plugin(passportLocalMongoose);
 

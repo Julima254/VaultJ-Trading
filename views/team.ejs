@@ -1,0 +1,184 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>my team</title>
+    <style>
+        /* team.css */
+
+/* ===== BASE STYLES ===== */
+body {
+    background-color: #121b2d; /* dark blue background */
+    color: #d3d3d3; /* light gray text */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+    padding: 1rem;
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ===== HEADER ===== */
+main h1 {
+    text-align: center;
+    color: #f9c74f; /* gold */
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+/* ===== SUMMARY SECTION ===== */
+section p {
+    color: #90be6d; /* green */
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* ===== TABLE STYLING ===== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #1a2640; /* slightly lighter dark blue */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+thead {
+    background-color: #0d1a33; /* darker blue for header */
+}
+
+thead th {
+    color: #f9c74f; /* gold */
+    text-align: left;
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+}
+
+tbody td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #2a3a5c; /* subtle row divider */
+    font-size: 0.9rem;
+}
+
+/* Stripe effect */
+tbody tr:nth-child(even) {
+    background-color: #16203a;
+}
+
+/* Hover effect for desktop */
+tbody tr:hover {
+    background-color: #24395c;
+}
+
+/* Status badges */
+.status-active {
+    color: #90be6d; /* green */
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: #d3d3d3; /* light gray */
+    font-weight: bold;
+}
+
+/* Commission column highlight */
+td.commission {
+    color: #f9c74f; /* gold */
+    font-weight: 600;
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Mobile */
+@media (max-width: 767px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem;
+        border-bottom: 1px solid #2a3a5c;
+    }
+
+    tbody td::before {
+        content: attr(data-label);
+        color: #f9c74f;
+        font-weight: bold;
+    }
+
+    tbody tr {
+        margin-bottom: 1rem;
+        background-color: #16203a;
+        border-radius: 6px;
+        padding: 0.5rem;
+    }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+    td, th {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+    td, th {
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+    </style>
+</head>
+<body>
+<main>
+    <h1>My Team</h1>
+
+    <section>
+        <p>Total Referrals: <%= totalReferrals %></p>
+        <p>Total Referral Earnings: KES <%= user.referralEarnings || 0 %></p>
+    </section>
+
+    <% if (team.length === 0) { %>
+        <p>You have not referred anyone yet.</p>
+    <% } else { %>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Package</th>
+                    <th>Commission Earned</th>
+                    <th>Status</th>
+                    <th>Date Joined</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% team.forEach(user => { %>
+                    <tr>
+                        <td><%= user.username %></td>
+                        <td><%= user.package %></td>
+                        <td>KES <%= user.referralEarnings || 0 %></td>
+                        <td><%= user.package && user.package !== 'None' ? 'Active' : 'Inactive' %></td>
+                        <td><%= user.createdAt ? user.createdAt.toDateString() : 'N/A' %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</main>
+</body>
+</html>

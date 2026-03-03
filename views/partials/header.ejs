@@ -243,13 +243,17 @@
       <ul>
         <li><a href="/home">Home</a></li>
         <li><a href="/account-packages">Account Packages</a></li>
-        <li><a href="/copy-link">Copy referral Link</a></li>
+        <li><a href="#" id="copyReferralLink">Copy referral Link</a></li>
         <li><a href="/spins">VaultJ spins</a></li>
         <li><a href="/coin">VaultJ Coin</a></li>
-        <li><a href="/transaction">Transactions</a></li>
+        <li><a href="/transactions">Transactions</a></li>
         <li><a href="/team">My Team</a></li>
         <li><a href="/profile">Profile</a></li>
-        <li><a href="/customerCare">Customer Care</a></li>
+        <li>
+  <a href="https://wa.me/254112853545" target="_blank" rel="noopener noreferrer">
+    Customer Care
+  </a>
+</li>
         <li><a href="/logout" class="logout-btn">Logout</a></li>
       </ul>
     </nav>
@@ -268,5 +272,29 @@ menuToggle.addEventListener('click', () => {
 });
 </script>
 
+
+<script>
+const copyBtn = document.getElementById('copyReferralLink');
+
+copyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Replace 'yourwebsite.com/register?ref=' with your actual referral URL
+    const referralLink = `<%= currentUser ? "https://vaultj-trading.onrender.com/register?ref=" + currentUser.username : "" %>`;
+
+    if (!referralLink) {
+        alert("No referral link available.");
+        return;
+    }
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(referralLink).then(() => {
+        alert("Referral link copied to clipboard!");
+    }).catch(err => {
+        console.error("Failed to copy: ", err);
+        alert("Failed to copy referral link.");
+    });
+});
+</script>
 </body>
 </html>

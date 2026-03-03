@@ -10,7 +10,7 @@ function isLoggedIn(req, res, next) {
     res.redirect('/login');
 }
 
-// Define the packages
+// Define the packages and referral rates
 const packages = [
     { name: 'Starter', cost: 100 },
     { name: 'Bronze', cost: 200 },
@@ -18,6 +18,14 @@ const packages = [
     { name: 'Gold', cost: 1000 },
     { name: 'Platinum', cost: 2000 }
 ];
+
+const referralRates = {
+    Starter: 0.2,    // 20%
+    Bronze: 0.25,    // 25%
+    Silver: 0.3,     // 30%
+    Gold: 0.4,       // 40%
+    Platinum: 0.5    // 50%
+};
 
 // GET /account-packages
 router.get('/', isLoggedIn, async (req, res) => {
@@ -35,14 +43,16 @@ router.get('/', isLoggedIn, async (req, res) => {
 router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        const packages = {
+        const packageCostMap = {
             Starter: 100,
             Bronze: 200,
             Silver: 500,
             Gold: 1000,
             Platinum: 2000
         };
-        const cost = packages[req.params.packageName];
+
+        const packageName = req.params.packageName;
+        const cost = packageCostMap[packageName];
 
         if (!cost) {
             req.flash("error", "Invalid package");
@@ -56,10 +66,33 @@ router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
 
         // Deduct cost and assign package
         user.depositBalance -= cost;
-        user.package = req.params.packageName;
+        user.package = packageName;
         await user.save();
 
-        req.flash("success", `You purchased the ${req.params.packageName} package`);
+        // --- Referral Commission Logic ---
+        if (user.referrer) {
+            const referrer = await User.findById(user.referrer);
+            if (referrer) {
+                const commissionRate = referralRates[packageName];
+                const commission = Math.floor(cost * commissionRate);
+
+                // Update referrer wallet & earnings
+                referrer.walletBalance += commission;
+                referrer.referralEarnings = (referrer.referralEarnings || 0) + commission;
+                await referrer.save();
+
+                // Record commission transaction
+                await Transaction.create({
+                    user: referrer._id,
+                    type: "bonus", // referral commission
+                    amount: commission,
+                    status: "completed",
+                    code: `REF-${user.username}-${Date.now()}`
+                });
+            }
+        }
+
+        req.flash("success", `You purchased the ${packageName} package`);
         res.redirect("/account-packages");
 
     } catch (err) {

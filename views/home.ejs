@@ -4,30 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>VaultJ-Trading</title>
     <link rel="stylesheet" href="/styles/main.css"/>
 </head>
 <body>
-    <main class="user-dashboard">
+<main class="user-dashboard">
 
-    <!-- =====================
-         TOP SUMMARY SECTION
-    ====================== -->
+    <!-- ===================== TOP SUMMARY SECTION ====================== -->
     <section class="dashboard-summary">
 
         <div class="summary-item">
-    <p>My Package</p>
-    <h4><%= user.package %></h4>
-</div>
-
+            <p>My Package</p>
+            <h4><%= user.package %></h4>
+        </div>
 
         <div class="summary-item">
-    <p>Wallet Balance</p>
-    <h4>KES <%= walletBalance %></h4>
-</div>
+            <p>Wallet Balance</p>
+            <h4>KES <%= walletBalance %></h4>
+        </div>
 
-
+        <div class="summary-item">
+            <p>Referral Earnings</p>
+            <h4>KES <%= user.referralEarnings || 0 %></h4>
+        </div>
 
         <div class="summary-item">
             <p>Total Referrals</p>
@@ -35,40 +35,31 @@
         </div>
 
         <div class="summary-item">
-            <p>Spinning Balance</p>
-            <h4>KES <%= user.spinningBalance %></h4>
-        </div>
-
-        <div class="summary-item">
-            <p>Coin Balance</p>
-            <h4><%= user.coinBalance %></h4>
-        </div>
-
-        <div class="summary-item">
             <p>Deposit Balance</p>
             <h4>KES <%= user.depositBalance %></h4>
         </div>
 
+        <div class="summary-item">
+            <p>Spinning Balance</p>
+            <h4>KES <%= user.spinningBalance || 0 %></h4>
+        </div>
+
+        <div class="summary-item">
+            <p>Coin Balance</p>
+            <h4>KES <%= user.coinBalance || 0 %></h4>
+        </div>
+
     </section>
 
-    <!-- =====================
-         ACTION BUTTONS
-    ====================== -->
+    <!-- ===================== ACTION BUTTONS ====================== -->
     <section class="dashboard-actions">
-
         <a href="/deposit" class="action-btn">Deposit</a>
-
         <a href="/withdraw" class="action-btn">Withdraw</a>
-
         <a href="/account-packages" class="action-btn">Upgrade Package</a>
-
     </section>
 
-    <!-- =====================
-         RECENT TRANSACTIONS
-    ====================== -->
+    <!-- ===================== RECENT TRANSACTIONS ====================== -->
     <section class="recent-transactions">
-
         <h4>Recent Transactions</h4>
 
         <table>
@@ -84,9 +75,7 @@
             <tbody>
                 <% if (!transactions || transactions.length === 0) { %>
                     <tr>
-                        <td colspan="4" style="text-align:center;">
-                            No transactions found
-                        </td>
+                        <td colspan="4" style="text-align:center;">No transactions found</td>
                     </tr>
                 <% } else { %>
                     <% transactions.forEach(tx => { %>
@@ -100,7 +89,6 @@
                 <% } %>
             </tbody>
         </table>
-
     </section>
 
 </main>

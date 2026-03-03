@@ -1,0 +1,219 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* =====================
+   GLOBAL STYLES
+===================== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0f1b2b; /* dark blue background */
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+main.transactions-page {
+    padding: 20px;
+}
+
+/* =====================
+   PAGE HEADER
+===================== */
+.page-header h1 {
+    color: #ffd700; /* gold */
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+}
+
+.page-header p {
+    color: #a0ffa0; /* light green */
+    font-size: 0.95rem;
+}
+
+/* =====================
+   SUMMARY CARDS
+===================== */
+.transaction-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.transaction-summary .card {
+    background-color: #1a2b45; /* dark card background */
+    border-left: 5px solid gold;
+    padding: 15px 20px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-summary .card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #ffd700; /* gold */
+}
+
+.transaction-summary .card p {
+    font-size: 1.2rem;
+    color: #a0ffa0; /* light green */
+    font-weight: bold;
+}
+
+.transaction-summary .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* =====================
+   TRANSACTION TABLE
+===================== */
+.transaction-table {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.transaction-table table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.transaction-table th, 
+.transaction-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.transaction-table thead {
+    background-color: #0a1625; /* darker blue */
+}
+
+.transaction-table thead th {
+    color: gold;
+    font-weight: 600;
+}
+
+.transaction-table tbody tr {
+    border-bottom: 1px solid #33475b; /* subtle separator */
+    background-color: #1c2a3b;
+    transition: background 0.2s;
+}
+
+.transaction-table tbody tr:hover {
+    background-color: #2a3b55;
+}
+
+.transaction-table tbody td {
+    color: #c0ffc0; /* light green for readability */
+}
+
+/* =====================
+   MOBILE TO TABLET
+===================== */
+@media screen and (min-width: 600px) {
+    .transaction-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media screen and (min-width: 900px) {
+    .transaction-summary {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .transaction-summary .card h3 {
+        font-size: 1.2rem;
+    }
+
+    .transaction-summary .card p {
+        font-size: 1.5rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.2rem;
+    }
+
+    .page-header p {
+        font-size: 1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <main class="transactions-page">
+
+  <!-- ===================== 
+       PAGE HEADER
+  ====================== -->
+  <section class="page-header">
+    <h1>My Transactions</h1>
+    <p>All your deposits, withdrawals, and referral earnings.</p>
+  </section>
+
+  <!-- ===================== 
+       SUMMARY CARDS
+  ====================== -->
+  <section class="transaction-summary">
+    <div class="card deposits">
+      <h3>Total Deposits</h3>
+      <p>KES <%= totalDeposits %></p>
+    </div>
+    <div class="card withdrawals">
+      <h3>Total Withdrawals</h3>
+      <p>KES <%= totalWithdrawals %></p>
+    </div>
+    <div class="card bonuses">
+      <h3>Total Bonuses</h3>
+      <p>KES <%= totalBonuses %></p>
+    </div>
+    <div class="card wallet">
+      <h3>Wallet Balance</h3>
+      <p>KES <%= walletBalance %></p>
+    </div>
+  </section>
+
+  <!-- ===================== 
+       TRANSACTIONS TABLE
+  ====================== -->
+  <section class="transaction-table">
+    <% if (transactions.length === 0) { %>
+      <p style="text-align:center; color:#ccc;">No transactions found.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount (KES)</th>
+            <th>Status</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transactions.forEach(tx => { %>
+            <tr>
+              <td><%= tx.createdAt ? tx.createdAt.toDateString() : 'N/A' %></td>
+              <td><%= tx.type.charAt(0).toUpperCase() + tx.type.slice(1) %></td>
+              <td><%= tx.amount %></td>
+              <td><%= tx.status.charAt(0).toUpperCase() + tx.status.slice(1) %></td>
+              <td><%= tx.code || 'N/A' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+</main>
+</body>
+</html>

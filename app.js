@@ -12,6 +12,11 @@ const adminRoutes = require("./routes/admin");
 const { stkPush } = require("./services/daraja");
 const adminPaymentsRoutes = require('./routes/adminPayments');
 const accountPackagesRoutes = require('./routes/accountPackages');
+const adminReferralsRoutes = require('./routes/adminReferrals');
+const teamRoutes = require('./routes/team');
+const profileRoutes = require('./routes/profile');
+const transactionRoutes = require('./routes/transaction');
+
 
 
 
@@ -165,7 +170,11 @@ app.get("/home", isLoggedIn, async (req, res) => {
             .limit(10);
 
         // Calculate wallet balance dynamically
-        const walletBalance = (user.package === 'None') ? 0 : user.depositBalance;
+       // Wallet balance includes deposits + referral earnings only if a package is purchased
+const walletBalance = (user.package === 'None') 
+    ? 0 
+    : (user.depositBalance || 0) + (user.referralEarnings || 0);
+
 
         res.render("home", {
             user,
@@ -259,7 +268,10 @@ app.post("/mpesa/callback", (req, res) => {
 
 app.use('/admin', adminPaymentsRoutes);
 app.use('/account-packages', accountPackagesRoutes);
-
+app.use('/admin/referrals', adminReferralsRoutes);
+app.use('/team', teamRoutes);
+app.use('/profile', profileRoutes);
+app.use('/transactions', transactionRoutes);
 
 
 

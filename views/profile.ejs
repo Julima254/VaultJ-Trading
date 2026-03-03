@@ -1,0 +1,172 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>profile</title>
+    <style>
+        /* =====================
+   BASE STYLES (MOBILE-FIRST)
+===================== */
+.profile-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #f0f0f0;
+    background-color: #0d1b2a; /* dark blue background */
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.profile-header .username {
+    font-size: 1.8rem;
+    color: #ffd700; /* gold */
+    margin-bottom: 5px;
+}
+
+.profile-header .member-since {
+    font-size: 0.9rem;
+    color: #90ee90; /* green */
+}
+
+.profile-section {
+    background-color: #1b2a41; /* slightly lighter dark blue */
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.profile-section h2 {
+    color: #ffd700; /* gold */
+    margin-bottom: 10px;
+}
+
+.profile-list {
+    list-style: none;
+    padding: 0;
+}
+
+.profile-list li {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.profile-list strong {
+    color: #90ee90; /* green for labels */
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.profile-actions .btn {
+    text-decoration: none;
+    background-color: #ffd700; /* gold buttons */
+    color: #0d1b2a; /* dark text */
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.profile-actions .btn:hover {
+    background-color: #90ee90; /* hover green */
+    color: #0d1b2a;
+}
+
+/* =====================
+   TABLET VIEW (min-width: 600px)
+===================== */
+@media (min-width: 600px) {
+    .profile-actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .profile-actions .btn {
+        min-width: 150px;
+    }
+}
+
+/* =====================
+   DESKTOP VIEW (min-width: 1024px)
+===================== */
+@media (min-width: 1024px) {
+    .profile-page {
+        padding: 40px;
+    }
+
+    .profile-header .username {
+        font-size: 2.5rem;
+    }
+
+    .profile-section {
+        padding: 25px;
+    }
+
+    .profile-list li {
+        font-size: 1.05rem;
+    }
+
+    .profile-actions {
+        justify-content: flex-start;
+    }
+}
+    </style>
+</head>
+<body>
+    <main class="profile-page">
+
+  <!-- =====================
+       PROFILE HEADER
+  ====================== -->
+  <section class="profile-header">
+    <h1 class="username"><%= user.username %></h1>
+    <p class="member-since">Member since: <%= user.createdAt ? user.createdAt.toDateString() : 'N/A' %></p>
+  </section>
+
+  <!-- =====================
+       PERSONAL INFORMATION
+  ====================== -->
+  <section class="profile-section">
+    <h2>Personal Info</h2>
+    <ul class="profile-list">
+      <li><strong>Email:</strong> <%= user.email %></li>
+      <li><strong>Phone:</strong> <%= user.phone %></li>
+      <li><strong>Country:</strong> <%= user.country %></li>
+    </ul>
+  </section>
+
+  <!-- =====================
+       ACCOUNT INFORMATION
+  ====================== -->
+  <section class="profile-section">
+    <h2>Account Info</h2>
+    <ul class="profile-list">
+      <li><strong>Package:</strong> <%= user.package %></li>
+      <li><strong>Total Referrals:</strong> <%= totalReferrals %></li>
+      <li><strong>Status:</strong> <%= user.package && user.package !== 'None' ? 'Active' : 'Inactive' %></li>
+    </ul>
+  </section>
+
+  <!-- =====================
+       ACTION BUTTONS
+  ====================== -->
+  <section class="profile-actions">
+    <a href="/profile/edit" class="btn">Edit Profile</a>
+    <a href="/profile/change-password" class="btn">Change Password</a>
+  </section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* =====================
+   BASE STYLES (MOBILE-FIRST)
+===================== */
+.edit-profile-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #f0f0f0;
+    background-color: #0d1b2a; /* dark blue background */
+    border-radius: 8px;
+}
+
+.edit-profile-page h1 {
+    text-align: center;
+    color: #ffd700; /* gold */
+    margin-bottom: 25px;
+}
+
+.edit-profile-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-profile-form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #90ee90; /* green */
+}
+
+.edit-profile-form input {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #90ee90;
+    border-radius: 5px;
+    background-color: #1b2a41; /* slightly lighter dark blue */
+    color: #f0f0f0;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.edit-profile-form input:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 5px #ffd700;
+}
+
+.edit-profile-form .btn {
+    background-color: #ffd700; /* gold */
+    color: #0d1b2a;
+    padding: 12px 0;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-profile-form .btn:hover {
+    background-color: #90ee90; /* green hover */
+    color: #0d1b2a;
+}
+
+/* =====================
+   TABLET VIEW (min-width: 600px)
+===================== */
+@media (min-width: 600px) {
+    .edit-profile-form input {
+        font-size: 1.05rem;
+    }
+
+    .edit-profile-form .btn {
+        font-size: 1.05rem;
+    }
+}
+
+/* =====================
+   DESKTOP VIEW (min-width: 1024px)
+===================== */
+@media (min-width: 1024px) {
+    .edit-profile-page {
+        padding: 40px;
+        max-width: 800px;
+    }
+
+    .edit-profile-form input {
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+
+    .edit-profile-form .btn {
+        padding: 15px;
+        font-size: 1.1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <main class="edit-profile-page">
+
+  <h1>Edit Profile</h1>
+
+  <form action="/profile/edit" method="POST" class="edit-profile-form">
+    
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" value="<%= user.email %>" required>
+
+    <label for="phone">Phone</label>
+    <input type="text" name="phone" id="phone" value="<%= user.phone %>" required>
+
+    <label for="country">Country</label>
+    <input type="text" name="country" id="country" value="<%= user.country %>" required>
+
+    <button type="submit" class="btn">Update Profile</button>
+
+  </form>
+
+</main>
+</body>
+</html>
