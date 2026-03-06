@@ -16,8 +16,8 @@ const adminReferralsRoutes = require('./routes/adminReferrals');
 const teamRoutes = require('./routes/team');
 const profileRoutes = require('./routes/profile');
 const transactionRoutes = require('./routes/transaction');
-
-
+const adminPackages = require('./routes/adminPackages');
+const adminSettingsRoutes = require('./routes/adminSettings');
 
 
 
@@ -272,7 +272,8 @@ app.use('/admin/referrals', adminReferralsRoutes);
 app.use('/team', teamRoutes);
 app.use('/profile', profileRoutes);
 app.use('/transactions', transactionRoutes);
-
+app.use('/admin', adminPackages);
+app.use('/admin/settings', adminSettingsRoutes);
 
 
 

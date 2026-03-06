@@ -1,0 +1,172 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f5f7fa;
+    color: #1a1a1a;
+}
+
+h1 {
+    text-align: center;
+    color: darkblue;
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background-color: darkblue;
+    color: gold;
+}
+
+thead th {
+    padding: 12px 10px;
+    text-align: left;
+    font-size: 14px;
+}
+
+tbody td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+}
+
+/* Buttons */
+button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+button[type="submit"] {
+    background-color: green;
+    color: white;
+}
+
+button[type="submit"]:hover {
+    background-color: darkgreen;
+}
+
+form[style*="display:inline;"] {
+    margin-right: 5px;
+}
+
+/* Active/Inactive Row Colors */
+tbody tr:nth-child(even) {
+    background-color: #f0f4ff;
+}
+
+tbody tr:hover {
+    background-color: #e0e8ff;
+}
+
+/* Responsive: Tablet view */
+@media (min-width: 600px) {
+    h1 {
+        font-size: 28px;
+    }
+
+    thead th, tbody td {
+        padding: 14px 12px;
+        font-size: 15px;
+    }
+
+    button {
+        padding: 8px 14px;
+        font-size: 14px;
+    }
+}
+
+/* Responsive: Desktop view */
+@media (min-width: 992px) {
+     body {
+        display: flex;
+        margin: 0;
+    }
+
+    /* Permanent left menu */
+    .sidebar {
+        width: 220px; /* adjust menu width */
+        background-color: darkblue;
+        color: gold;
+        min-height: 100vh;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    /* Main content shifted to right */
+    .content {
+        flex: 1;
+        padding: 40px;
+    }
+
+    h1 {
+        text-align: left;
+    }
+
+    thead th, tbody td {
+        padding: 16px 12px;
+        font-size: 16px;
+    }
+
+    button {
+        padding: 10px 16px;
+        font-size: 15px;
+    }
+}
+    </style>
+</head>
+<body>
+    <h1>Manage Admins</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Admin</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% users.forEach(user => { %>
+        <tr>
+            <td><%= user.username %></td>
+            <td><%= user.email %></td>
+            <td><%= user.isAdmin ? 'Yes' : 'No' %></td>
+            <td><%= user.isActive !== false ? 'Yes' : 'No' %></td>
+            <td>
+    <% if (!user.isAdmin) { %>
+    <form action="/admin/settings/users/<%= user._id %>/make-admin" method="POST" style="display:inline;">
+        <button type="submit">Make Admin</button>
+    </form>
+    <% } else { %>
+    <form action="/admin/settings/users/<%= user._id %>/remove-admin" method="POST" style="display:inline;">
+        <button type="submit">Remove Admin</button>
+    </form>
+    <% } %>
+</td>
+        </tr>
+        <% }) %>
+    </tbody>
+</table>
+</body>
+</html>

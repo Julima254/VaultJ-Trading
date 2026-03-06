@@ -1,0 +1,240 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family: Arial, Helvetica, sans-serif;
+}
+
+/* MAIN CONTAINER */
+.admin-packages{
+padding:15px;
+background:#f5f7fa;
+min-height:100vh;
+}
+
+/* TITLE */
+.admin-packages h1{
+color:#0b2a59;
+margin-bottom:15px;
+font-size:22px;
+}
+
+/* ADD BUTTON */
+.add-btn{
+display:inline-block;
+background:#caa12c;
+color:white;
+padding:10px 14px;
+border-radius:6px;
+text-decoration:none;
+font-weight:bold;
+margin-bottom:15px;
+}
+
+.add-btn:hover{
+background:#b48e24;
+}
+
+/* TABLE */
+.packages-table{
+width:100%;
+border-collapse:collapse;
+background:white;
+border-radius:8px;
+overflow:hidden;
+box-shadow:0 3px 10px rgba(0,0,0,0.08);
+}
+
+/* TABLE HEADER */
+.packages-table thead{
+background:#0b2a59;
+color:white;
+}
+
+.packages-table th{
+padding:10px;
+font-size:13px;
+text-align:left;
+}
+
+/* TABLE BODY */
+.packages-table td{
+padding:10px;
+border-bottom:1px solid #eee;
+font-size:13px;
+}
+
+/* ROW HOVER */
+.packages-table tbody tr:hover{
+background:#f3f6ff;
+}
+
+/* STATUS */
+.status-active{
+background:#1fa84f;
+color:white;
+padding:4px 8px;
+border-radius:4px;
+font-size:12px;
+}
+
+.status-disabled{
+background:#999;
+color:white;
+padding:4px 8px;
+border-radius:4px;
+font-size:12px;
+}
+
+/* ACTION BUTTONS */
+.actions a{
+text-decoration:none;
+padding:5px 8px;
+border-radius:4px;
+font-size:12px;
+margin-right:5px;
+}
+
+.actions .edit{
+background:#0b2a59;
+color:white;
+}
+
+.actions .delete{
+background:#c0392b;
+color:white;
+}
+
+/* MOBILE SCROLL */
+.packages-table{
+display:block;
+overflow-x:auto;
+}
+
+/* ---------------- TABLET ---------------- */
+@media (min-width:768px){
+
+.admin-packages{
+padding:25px;
+}
+
+.admin-packages h1{
+font-size:26px;
+}
+
+.packages-table th,
+.packages-table td{
+padding:12px;
+font-size:14px;
+}
+
+.add-btn{
+padding:11px 16px;
+}
+
+}
+
+/* ---------------- DESKTOP ---------------- */
+@media (min-width:1024px){
+
+.admin-packages{
+margin-left:250px; /* space for sidebar */
+padding:30px;
+max-width:calc(100% - 250px);
+}
+
+.packages-table th{
+font-size:15px;
+}
+
+.packages-table td{
+font-size:14px;
+}
+
+.actions a{
+padding:6px 10px;
+font-size:13px;
+}
+
+}
+    </style>
+</head>
+<body>
+    <main class="admin-packages">
+
+<h1>Investment Packages</h1>
+
+
+
+<table class="packages-table">
+<thead>
+<tr>
+<th>Package</th>
+<th>Price (KES)</th>
+<th>Daily ROI</th>
+<th>Duration</th>
+<th>Total Profit</th>
+<th>Referral %</th>
+<th>Status</th>
+<th>Users</th>
+<th>Total Invested</th>
+<th>Total Paid</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+
+<% packages.forEach(pkg => { %>
+
+<tr>
+
+<td><%= pkg.name %></td>
+
+<td>KES <%= pkg.price %></td>
+
+<td><%= pkg.dailyROI %>%</td>
+
+<td><%= pkg.duration %> Days</td>
+
+<td>KES <%= pkg.totalProfit %></td>
+
+<td><%= pkg.referralCommission %>%</td>
+
+<td>
+<span class="<%= pkg.status === 'Active' ? 'status-active' : 'status-disabled' %>">
+<%= pkg.status %>
+</span>
+</td>
+
+<td><%= pkg.totalUsers || 0 %></td>
+
+<td>KES <%= pkg.totalInvested || 0 %></td>
+
+<td>KES <%= pkg.totalPaid || 0 %></td>
+
+<td class="actions">
+
+
+
+</td>
+
+</tr>
+
+<% }) %>
+
+</tbody>
+
+</table>
+
+</main>
+</body>
+</html>

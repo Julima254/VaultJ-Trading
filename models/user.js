@@ -13,7 +13,8 @@ const userSchema = new mongoose.Schema({
     package: { type: String, default: "None" },
     walletBalance: { type: Number, default: 0 },
     referralEarnings: { type: Number, default: 0 },
-}, { timestamps: true }); 
+    isActive: { type: Boolean, default: true } // ✅ Add this
+}, { timestamps: true });
 
 userSchema.plugin(passportLocalMongoose);
 
