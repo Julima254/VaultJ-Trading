@@ -5,91 +5,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spin & Win</title>
+
 <style>
-  body {
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-    background-color: #001f4d;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+body{
+    margin:0;
+    font-family:Arial;
+    background:#001f4d;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 
-.container {
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    padding: 15px;
+.container{
+    width:90%;
+    max-width:400px;
+    text-align:center;
+    padding:15px;
 }
 
-header {
-    background-color: #001f4d;
-    width: 100%;
-    padding: 10px 0;
-    text-align: center;
-    border-bottom: 3px solid gold;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+.wallet{
+    color:#00ff00;
+    font-weight:bold;
+    margin-top:5px;
 }
 
-header h1 {
-    color: gold;
-    margin: 0;
-    font-size: 28px;
-    text-shadow: 0 0 5px gold;
+input{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    font-size:16px;
+    margin-top:5px;
+    margin-bottom:10px;
 }
 
-.wallet {
-    color: #00ff00;
-    font-weight: bold;
-    margin-top: 5px;
-    text-shadow: 0 0 3px #00ff00;
+button{
+    padding:12px 20px;
+    font-size:18px;
+    color:#001f4d;
+    background:gold;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-form {
-    margin: 20px 0;
+button:disabled{
+    background:#ccc;
+    cursor:not-allowed;
 }
 
-input[type="number"] {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
-    margin-top: 5px;
-    margin-bottom: 10px;
+.wheel-wrapper{
+    position:relative;
+    width:320px;
+    height:320px;
+    margin:25px auto;
 }
 
-button {
-    padding: 12px 20px;
-    font-size: 18px;
-    color: #001f4d;
-    background-color: gold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-button:hover { transform: scale(1.05); box-shadow: 0 0 15px gold; }
-button:disabled { background-color: #ccc; cursor: not-allowed; }
-
-.wheel-wrapper {
-    position: relative;
-    width: 300px;
-    height: 300px;
-    margin: 20px auto;
-    border-radius: 50%;
-    perspective: 1000px;
-}
-
-.wheel {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: conic-gradient(
+.wheel{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background:conic-gradient(
         #004080 0deg 60deg,
         #008000 60deg 120deg,
         #ffd700 120deg 180deg,
@@ -97,114 +74,70 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
         #00cc66 240deg 300deg,
         #ff9900 300deg 360deg
     );
-    border: 8px solid gold;
-    box-shadow: 0 0 20px gold inset, 0 0 15px #004080, 0 0 30px #008000;
-    position: relative;
-    overflow: hidden;
-    transform: rotate(0deg);
-    transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
+    border:8px solid gold;
+    box-shadow:0 0 20px gold inset;
+    transition:transform 4s cubic-bezier(0.33,1,0.68,1);
 }
 
-/* 3D inner circle */
-.wheel::after {
-    content: "";
-    position: absolute;
-    width: 30%;
-    height: 30%;
-    background-color: #001f4d;
-    border-radius: 50%;
-    top: 35%;
-    left: 35%;
-    box-shadow: 0 0 10px #00ff00 inset;
+.segment{
+    position:absolute;
+    width:50%;
+    height:50%;
+    top:0;
+    left:50%;
+    transform-origin:left bottom;
+    display:flex;
+    align-items:flex-start;
+    padding-top:20px;
+    padding-left:10px;
+    font-weight:bold;
+    color:gold;
+    font-size:18px;
+    transform:rotate(calc(var(--i) * 60deg));
 }
 
-/* Segment Labels */
-.segment {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    top: 0;
-    left: 50%;
-    transform-origin: left bottom;
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding-top: 20px;
-    padding-left: 10px;
-    font-weight: bold;
-    color: gold;
-    text-shadow: 0 0 3px gold;
-    font-size: 18px;
+.pointer{
+    position:absolute;
+    top:-30px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:40px;
+    color:red;
+    z-index:10;
 }
 
-/* Rotate each segment using CSS variable --i */
-.segment {
-    transform: rotate(calc(var(--i) * 60deg));
+.winning{
+    color:white;
+    text-shadow:0 0 5px white,0 0 10px gold,0 0 20px gold,0 0 40px gold;
+    transform:scale(1.2);
 }
 
-/* Pointer */
-.pointer {
-    position: absolute;
-    top: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 36px;
-    color: red;
-    text-shadow: 0 0 5px gold, 0 0 15px gold;
-    z-index: 10;
-    animation: bounce 1s infinite alternate;
-}
-
-@keyframes bounce {
-    from { transform: translateX(-50%) translateY(0); }
-    to { transform: translateX(-50%) translateY(10px); }
-}
-
-/* Result */
-#result {
-    font-size: 18px;
-    font-weight: bold;
-    color: gold;
-    text-shadow: 0 0 5px #00ff00;
-    min-height: 30px;
-    margin-top: 20px;
-}
-
-/* Responsive */
-@media(min-width: 600px){
-    .container { max-width: 600px; }
-    header h1 { font-size: 36px; }
-    .wheel-wrapper { width: 400px; height: 400px; }
-    .segment { font-size: 22px; padding-top: 30px; padding-left: 15px; }
-    .pointer { font-size: 44px; top: -40px; }
-    button { font-size: 20px; padding: 14px 24px; }
-    #result { font-size: 20px; }
-}
-
-@media(min-width: 992px){
-    .container { max-width: 800px; }
-    header h1 { font-size: 48px; }
-    .wheel-wrapper { width: 500px; height: 500px; }
-    .segment { font-size: 26px; padding-top: 40px; padding-left: 20px; }
-    .pointer { font-size: 50px; top: -45px; }
-    button { font-size: 22px; padding: 16px 30px; }
-    #result { font-size: 22px; }
+#result{
+    margin-top:20px;
+    font-size:18px;
+    font-weight:bold;
+    color:gold;
 }
 </style>
 </head>
+
 <body>
+
 <div class="container">
-    <h1>🎡 Spin & Win</h1>
 
-    <div class="wallet">Wallet Balance: <span id="wallet-balance">KES <%= walletBalance %></span></div>
+<h1>🎡 Spin & Win</h1>
 
-    <form id="spin-form">
-        <label for="betAmount">Enter Bet Amount (KES 10 - 2000)</label>
-        <input type="number" id="betAmount" name="betAmount" min="10" max="2000" required>
-        <button type="submit" id="spin-btn">SPIN</button>
-    </form>
+<div class="wallet">
+Wallet Balance: <span id="wallet-balance">KES <%= walletBalance %></span>
+</div>
 
-   <div class="wheel-wrapper">
+<form id="spin-form">
+<label>Enter Bet Amount (KES 10 - 2000)</label>
+<input type="number" id="betAmount" min="10" max="2000" required>
+<button id="spin-btn">SPIN</button>
+</form>
+
+<div class="wheel-wrapper">
     <div class="pointer">▼</div>
     <div class="wheel" id="wheel">
         <div class="segment" style="--i:0;">0x</div>
@@ -216,8 +149,13 @@ button:disabled { background-color: #ccc; cursor: not-allowed; }
     </div>
 </div>
 
-    <div id="result"></div>
+<div id="result"></div>
+
 </div>
+
+<audio id="tickSound">
+<source src="/sounds/tick.mp3" type="audio/mpeg">
+</audio>
 
 <script>
 const form = document.getElementById('spin-form');
@@ -226,93 +164,98 @@ const resultDiv = document.getElementById('result');
 const walletSpan = document.getElementById('wallet-balance');
 const spinBtn = document.getElementById('spin-btn');
 
-// Get wallet balance as number
 let walletBalance = parseInt("<%= walletBalance || 0 %>");
-
-// Spin pot amount
 let spinPotAmount = 0;
 
-// Fetch SpinPot amount on page load
-async function getSpinPot() {
-    try {
-        const res = await fetch('/spins/pot'); // Correct GET endpoint
+// Load Spin Pot
+async function getSpinPot(){
+    try{
+        const res = await fetch('/spins/pot');
         const data = await res.json();
         spinPotAmount = data.totalAmount || 0;
 
-        // Disable spin if wallet too low or pot empty
-        if(walletBalance < 10) {
+        if(walletBalance < 10){
             spinBtn.disabled = true;
             resultDiv.innerHTML = "<span style='color:red'>Wallet too low to spin</span>";
-        } else if(spinPotAmount <= 0) {
-            spinBtn.disabled = true;
-            resultDiv.innerHTML = "<span style='color:red'>Spin pot is empty. Try again later.</span>";
         }
-    } catch(err) {
+
+        if(spinPotAmount <= 0){
+            spinBtn.disabled = true;
+            resultDiv.innerHTML = "<span style='color:red'>Spin pot empty</span>";
+        }
+
+    }catch(err){
         console.error(err);
         spinBtn.disabled = true;
         resultDiv.innerHTML = "<span style='color:red'>Unable to load spin pot</span>";
     }
 }
 
-// Call on page load
 getSpinPot();
 
-form.addEventListener('submit', async e => {
+// Spin Logic
+form.addEventListener('submit', async e=>{
     e.preventDefault();
 
     const betAmount = Number(document.getElementById('betAmount').value);
 
-    if(betAmount < 10 || betAmount > 2000) return alert('Bet must be 10–2000 KES');
-    if(betAmount > walletBalance) return alert('Insufficient wallet balance');
-    if(betAmount > spinPotAmount) return alert('Spin pot has insufficient funds');
+    if(betAmount < 10 || betAmount > 2000) return alert("Bet must be 10-2000");
+    if(betAmount > walletBalance) return alert("Insufficient wallet");
+    if(betAmount > spinPotAmount) return alert("Spin pot insufficient");
 
     spinBtn.disabled = true;
     resultDiv.textContent = "Spinning...";
 
-    try {
-        const res = await fetch('/spins/play', { // Correct POST endpoint
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ betAmount })
+    try{
+        const res = await fetch('/spins/play',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({betAmount})
         });
 
         const data = await res.json();
 
-        if(!data.success) {
+        if(!data.success){
             resultDiv.innerHTML = `<span style="color:red">${data.message}</span>`;
             spinBtn.disabled = false;
             return;
         }
 
-        // Spin animation
-        const segments = 6;
-        const multipliers = [0, 0.5, 1, 2, 5, 10];
+        // Calculate finalAngle based on multiplier
+        const multipliers = [0,0.5,1,2,5,10];
         const multiplierIndex = multipliers.indexOf(data.multiplier);
-        const anglePerSegment = 360 / segments;
-        const fullSpins = 5;
-        const finalAngle = 360*fullSpins + multiplierIndex*anglePerSegment + anglePerSegment/2;
+        const anglePerSegment = 360 / multipliers.length;
+        const fullSpins = 5; // spins before stopping
+        const finalAngle = 360 * fullSpins + (multiplierIndex * anglePerSegment) - 90 + (anglePerSegment / 2);
 
-        wheel.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+        // Animate wheel
+        wheel.style.transition = 'transform 4s cubic-bezier(0.33,1,0.68,1)';
         wheel.style.transform = `rotate(${finalAngle}deg)`;
 
-        setTimeout(() => {
-          walletBalance = walletBalance - betAmount + data.reward; // subtract bet, add reward
-walletSpan.textContent = `KES ${walletBalance}`; // update wallet display
+        // Update balances instantly
+        walletBalance = data.walletBalance;
+        walletSpan.textContent = `KES ${walletBalance}`;
 
-resultDiv.innerHTML = `You bet <strong>KES ${betAmount}</strong> and won <strong>KES ${data.reward}</strong>!<br>
-Multiplier: <strong>x${data.multiplier}</strong>`;
+        // If using separate spinning balance
+        if(data.spinningBalance !== undefined){
+            let spinningEl = document.getElementById('spinning-balance');
+            if(spinningEl) spinningEl.textContent = data.spinningBalance;
+        }
 
-            // Reset wheel rotation to final segment
-            wheel.style.transition = 'none';
-            wheel.style.transform = `rotate(${multiplierIndex*anglePerSegment + anglePerSegment/2}deg)`;
+        // Show result after spin ends
+        setTimeout(()=>{
+            resultDiv.innerHTML = `You bet <strong>KES ${betAmount}</strong> and won <strong>KES ${data.reward}</strong>!<br>
+            Your wallet now has <strong>KES ${walletBalance}</strong>`;
+            spinBtn.disabled = false;
         }, 4000);
 
-    } catch(err) {
+    }catch(err){
         console.error(err);
-        resultDiv.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+        resultDiv.innerHTML = `<span style="color:red">${err.message}</span>`;
         spinBtn.disabled = false;
     }
 });
 </script>
+
 </body>
 </html>

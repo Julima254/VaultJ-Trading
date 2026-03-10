@@ -21,7 +21,7 @@
 
         <div class="summary-item">
             <p>Wallet Balance</p>
-            <h4>KES <%= walletBalance %></h4>
+            <h4>KES <span id="wallet-balance"><%= walletBalance %></span></h4>
         </div>
 
         <div class="summary-item">
@@ -41,7 +41,7 @@
 
         <div class="summary-item">
             <p>Spinning Balance</p>
-            <h4>KES <%= user.spinningBalance || 0 %></h4>
+            <h4>KES <span id="spinning-balance"><%= user.spinningBalance || 0 %></span></h4>
         </div>
 
         <div class="summary-item">
@@ -92,5 +92,37 @@
     </section>
 
 </main>
+
+<script>
+    // ===========================
+    // DYNAMIC BALANCE UPDATES
+    // ===========================
+    const walletEl = document.getElementById("wallet-balance");
+    const spinningEl = document.getElementById("spinning-balance");
+
+    // Function to fetch latest balances from server
+    async function updateBalances() {
+        try {
+            const res = await fetch('/user/wallet'); // backend endpoint
+            const data = await res.json();
+
+            if(data.success) {
+                walletEl.textContent = data.walletBalance;
+                spinningEl.textContent = data.spinningBalance || 0;
+            }
+        } catch(err) {
+            console.error("Failed to update balances:", err);
+        }
+    }
+
+    // Function to add spin reward instantly
+    function afterSpinUpdate(reward) {
+        spinningEl.textContent = Number(spinningEl.textContent) + reward;
+        walletEl.textContent = Number(walletEl.textContent) + reward;
+    }
+
+    // Auto-refresh balances every 10 seconds
+    setInterval(updateBalances, 10000);
+</script>
 </body>
 </html>

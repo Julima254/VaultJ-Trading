@@ -1,244 +1,205 @@
 <%- include('../partials/adminHeader.ejs'); -%>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-   /* ==========================
-   BODY & MAIN STRUCTURE
-========================== */
-body {
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-    background-color: #001f4d; /* dark blue */
-    color: #fff;
+
+<main class="admin-main">
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#001f4d;
+color:white;
 }
 
-.menu {
-    display: none; /* hidden on mobile */
+.container{
+width:90%;
+max-width:900px;
+margin:auto;
+padding:20px;
 }
 
-.main-content {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-height: 100vh;
-    box-sizing: border-box;
+h2,h3{
+color:gold;
 }
 
-/* ==========================
-   CONTAINER
-========================== */
-.container {
-    width: 90%;
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 15px;
-    box-sizing: border-box;
+form{
+margin-bottom:30px;
 }
 
-/* ==========================
-   HEADERS
-========================== */
-h2, h3 {
-    color: gold;
-    text-shadow: 0 0 3px #ffd700;
-    margin-bottom: 15px;
+input{
+padding:10px;
+border-radius:6px;
+border:1px solid gold;
+background:#001f4d;
+color:white;
+width:100%;
+margin-top:5px;
 }
 
-h2 { font-size: 24px; }
-h3 { font-size: 20px; }
-
-/* ==========================
-   FORM
-========================== */
-form {
-    margin-bottom: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+button{
+padding:10px 16px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin-top:10px;
 }
 
-form label {
-    font-weight: bold;
-    color: #00ff00;
+.update-btn{
+background:gold;
+color:#001f4d;
 }
 
-form input[type="number"] {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid gold;
-    font-size: 16px;
-    background-color: #001f4d;
-    color: #fff;
-    width: 100%;
-    box-sizing: border-box;
+.reset-btn{
+background:red;
+color:white;
+margin-top:10px;
 }
 
-form button {
-    padding: 12px 20px;
-    font-size: 16px;
-    color: #001f4d;
-    background-color: gold;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
 }
 
-form button:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 10px gold;
+thead{
+background:#004080;
 }
 
-/* ==========================
-   TABLE
-========================== */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    word-wrap: break-word;
+th,td{
+padding:10px;
+text-align:left;
 }
 
-thead {
-    background-color: #004080;
+tbody tr{
+border-bottom:1px solid gold;
 }
 
-thead th {
-    color: gold;
-    font-weight: bold;
-    padding: 10px;
-    text-align: left;
+tbody tr:nth-child(even){
+background:rgba(0,255,0,0.05);
 }
 
-tbody tr {
-    border-bottom: 1px solid gold;
+</style>
+
+<div class="container">
+
+<h2>Admin SpinPot Management</h2>
+
+<form action="/admin/spins/update" method="POST">
+
+<label>Total Spin Pot (KES)</label>
+
+<input
+type="number"
+name="totalAmount"
+value="<%= spinPot?.totalAmount || 0 %>"
+required
+>
+
+<button class="update-btn" type="submit">
+Update Spin Pot
+</button>
+
+</form>
+
+
+<!-- TOTAL DEDUCTED -->
+
+<div style="margin-bottom:30px">
+
+<label style="color:#00ff00;font-weight:bold;">
+Total Deducted From Users
+</label>
+
+<input
+type="text"
+id="deductedAmount"
+value="KES <%= totalDeducted %>"
+readonly
+>
+
+<button
+class="reset-btn"
+onclick="resetDeducted()">
+Reset Deducted Amount
+</button>
+
+</div>
+
+
+<h3>All Spins</h3>
+
+<table>
+
+<thead>
+<tr>
+<th>User</th>
+<th>Bet Amount</th>
+<th>Multiplier</th>
+<th>Reward</th>
+<th>Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+<% spins.forEach(spin=>{ %>
+
+<tr>
+<td><%= spin.user.username %></td>
+<td>KES <%= spin.betAmount %></td>
+<td>x<%= spin.multiplier %></td>
+<td>KES <%= spin.reward %></td>
+<td><%= spin.createdAt.toDateString() %></td>
+</tr>
+
+<% }) %>
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<script>
+
+async function resetDeducted(){
+
+const confirmReset = confirm(
+"Are you sure you want to reset total deducted? This will delete all spin history."
+);
+
+if(!confirmReset) return;
+
+try{
+
+const res = await fetch("/admin/spins/reset-deducted",{
+method:"POST"
+});
+
+if(res.ok){
+
+alert("Total deducted reset successfully");
+location.reload();
+
+}else{
+
+alert("Failed to reset");
+
 }
 
-tbody td {
-    padding: 10px;
-    color: #00ff00;
+}catch(err){
+
+console.error(err);
+alert("Error resetting deducted amount");
+
 }
 
-tbody tr:nth-child(even) {
-    background-color: rgba(0, 255, 0, 0.05);
 }
 
-/* ==========================
-   MOBILE-FIRST RESPONSIVE
-========================== */
-@media(min-width: 600px) {
-    .container { max-width: 600px; }
-    h2 { font-size: 28px; }
-    h3 { font-size: 24px; }
-    form input[type="number"] { font-size: 18px; padding: 12px; }
-    form button { font-size: 18px; padding: 14px 24px; }
-    thead th { font-size: 16px; padding: 12px; }
-    tbody td { font-size: 16px; padding: 12px; }
-}
+</script>
 
-/* ==========================
-   DESKTOP - LEFT MENU FIXED
-========================== */
-@media(min-width: 992px) {
-    body {
-        display: flex;
-        flex-direction: row;
-    }
+</main>
 
-    .menu {
-        display: flex;
-        flex-direction: column;
-        width: 250px;
-        background-color: #001f4d;
-        border-right: 3px solid gold;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        padding: 20px;
-        box-sizing: border-box;
-        gap: 20px;
-    }
-
-    .menu a {
-        color: gold;
-        text-decoration: none;
-        font-weight: bold;
-        padding: 8px;
-        border-radius: 4px;
-        transition: background 0.2s;
-        display: block;
-    }
-
-    .menu a:hover {
-        background-color: #004080;
-    }
-
-    .main-content {
-        margin-left: 0px; /* leave space for menu */
-        width: calc(100% - 270px);
-        display: flex;
-        flex-direction: column; /* keep all stacked vertically */
-    }
-
-    .container {
-        width: 95%;
-        padding: 20px;
-    }
-
-    h2 { font-size: 32px; }
-    h3 { font-size: 28px; }
-    form input[type="number"] { font-size: 20px; padding: 14px; }
-    form button { font-size: 20px; padding: 16px 28px; }
-    thead th { font-size: 18px; padding: 14px; }
-    tbody td { font-size: 18px; padding: 14px; }
-}
-    </style>
-</head>
-<body>
-    <div class="menu">
-        <a href="/admin/dashboard">Dashboard</a>
-        <a href="/admin/spins">SpinPot</a>
-        <a href="/admin/users">Users</a>
-        <!-- Add more menu items -->
-    </div>
-
-    <div class="main-content">
-        <div class="container">
-            <h2>Admin SpinPot Management</h2>
-            <form action="/admin/spins/update" method="POST">
-                <label>Total Spin Pot (KES):</label>
-                <input type="number" name="totalAmount" value="<%= spinPot?.totalAmount || 0 %>" required />
-                <button type="submit">Update Spin Pot</button>
-            </form>
-
-            <h3>All Spins</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Bet Amount</th>
-                        <th>Multiplier</th>
-                        <th>Reward</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% spins.forEach(spin => { %>
-                        <tr>
-                            <td><%= spin.user.username %></td>
-                            <td>KES <%= spin.betAmount %></td>
-                            <td>x<%= spin.multiplier %></td>
-                            <td>KES <%= spin.reward %></td>
-                            <td><%= spin.createdAt.toDateString() %></td>
-                        </tr>
-                    <% }) %>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>

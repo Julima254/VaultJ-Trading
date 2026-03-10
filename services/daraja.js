@@ -57,4 +57,34 @@ async function stkPush(phone, amount) {
   );
 }
 
-module.exports = { stkPush };
+async function b2cPayment(phone, amount) {
+  try {
+    const token = await getAccessToken();
+
+    const response = await axios.post(
+      "https://sandbox.safaricom.co.ke/mpesa/b2c/v1/paymentrequest",
+      {
+        InitiatorName: process.env.B2C_INITIATOR_NAME,      // from Daraja portal
+        SecurityCredential: process.env.B2C_SECURITY_CRED,  // generated in Safaricom portal
+        CommandID: "BusinessPayment",                        // fixed for sending money to customer
+        Amount: amount,
+        PartyA: process.env.DARAJA_SHORTCODE,               // your business shortcode
+        PartyB: phone,                                      // user phone
+        Remarks: "VaultJ Withdrawal",
+        QueueTimeOutURL: process.env.B2C_TIMEOUT_URL,       // URL for timeout
+        ResultURL: process.env.B2C_RESULT_URL,             // URL for callback
+        Occasion: "Withdrawal"
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    return response.data;
+  } catch (err) {
+    console.error("B2C Payment failed:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+module.exports = { stkPush, b2cPayment };

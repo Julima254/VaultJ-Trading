@@ -117,4 +117,80 @@ router.get("/", isAdmin, async (req, res) => {
     }
 });
 
+// ===== GET ALL WITHDRAWALS =====
+router.get("/withdrawals", isAdmin, async (req, res) => {
+    try {
+        const withdrawals = await Transaction.find({ type: "withdrawal" })
+            .populate("user", "username phone walletBalance") // bring user info
+            .sort({ createdAt: -1 });
+
+       res.render("admin/adminWithdrawals", {
+    withdrawals,
+    success: req.flash("success"),
+    error: req.flash("error")
+});
+    } catch (err) {
+        console.error(err);
+        req.flash("error", "Cannot load withdrawals");
+        res.redirect("/admin");
+    }
+});
+
+// APPROVE
+const { b2cPayment } = require("../services/daraja"); // new B2C function
+
+router.post("/withdrawals/:id/approve", isAdmin, async (req, res) => {
+    try {
+        const transaction = await Transaction.findById(req.params.id).populate("user");
+        if (!transaction || transaction.status !== "pending") {
+            req.flash("error", "Transaction not found or already processed.");
+            return res.redirect("/admin/withdrawals");
+        }
+
+        // Call B2C API here
+        const result = await b2cPayment(transaction.phone, transaction.amount);
+
+        transaction.status = "completed";
+        transaction.b2cReceipt = result.MpesaReceiptNumber; // save receipt number
+        await transaction.save();
+
+        req.flash("success", `Payment sent to ${transaction.user.username}`);
+        res.redirect("/admin/withdrawals");
+    } catch (err) {
+        console.error(err);
+        req.flash("error", "B2C payment failed.");
+        res.redirect("/admin/withdrawals");
+    }
+});
+
+// REJECT
+router.post("/withdrawals/:id/reject", isAdmin, async (req, res) => {
+    try {
+        const transaction = await Transaction.findById(req.params.id).populate("user");
+        if (!transaction) {
+            req.flash("error", "Transaction not found.");
+            return res.redirect("/admin/withdrawals");
+        }
+
+        if (transaction.status !== "pending") {
+            req.flash("error", "Already processed");
+            return res.redirect("/admin/withdrawals");
+        }
+
+        // Refund user wallet first
+        transaction.user.walletBalance += transaction.amount;
+        await transaction.user.save();
+
+        transaction.status = "failed";
+        await transaction.save();
+
+        req.flash("success", `Withdrawal rejected and KES ${transaction.amount} refunded to ${transaction.user.username}`);
+        res.redirect("/admin/withdrawals");
+    } catch (err) {
+        console.error(err);
+        req.flash("error", "Could not reject withdrawal.");
+        res.redirect("/admin/withdrawals");
+    }
+});
+
 module.exports = router;

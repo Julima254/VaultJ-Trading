@@ -1,0 +1,174 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds</title>
+    <style>
+        /* ======================
+   COLORS
+===================== */
+:root {
+    --dark-blue: #001f4d;
+    --gold: #FFD700;
+    --green: #28a745;
+    --white: #ffffff;
+}
+
+/* ======================
+   GLOBAL
+===================== */
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: var(--dark-blue);
+    color: var(--white);
+}
+
+.container {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+/* ======================
+   HEADINGS & TEXT
+===================== */
+h1 {
+    text-align: center;
+    color: var(--gold);
+    margin-bottom: 20px;
+}
+
+.wallet-balance {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.flash {
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.flash.error {
+    background-color: #ff4d4d;
+    color: var(--white);
+}
+
+.flash.success {
+    background-color: var(--green);
+    color: var(--white);
+}
+
+/* ======================
+   FORM
+===================== */
+.withdraw-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.withdraw-form label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.withdraw-form input {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.withdraw-form button {
+    padding: 12px;
+    background-color: var(--gold);
+    color: var(--dark-blue);
+    font-weight: bold;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.withdraw-form button:hover {
+    background-color: var(--green);
+    color: var(--white);
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    color: var(--green);
+}
+
+/* ======================
+   RESPONSIVE: TABLET
+===================== */
+@media (min-width: 600px) {
+    .container {
+        padding: 30px;
+    }
+}
+
+/* ======================
+   RESPONSIVE: DESKTOP
+===================== */
+@media (min-width: 992px) {
+    .container {
+        max-width: 600px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .withdraw-form input, .withdraw-form button {
+        font-size: 1.1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Withdraw Funds</h1>
+
+        <p class="wallet-balance">Wallet Balance: KES <span id="wallet"><%= walletBalance %></span></p>
+
+        <% if (error && error.length > 0) { %>
+            <p class="flash error"><%= error %></p>
+        <% } %>
+
+        <% if (success && success.length > 0) { %>
+            <p class="flash success"><%= success %></p>
+        <% } %>
+
+        <form action="/withdraw" method="POST" class="withdraw-form">
+            <label for="phone">Phone Number:</label>
+            <input type="text" id="phone" name="phone" value="<%= user.phone %>" required />
+
+            <label for="amount">Amount to withdraw (KES):</label>
+            <input type="number" id="amount" name="amount" min="100" max="<%= walletBalance %>" required />
+
+            <button type="submit">Withdraw</button>
+        </form>
+
+        <p><a href="/home" class="back-link">Back to Home</a></p>
+    </div>
+</body>
+</html>

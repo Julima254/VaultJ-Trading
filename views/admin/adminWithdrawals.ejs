@@ -1,0 +1,243 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ======================
+   COLORS
+===================== */
+:root {
+    --dark-blue: #001f4d;
+    --gold: #FFD700;
+    --green: #28a745;
+    --white: #ffffff;
+    --red: #ff4d4d;
+}
+
+
+/* Assuming your admin header height is 60px */
+.container {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 15px;
+    padding-top: 80px; /* <-- ADD THIS */
+}
+
+/* ======================
+   GLOBAL
+===================== */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: var(--dark-blue);
+    color: var(--white);
+}
+
+.container {
+    max-width: 100%;
+    margin: 20px auto;
+    padding: 15px;
+}
+
+/* ======================
+   HEADINGS
+===================== */
+h1 {
+    text-align: center;
+    color: var(--gold);
+    margin-bottom: 20px;
+}
+
+/* ======================
+   FLASH MESSAGES
+===================== */
+.flash {
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.flash.error {
+    background-color: var(--red);
+    color: var(--white);
+}
+
+.flash.success {
+    background-color: var(--green);
+    color: var(--white);
+}
+
+/* ======================
+   TABLE
+===================== */
+.withdrawals-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.withdrawals-table th, .withdrawals-table td {
+    border: 1px solid var(--gold);
+    padding: 8px;
+    text-align: center;
+}
+
+.withdrawals-table th {
+    background-color: var(--gold);
+    color: var(--dark-blue);
+}
+
+.withdrawals-table td {
+    background-color: rgba(255,215,0,0.1);
+}
+
+/* Status colors */
+td.completed { color: var(--green); font-weight: bold; }
+td.failed { color: var(--red); font-weight: bold; }
+td.pending { color: var(--gold); font-weight: bold; }
+
+/* ======================
+   BUTTONS
+===================== */
+button.approve-btn {
+    background-color: var(--green);
+    color: var(--white);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+button.approve-btn:hover {
+    opacity: 0.8;
+}
+
+button.reject-btn {
+    background-color: var(--red);
+    color: var(--white);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button.reject-btn:hover {
+    opacity: 0.8;
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.back-link:hover {
+    color: var(--green);
+}
+
+/* ======================
+   RESPONSIVE: TABLET
+===================== */
+@media (min-width: 600px) {
+    .container {
+        max-width: 90%;
+        padding: 20px;
+    }
+
+    .withdrawals-table th, .withdrawals-table td {
+        padding: 12px;
+    }
+}
+
+/* ======================
+   RESPONSIVE: DESKTOP
+===================== */
+@media (min-width: 992px) {
+    .container {
+        max-width: 1100px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .withdrawals-table th, .withdrawals-table td {
+        padding: 15px;
+        font-size: 1rem;
+    }
+
+    button.approve-btn, button.reject-btn {
+        padding: 7px 15px;
+        font-size: 0.95rem;
+    }
+
+    /* Desktop adjustment */
+@media (min-width: 992px) {
+     .container {
+        margin-left: 250px; /* sidebar width */
+        max-width: calc(100% - 250px);
+    }
+}
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Pending Withdrawals</h1>
+
+    <% if (error && error.length > 0) { %>
+        <p class="flash error"><%= error %></p>
+    <% } %>
+
+    <% if (success && success.length > 0) { %>
+        <p class="flash success"><%= success %></p>
+    <% } %>
+
+    <table class="withdrawals-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Phone</th>
+                <th>Amount (KES)</th>
+                <th>Requested At</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% withdrawals.forEach(function(w) { %>
+                <tr>
+                    <td><%= w.user.username %></td>
+                    <td><%= w.phone %></td>
+                    <td><%= w.amount %></td>
+                    <td><%= w.createdAt.toLocaleString() %></td>
+                    <td class="<%= w.status %>"><%= w.status %></td>
+                    <td>
+                        <% if (w.status === "pending") { %>
+                            <form action="/admin/withdrawals/<%= w._id %>/approve" method="POST" style="display:inline">
+                                <button type="submit" class="approve-btn">Approve</button>
+                            </form>
+                            <form action="/admin/withdrawals/<%= w._id %>/reject" method="POST" style="display:inline">
+                                <button type="submit" class="reject-btn">Reject</button>
+                            </form>
+                        <% } else { %>
+                            N/A
+                        <% } %>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <p><a href="/admin" class="back-link">Back to Dashboard</a></p>
+</div>
+</body>
+</html>

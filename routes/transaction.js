@@ -47,4 +47,40 @@ router.get('/', isLoggedIn, async (req, res) => {
   }
 });
 
+
+router.post("/withdraw", isLoggedIn, async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const user = await User.findById(req.user._id);
+
+        if (amount < 100) {
+            req.flash("error", "Minimum withdrawal is KES 100");
+            return res.redirect("/home");
+        }
+
+        if (user.walletBalance < amount) {
+            req.flash("error", "Insufficient wallet balance");
+            return res.redirect("/home");
+        }
+
+        // Deduct from wallet and create a pending transaction
+        user.walletBalance -= amount;
+        await user.save();
+
+        await Transaction.create({
+            user: user._id,
+            type: "withdrawal",
+            amount: amount,
+            phone: user.phone,
+            status: "pending"
+        });
+
+        req.flash("success", "Withdrawal request submitted. Awaiting admin approval.");
+        res.redirect("/home");
+    } catch (err) {
+        console.error(err);
+        res.redirect("/home");
+    }
+});
+
 module.exports = router;

@@ -22,6 +22,7 @@ const adminSpinRoutes = require('./routes/adminSpinPot');
 const spinRouter = require('./routes/spin');
 
 
+
 const app = express();
 
 
@@ -161,35 +162,28 @@ app.post("/forgot", async (req, res) => {
 app.get("/home", isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-
-        // Count total referrals
         const totalReferrals = await User.countDocuments({ referrer: user._id });
-
-        // Fetch last 10 transactions
         const transactions = await Transaction.find({ user: user._id })
-            .sort({ createdAt: -1 })
-            .limit(10);
+            .sort({ createdAt: -1 }).limit(10);
 
-        // Calculate wallet balance dynamically
-       // Wallet balance includes deposits + referral earnings only if a package is purchased
-const walletBalance = (user.package === 'None') 
-    ? 0 
-    : (user.depositBalance || 0) + (user.referralEarnings || 0);
-
+        // SYNC LOGIC: 
+        // If it's a new user, initialize their walletBalance from their deposits
+        if (user.walletBalance === 0 && user.depositBalance > 0) {
+            user.walletBalance = user.depositBalance + (user.referralEarnings || 0);
+            await user.save();
+        }
 
         res.render("home", {
             user,
             totalReferrals,
             transactions,
-            walletBalance
+            // Display the actual stored balance
+            walletBalance: user.walletBalance || 0 
         });
     } catch (err) {
-        console.error(err);
-        req.flash("error", "Cannot load home page");
         res.redirect("/login");
     }
 });
-
 
 
 
@@ -201,6 +195,23 @@ function isLoggedIn(req, res, next) {
     req.flash("error", "Please login first");
     res.redirect("/login");
 }
+
+
+// ====================
+// DYNAMIC USER BALANCES
+// ====================
+app.get("/user/wallet", isLoggedIn, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        res.json({
+            success: true,
+            walletBalance: user.walletBalance || 0,
+            spinningBalance: user.spinningBalance || 0 // Added this
+        });
+    } catch (err) {
+        res.json({ success: false });
+    }
+});
 
 //deposit
 // deposit page
@@ -267,6 +278,57 @@ app.post("/mpesa/callback", (req, res) => {
     });});
 
 
+
+    // GET withdrawal page
+// GET /withdraw page
+app.get("/withdraw", isLoggedIn, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        res.render("withdrawal", {
+            user,                     // Pass user to header.ejs
+            walletBalance: user.walletBalance || 0,
+            error: req.flash("error"),
+            success: req.flash("success")
+        });
+    } catch (err) {
+        console.error(err);
+        req.flash("error", "Cannot load withdrawal page");
+        res.redirect("/home");
+    }
+});
+
+// POST /withdraw to submit a withdrawal
+app.post("/withdraw", isLoggedIn, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  try {
+    const { amount } = req.body;
+
+    if (user.walletBalance < 100) throw new Error("You must have at least KES 100 in wallet to withdraw");
+    if (amount < 100) throw new Error("Minimum withdrawal amount is KES 100");
+    if (amount > user.walletBalance) throw new Error("Insufficient wallet balance");
+
+    user.walletBalance -= amount;
+    await user.save();
+
+    await Transaction.create({
+      user: user._id,
+      type: "withdrawal",
+      amount: amount,
+      phone: user.phone,
+      status: "pending"
+    });
+
+    req.flash("success", "Withdrawal request submitted. Awaiting admin approval.");
+    res.redirect("/withdraw");
+    
+  } catch (err) {
+    console.error(err);
+    req.flash("error", err.message || "Something went wrong.");
+    res.redirect("/withdraw");
+  }
+});
+
+
 app.use('/admin', adminPaymentsRoutes);
 app.use('/account-packages', accountPackagesRoutes);
 app.use('/admin/referrals', adminReferralsRoutes);
@@ -277,6 +339,8 @@ app.use('/admin', adminPackages);
 app.use('/admin/settings', adminSettingsRoutes);
 app.use('/admin/spins', adminSpinRoutes);
 app.use('/spins', spinRouter);
+
+
 
 
 

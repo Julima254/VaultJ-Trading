@@ -78,9 +78,12 @@ if (!spinPot) {
 
         // Add reward to user wallet
         if (reward > 0) {
-            user.walletBalance += reward;
-            await user.save();
-        }
+    user.walletBalance += reward; // Main balance for future bets/withdrawals
+    user.spinningBalance = (user.spinningBalance || 0) + reward; // Total winnings log
+}
+
+await user.save(); // Essential: Save the changes to MongoDB
+
 
         // Save spin record
         await Spin.create({
@@ -92,13 +95,20 @@ if (!spinPot) {
         });
 
         // Return JSON
-        return res.json({ success: true, multiplier: selectedMultiplier, reward });
+       return res.json({
+    success: true,
+    multiplier: selectedMultiplier,
+    reward,
+    walletBalance: user.walletBalance,
+    spinningBalance: user.spinningBalance || 0
+});
 
     } catch (err) {
         console.error(err);
         return res.json({ success: false, message: err.message || "Something went wrong" });
     }
 });
+
 
 // GET spin pot amount
 router.get('/pot', async (req, res) => {
