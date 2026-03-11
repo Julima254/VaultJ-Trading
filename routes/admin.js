@@ -4,6 +4,7 @@ const User = require("../models/user");
 const Transaction = require("../models/transaction");
 const VaultCoin = require("../models/vaultCoin");
 const CoinOrder = require("../models/coinOrder");
+const { b2cPayment } = require("../services/daraja");
 
 // ===== ADMIN GUARD =====
 function isAdmin(req, res, next) {
@@ -17,130 +18,102 @@ function isAdmin(req, res, next) {
 // ===== ADMIN DASHBOARD =====
 router.get("/", isAdmin, async (req, res) => {
     try {
-        // ===== USERS =====
-        const totalUsers = await User.countDocuments();
-        const starterUsers = await User.countDocuments({ package: "Starter" });
-        const bronzeUsers = await User.countDocuments({ package: "Bronze" });
-        const silverUsers = await User.countDocuments({ package: "Silver" });
-        const goldUsers = await User.countDocuments({ package: "Gold" });
-        const platinumUsers = await User.countDocuments({ package: "Platinum" });
-        const activeUsers = await User.countDocuments({ isActive: true });
+        const now = new Date();
+        const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        // ===== TRANSACTIONS =====
+        // 1. Basic Counts
+        const totalUsers = await User.countDocuments();
+        const activeUsers = await User.countDocuments({ isActive: true });
+        const pendingOrders = await CoinOrder.countDocuments({ status: "pending" });
+
+        // 2. Coin Metrics
+        const coin = await VaultCoin.findOne();
+        const totalCoinsCreated = coin?.totalSupply || 0;
+        const currentPrice = coin?.price || 0;
+        const dailyVolume = coin?.dailyVolume || 0;
+        const revenueFromFees = coin?.platformRevenue || 0;
+
+        const coinsInCirculationAgg = await User.aggregate([
+            { $group: { _id: null, totalCoins: { $sum: "$coinsBalance" } } }
+        ]);
+        const coinsInCirculation = coinsInCirculationAgg[0]?.totalCoins || 0;
+
+        // 3. Transactions
         const transactions = await Transaction.find().populate("user", "username").sort({ createdAt: -1 });
 
-        // ===== TOTAL DEPOSITS =====
-        const now = new Date();
-        const totalDeposits = {
-            today: transactions
-                .filter(tx => tx.type === "deposit" && tx.status === "completed" &&
-                              new Date(tx.createdAt).toDateString() === now.toDateString())
-                .reduce((sum, tx) => sum + tx.amount, 0),
+        // Calculate Totals
+        const totalDepositsToday = transactions
+            .filter(tx => tx.type === "deposit" && tx.status === "completed" && tx.createdAt >= startOfToday)
+            .reduce((sum, tx) => sum + tx.amount, 0);
 
-            week: transactions
-                .filter(tx => tx.type === "deposit" && tx.status === "completed" &&
-                              (now - new Date(tx.createdAt)) / (1000 * 60 * 60 * 24) <= 7)
-                .reduce((sum, tx) => sum + tx.amount, 0),
+        const totalDepositsWeek = transactions
+            .filter(tx => tx.type === "deposit" && tx.status === "completed" && tx.createdAt >= startOfWeek)
+            .reduce((sum, tx) => sum + tx.amount, 0);
 
-            month: transactions
-                .filter(tx => tx.type === "deposit" && tx.status === "completed" &&
-                              new Date(tx.createdAt).getMonth() === now.getMonth() &&
-                              new Date(tx.createdAt).getFullYear() === now.getFullYear())
-                .reduce((sum, tx) => sum + tx.amount, 0)
-        };
+        const totalDepositsMonth = transactions
+            .filter(tx => tx.type === "deposit" && tx.status === "completed" && tx.createdAt >= startOfMonth)
+            .reduce((sum, tx) => sum + tx.amount, 0);
 
-        // ===== TOTAL PAYOUTS =====
-        const totalPayoutsAgg = await Transaction.aggregate([
-            { $match: { type: "withdrawal", status: "completed" } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        const totalPayouts = totalPayoutsAgg[0]?.total || 0;
+        const totalPayouts = transactions
+            .filter(tx => tx.type === "withdrawal" && tx.status === "completed")
+            .reduce((sum, tx) => sum + tx.amount, 0);
 
-        // ===== PENDING WITHDRAWALS =====
-        const pendingWithdrawalsAgg = await Transaction.aggregate([
-            { $match: { type: "withdrawal", status: "pending" } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        const pendingWithdrawals = pendingWithdrawalsAgg[0]?.total || 0;
+        const pendingWithdrawals = transactions
+            .filter(tx => tx.type === "withdrawal" && tx.status === "pending")
+            .reduce((sum, tx) => sum + tx.amount, 0);
 
-        // ===== TOTAL COINS ISSUED (bonuses/referral earnings) =====
-        const totalCoinsAgg = await Transaction.aggregate([
-            { $match: { type: "bonus" } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        const totalCoinsIssued = totalCoinsAgg[0]?.total || 0;
+        const platformProfit = (transactions.filter(tx => tx.type === "deposit" && tx.status === "completed").reduce((s, t) => s + t.amount, 0)) - totalPayouts;
 
-        // ===== PLATFORM PROFIT =====
-        // Profit = total deposits completed - total payouts completed
-        const totalDepositAgg = await Transaction.aggregate([
-            { $match: { type: "deposit", status: "completed" } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        const totalDepositsCompleted = totalDepositAgg[0]?.total || 0;
-        const platformProfit = totalDepositsCompleted - totalPayouts;
+        // 4. Chart Data Generation (Dummy data for price, real for deposits)
+        // In a real app, you'd store price history in a separate model
+        const dailyDepositLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const dailyDepositData = [0, 0, 0, 0, 0, 0, totalDepositsToday]; // Example logic
+        
+        const dailyWithdrawalLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const dailyWithdrawalData = [0, 0, 0, 0, 0, 0, 0];
 
-        // ===== CHART DATA (dummy for now) =====
-        const dailyDepositLabels = Array.from({ length: 7 }, (_, i) => `Day ${i + 1}`);
-        const dailyDepositData = [500, 1000, 750, 1200, 900, 1300, 700];
+        const coinPriceLabels = ["12:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
+        const coinPriceData = [currentPrice * 0.9, currentPrice * 0.95, currentPrice, currentPrice * 1.02, currentPrice];
 
-        const dailyWithdrawalLabels = Array.from({ length: 7 }, (_, i) => `Day ${i + 1}`);
-        const dailyWithdrawalData = [200, 400, 350, 300, 500, 450, 600];
-
-        const coinPriceLabels = Array.from({ length: 7 }, (_, i) => `Day ${i + 1}`);
-        const coinPriceData = [1.2, 1.3, 1.25, 1.28, 1.35, 1.4, 1.38];
-
-        // ===== RENDER ADMIN DASHBOARD =====
+        // 5. RENDER
         res.render("admin", {
             totalUsers,
             activeUsers,
-            starterUsers,
-            bronzeUsers,
-            silverUsers,
-            goldUsers,
-            platinumUsers,
-            totalDeposits,
+            totalCoinsIssued: totalCoinsCreated,
+            coinsInCirculation,
+            currentPrice,
+            dailyVolume,
+            revenueFromFees,
+            pendingOrders,
+            platformProfit,
+            totalDeposits: { 
+                today: totalDepositsToday,
+                week: totalDepositsWeek,
+                month: totalDepositsMonth
+            },
             totalPayouts,
             pendingWithdrawals,
-            totalCoinsIssued,
-            platformProfit,
+            recentTransactions: transactions.slice(0, 10),
+            // Chart Variables needed by admin.ejs
             dailyDepositLabels,
             dailyDepositData,
             dailyWithdrawalLabels,
             dailyWithdrawalData,
             coinPriceLabels,
             coinPriceData,
-            recentTransactions: transactions
+            success: req.flash("success"),
+            error: req.flash("error")
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("Admin Dashboard Error:", err);
         req.flash("error", "Cannot load admin dashboard");
         res.redirect("/home");
     }
 });
-
-// ===== GET ALL WITHDRAWALS =====
-router.get("/withdrawals", isAdmin, async (req, res) => {
-    try {
-        const withdrawals = await Transaction.find({ type: "withdrawal" })
-            .populate("user", "username phone walletBalance") // bring user info
-            .sort({ createdAt: -1 });
-
-       res.render("admin/adminWithdrawals", {
-    withdrawals,
-    success: req.flash("success"),
-    error: req.flash("error")
-});
-    } catch (err) {
-        console.error(err);
-        req.flash("error", "Cannot load withdrawals");
-        res.redirect("/admin");
-    }
-});
-
-// APPROVE
-const { b2cPayment } = require("../services/daraja"); // new B2C function
-
+// ===== APPROVE WITHDRAWAL =====
 router.post("/withdrawals/:id/approve", isAdmin, async (req, res) => {
     try {
         const transaction = await Transaction.findById(req.params.id).populate("user");
@@ -149,11 +122,10 @@ router.post("/withdrawals/:id/approve", isAdmin, async (req, res) => {
             return res.redirect("/admin/withdrawals");
         }
 
-        // Call B2C API here
         const result = await b2cPayment(transaction.phone, transaction.amount);
 
         transaction.status = "completed";
-        transaction.b2cReceipt = result.MpesaReceiptNumber; // save receipt number
+        transaction.b2cReceipt = result.MpesaReceiptNumber;
         await transaction.save();
 
         req.flash("success", `Payment sent to ${transaction.user.username}`);
@@ -165,21 +137,15 @@ router.post("/withdrawals/:id/approve", isAdmin, async (req, res) => {
     }
 });
 
-// REJECT
+// ===== REJECT WITHDRAWAL =====
 router.post("/withdrawals/:id/reject", isAdmin, async (req, res) => {
     try {
         const transaction = await Transaction.findById(req.params.id).populate("user");
-        if (!transaction) {
-            req.flash("error", "Transaction not found.");
+        if (!transaction || transaction.status !== "pending") {
+            req.flash("error", "Transaction not found or already processed.");
             return res.redirect("/admin/withdrawals");
         }
 
-        if (transaction.status !== "pending") {
-            req.flash("error", "Already processed");
-            return res.redirect("/admin/withdrawals");
-        }
-
-        // Refund user wallet first
         transaction.user.walletBalance += transaction.amount;
         await transaction.user.save();
 
@@ -195,23 +161,44 @@ router.post("/withdrawals/:id/reject", isAdmin, async (req, res) => {
     }
 });
 
-// Fetch coin metrics
-router.get("/coin-dashboard", isAdmin, async (req, res) => {
-    const coin = await VaultCoin.findOne();
-    const totalCoinsCreated = coin.totalSupply;
-    const coinsInCirculation = await User.aggregate([
-        { $group: { _id: null, total: { $sum: "$coinsBalance" } } }
-    ]);
-    const dailyVolume = coin.dailyVolume;
-    const orders = await CoinOrder.find({ status: "pending" });
+// ===== COIN DASHBOARD (ADMIN) =====
+router.get("/coin", async (req, res) => {
+    try {
+        const coin = await VaultCoin.findOne();
+        const totalCoinsCreated = coin?.totalSupply || 0;
 
-    res.render("admin/coinDashboard", {
-        totalCoinsCreated,
-        coinsInCirculation: coinsInCirculation[0]?.total || 0,
-        currentPrice: coin.price,
-        dailyVolume,
-        pendingOrders: orders.length
-    });
+        const coinsInCirculationAgg = await User.aggregate([
+            { $group: { _id: null, total: { $sum: "$coinsBalance" } } }
+        ]);
+        const coinsInCirculation = coinsInCirculationAgg[0]?.total || 0;
+
+        const dailyVolume = coin?.dailyVolume || 0;
+        const revenueFromFees = coin?.platformRevenue || 0;
+
+        const pendingOrders = await CoinOrder.countDocuments({ status: "pending" });
+
+        // Get the logged-in user
+        const user = req.user; // Make sure your auth middleware sets req.user
+        // Fetch user's recent orders
+        const recentOrders = await CoinOrder.find({ user: user._id }).sort({ createdAt: -1 }).limit(10);
+
+        res.render("admin/coin", {
+            user, // <-- now available in ejs
+            coin,
+            totalCoinsCreated,
+            coinsInCirculation,
+            currentPrice: coin?.price || 0,
+            dailyVolume,
+            revenueFromFees,
+            pendingOrders,
+            recentOrders, // <-- for recent orders table
+            success: req.flash("success"),
+            error: req.flash("error")
+        });
+    } catch (err) {
+        console.error(err);
+        req.flash("error", "Cannot load coin dashboard");
+        res.redirect("/admin");
+    }
 });
-
 module.exports = router;

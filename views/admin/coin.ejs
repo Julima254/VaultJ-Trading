@@ -1,0 +1,243 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    /* Base Styles - Mobile First */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #0b1e3d; /* Dark Blue background */
+        color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        display: none; /* Hidden on mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 220px;
+        background-color: #142850; /* Darker blue */
+        padding: 1rem;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.5);
+        z-index: 1000;
+    }
+
+    .sidebar h2 {
+        color: #ffd700;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar a {
+        display: block;
+        color: #f5f5f5;
+        text-decoration: none;
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
+        border-radius: 6px;
+        transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+        background-color: #1e40af; /* Blue hover */
+    }
+
+    /* Container adjusts to sidebar on desktop */
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 1.5rem;
+    }
+
+    /* Shift content when sidebar is visible */
+    @media(min-width: 1024px) {
+        .sidebar {
+            display: block;
+        }
+        .container {
+            margin-left: 240px; /* Enough to leave space for sidebar */
+        }
+    }
+
+    /* Card styles */
+    .card {
+        background-color: #142850;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        padding: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+    }
+
+    /* Typography */
+    h1, h2, h3 { color: #ffd700; }
+    p { margin: 0 0 0.5rem 0; font-weight: 500; }
+
+    /* Forms */
+    input[type="number"] {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #ffd700;
+        background-color: #0b1e3d;
+        color: #f5f5f5;
+    }
+
+    button {
+        cursor: pointer;
+        font-weight: bold;
+        transition: background 0.3s;
+    }
+
+    .bg-blue { background-color: #1e40af; color: #fff; }
+    .bg-red { background-color: #dc2626; color: #fff; }
+
+    button:hover { opacity: 0.9; }
+
+    /* Table styles */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #0b1e3d;
+    }
+
+    th, td {
+        border: 1px solid #ffd700;
+        padding: 0.5rem;
+        text-align: left;
+    }
+
+    th { background-color: #1e3a8a; color: #ffd700; }
+    tr:nth-child(even) { background-color: #142850; }
+
+    /* Feedback messages */
+    .success { background-color: #064e3b; color: #10b981; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; }
+    .error { background-color: #7f1d1d; color: #f87171; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; }
+
+    /* Grid */
+    .grid { display: grid; gap: 1rem; }
+    .grid-cols-1 { grid-template-columns: 1fr; }
+    @media(min-width: 768px) {
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Desktop adjustments */
+    @media(min-width: 1024px) {
+        .card { padding: 1.5rem; }
+        h1 { font-size: 3rem; }
+        h2 { font-size: 2.5rem; }
+        h3 { font-size: 1.75rem; }
+    }
+</style>
+</head>
+<body>
+<div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">VaultCoin Dashboard</h1>
+
+    <!-- User Coin Info -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Your Coin Balance</p>
+            <h2 class="text-2xl"><%= user.coinsBalance %> VLT</h2>
+        </div>
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Current Coin Price</p>
+            <h2 class="text-2xl">KES <%= coin?.price || 0 %></h2>
+        </div>
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Your Wallet Balance</p>
+            <h2 class="text-2xl">KES <%= user.walletBalance %></h2>
+        </div>
+    </div>
+
+    <!-- Buy / Sell Coin Forms -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <!-- Buy Coin -->
+        <div class="card p-4 shadow rounded">
+            <h3 class="text-xl font-semibold mb-2">Buy VaultCoin</h3>
+            <form action="/coins/buy" method="POST">
+                <label for="buyAmount" class="block mb-1">Amount to Spend (KES)</label>
+                <input type="number" name="amount" id="buyAmount" min="1" class="border p-2 w-full rounded mb-2" required>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Buy</button>
+            </form>
+        </div>
+
+        <!-- Sell Coin -->
+        <div class="card p-4 shadow rounded">
+            <h3 class="text-xl font-semibold mb-2">Sell VaultCoin</h3>
+            <form action="/coins/sell" method="POST">
+                <label for="sellAmount" class="block mb-1">Amount of Coins to Sell (VLT)</label>
+                <input type="number" name="coins" id="sellAmount" min="1" max="<%= user.coinsBalance %>" class="border p-2 w-full rounded mb-2" required>
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Sell</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Coin Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Total Coins Created</p>
+            <h2 class="text-2xl"><%= totalCoinsCreated %></h2>
+        </div>
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Coins in Circulation</p>
+            <h2 class="text-2xl"><%= coinsInCirculation %></h2>
+        </div>
+        <div class="card p-4 shadow rounded">
+            <p class="font-semibold">Daily Volume</p>
+            <h2 class="text-2xl">KES <%= dailyVolume %></h2>
+        </div>
+    </div>
+
+    <!-- Recent Coin Orders -->
+    <div class="card p-4 shadow rounded mb-6">
+        <h3 class="text-xl font-semibold mb-2">Your Recent Orders</h3>
+        <table class="w-full border-collapse">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="border p-2">Type</th>
+                    <th class="border p-2">Amount (KES / VLT)</th>
+                    <th class="border p-2">Status</th>
+                    <th class="border p-2">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% recentOrders.forEach(order => { %>
+                    <tr>
+                        <td class="border p-2"><%= order.type %></td>
+                        <td class="border p-2">
+                            <% if(order.type === 'buy'){ %>
+                                KES <%= order.amount %>
+                            <% } else { %>
+                                <%= order.coins %> VLT
+                            <% } %>
+                        </td>
+                        <td class="border p-2"><%= order.status %></td>
+                        <td class="border p-2"><%= order.createdAt.toLocaleString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <% if(success.length > 0){ %>
+        <div class="bg-green-200 p-2 rounded mb-2 text-green-800"><%= success %></div>
+    <% } %>
+    <% if(error.length > 0){ %>
+        <div class="bg-red-200 p-2 rounded mb-2 text-red-800"><%= error %></div>
+    <% } %>
+</div>
+
+
+</body>
+</html>

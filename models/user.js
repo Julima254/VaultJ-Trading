@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
     walletBalance: { type: Number, default: 0 },
     spinningBalance: { type: Number, default: 0 },
     coinsBalance: { type: Number, default: 0 },
+    isLiquidityProvider: {
+    type: Boolean,
+    default: false
+},
     referralEarnings: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true } 
 }, { timestamps: true });

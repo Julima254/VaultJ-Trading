@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/user');
 const VaultCoin = require('../models/vaultCoin');
 const CoinOrder = require('../models/coinOrder');
+const Trade = require('../models/trade'); // Make sure this exists
 
 // Middleware
 function isLoggedIn(req, res, next) {
@@ -11,7 +12,9 @@ function isLoggedIn(req, res, next) {
     res.redirect('/login');
 }
 
-// GET /coin - Dashboard
+// ========================
+// GET /coin - User Dashboard
+// ========================
 router.get('/', isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -29,14 +32,12 @@ router.get('/', isLoggedIn, async (req, res) => {
             });
         }
 
-        // Last 50 orders for charts
         const orders = await CoinOrder.find({})
-            .sort({ createdAt: 1 }) // oldest to newest
+            .sort({ createdAt: 1 })
             .limit(50)
             .populate('user', 'username');
 
         res.render('coin', { user, vaultCoin, orders, success: req.flash('success'), error: req.flash('error') });
-
     } catch (err) {
         console.error(err);
         req.flash('error', 'Unable to load coin dashboard');
@@ -44,52 +45,100 @@ router.get('/', isLoggedIn, async (req, res) => {
     }
 });
 
+// ========================
 // POST /coin/buy
+// ========================
 router.post('/buy', isLoggedIn, async (req, res) => {
     try {
         const coinsAmount = parseFloat(req.body.coinsAmount);
-        if (coinsAmount > 50) throw new Error("Max 50 coins per transaction");
+        if (coinsAmount <= 0) throw new Error("Invalid amount");
 
         const user = await User.findById(req.user._id);
         let coin = await VaultCoin.findOne();
-
-        // Daily limit
-        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
-        const userDailyBuys = await CoinOrder.aggregate([
-            { $match: { user: user._id, type: "buy", createdAt: { $gte: todayStart, $lte: todayEnd } } },
-            { $group: { _id: null, total: { $sum: "$coinsAmount" } } }
-        ]);
-        if ((userDailyBuys[0]?.total || 0) + coinsAmount > 200)
-            throw new Error("Daily coin buy limit exceeded");
-
-        // Fee & price
         const buyFeeRate = 0.05;
-        const totalPrice = coinsAmount * coin.price;
-        const buyFee = totalPrice * buyFeeRate;
-        const totalCost = totalPrice + buyFee;
 
-        if (user.walletBalance < totalCost) throw new Error("Insufficient wallet balance");
+        let remaining = coinsAmount;
 
-        user.walletBalance -= totalCost;
-        user.coinsBalance += coinsAmount;
-        await user.save();
+        // Fetch available sell orders (lowest price first)
+        const sellOrders = await CoinOrder.find({ type: "sell", status: "pending" }).sort({ price: 1, createdAt: 1 });
 
-        await CoinOrder.create({
-            user: user._id,
-            type: "buy",
-            coinsAmount,
-            price: coin.price,
-            status: "completed"
-        });
+        // ===== No sellers? Use liquidity pool =====
+        if (sellOrders.length === 0) {
+            const liquidityUser = await User.findOne({ isLiquidityProvider: true });
+            if (!liquidityUser || liquidityUser.coinsBalance < coinsAmount) throw new Error("No sellers and liquidity pool insufficient");
 
-        // Update coin price
-        const steps = Math.floor(coinsAmount / 20);
-        const maxPrice = coin.price * (1 + coin.dailyMaxChangePercent/100);
-        coin.price = Math.min(coin.price + steps * coin.stepSize, maxPrice);
+            const totalPrice = coinsAmount * coin.price;
+            const buyFee = totalPrice * buyFeeRate;
+            const totalCost = totalPrice + buyFee;
 
-        coin.dailyVolume += coinsAmount;
-        coin.platformRevenue = (coin.platformRevenue || 0) + buyFee;
+            if (user.walletBalance < totalCost) throw new Error("Insufficient wallet balance");
+
+            // Execute trade
+            user.walletBalance -= totalCost;
+            user.coinsBalance += coinsAmount;
+
+            liquidityUser.walletBalance += totalPrice;
+            liquidityUser.coinsBalance -= coinsAmount;
+
+            await user.save();
+            await liquidityUser.save();
+
+            return res.json({ success: true, coinsBalance: user.coinsBalance, walletBalance: user.walletBalance });
+        }
+
+        // ===== Match with sellers =====
+        for (let order of sellOrders) {
+            if (remaining <= 0) break;
+
+            const tradeAmount = Math.min(order.remainingAmount || order.coinsAmount, remaining);
+            const tradePrice = order.price;
+            const totalPrice = tradeAmount * tradePrice;
+            const buyFee = totalPrice * buyFeeRate;
+            const totalCost = totalPrice + buyFee;
+
+            if (user.walletBalance < totalCost) break;
+
+            const seller = await User.findById(order.user);
+
+            // Update balances
+            user.walletBalance -= totalCost;
+            user.coinsBalance += tradeAmount;
+
+            seller.walletBalance += totalPrice * (1 - buyFeeRate);
+            seller.coinsBalance -= tradeAmount;
+
+            await user.save();
+            await seller.save();
+
+            // Update order
+            order.remainingAmount = (order.remainingAmount || order.coinsAmount) - tradeAmount;
+            if (order.remainingAmount <= 0) order.status = "completed";
+            await order.save();
+
+            // Record trade
+            await Trade.create({
+                buyer: user._id,
+                seller: seller._id,
+                coinsAmount: tradeAmount,
+                price: tradePrice
+            });
+
+            remaining -= tradeAmount;
+            coin.price = tradePrice; // update current price
+        }
+
+        // ===== Place remaining as pending order =====
+        if (remaining > 0) {
+            await CoinOrder.create({
+                user: user._id,
+                type: "buy",
+                coinsAmount,
+                remainingAmount: remaining,
+                price: coin.price,
+                status: "pending"
+            });
+        }
+
         await coin.save();
 
         res.json({ success: true, coinsBalance: user.coinsBalance, walletBalance: user.walletBalance });
@@ -99,50 +148,98 @@ router.post('/buy', isLoggedIn, async (req, res) => {
     }
 });
 
+// ========================
 // POST /coin/sell
+// ========================
 router.post('/sell', isLoggedIn, async (req, res) => {
     try {
         const coinsAmount = parseFloat(req.body.coinsAmount);
-        if (coinsAmount > 50) throw new Error("Max 50 coins per transaction");
+        if (coinsAmount <= 0) throw new Error("Invalid amount");
 
         const user = await User.findById(req.user._id);
         let coin = await VaultCoin.findOne();
-        if (!coin) throw new Error("VaultCoin not initialized");
+        const sellFeeRate = 0.05;
+
         if (user.coinsBalance < coinsAmount) throw new Error("Insufficient coins");
 
-        const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-        const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
-        const userDailySells = await CoinOrder.aggregate([
-            { $match: { user: user._id, type: "sell", createdAt: { $gte: todayStart, $lte: todayEnd } } },
-            { $group: { _id: null, total: { $sum: "$coinsAmount" } } }
-        ]);
-        if ((userDailySells[0]?.total || 0) + coinsAmount > 200)
-            throw new Error("Daily coin sell limit exceeded");
+        let remaining = coinsAmount;
 
-        // Fee & payout
-        const sellFeeRate = 0.05;
-        const totalPrice = coinsAmount * coin.price;
-        const sellFee = totalPrice * sellFeeRate;
-        const sellerReceives = totalPrice - sellFee;
+        // Fetch available buy orders (highest price first)
+        const buyOrders = await CoinOrder.find({ type: "buy", status: "pending" }).sort({ price: -1, createdAt: 1 });
 
-        user.coinsBalance -= coinsAmount;
-        user.walletBalance += sellerReceives;
-        await user.save();
+        // ===== No buyers? Use liquidity pool =====
+        if (buyOrders.length === 0) {
+            const liquidityUser = await User.findOne({ isLiquidityProvider: true });
+            if (!liquidityUser || liquidityUser.walletBalance < coinsAmount * coin.price) throw new Error("No buyers and liquidity pool insufficient");
 
-        await CoinOrder.create({
-            user: user._id,
-            type: "sell",
-            coinsAmount,
-            price: coin.price,
-            status: "completed"
-        });
+            const totalPrice = coinsAmount * coin.price;
+            const sellFee = totalPrice * sellFeeRate;
+            const sellerReceives = totalPrice - sellFee;
 
-        const steps = Math.floor(coinsAmount / 20);
-        const minPrice = coin.price * (1 - coin.dailyMaxChangePercent/100);
-        coin.price = Math.max(coin.price - steps * coin.stepSize, minPrice);
+            // Execute trade
+            user.coinsBalance -= coinsAmount;
+            user.walletBalance += sellerReceives;
 
-        coin.dailyVolume += coinsAmount;
-        coin.platformRevenue = (coin.platformRevenue || 0) + sellFee;
+            liquidityUser.coinsBalance += coinsAmount;
+            liquidityUser.walletBalance -= totalPrice;
+
+            await user.save();
+            await liquidityUser.save();
+
+            return res.json({ success: true, coinsBalance: user.coinsBalance, walletBalance: user.walletBalance });
+        }
+
+        // ===== Match with buyers =====
+        for (let order of buyOrders) {
+            if (remaining <= 0) break;
+
+            const tradeAmount = Math.min(order.remainingAmount || order.coinsAmount, remaining);
+            const tradePrice = order.price;
+            const totalPrice = tradeAmount * tradePrice;
+            const sellFee = totalPrice * sellFeeRate;
+            const sellerReceives = totalPrice - sellFee;
+
+            const buyer = await User.findById(order.user);
+
+            // Update balances
+            buyer.coinsBalance += tradeAmount;
+            buyer.walletBalance -= totalPrice + (totalPrice * sellFeeRate);
+
+            user.coinsBalance -= tradeAmount;
+            user.walletBalance += sellerReceives;
+
+            await buyer.save();
+            await user.save();
+
+            // Update order
+            order.remainingAmount = (order.remainingAmount || order.coinsAmount) - tradeAmount;
+            if (order.remainingAmount <= 0) order.status = "completed";
+            await order.save();
+
+            // Record trade
+            await Trade.create({
+                buyer: buyer._id,
+                seller: user._id,
+                coinsAmount: tradeAmount,
+                price: tradePrice
+            });
+
+            remaining -= tradeAmount;
+            coin.price = tradePrice;
+        }
+
+        // ===== Place remaining as pending sell order =====
+        if (remaining > 0) {
+            await CoinOrder.create({
+                user: user._id,
+                type: "sell",
+                coinsAmount,
+                remainingAmount: remaining,
+                price: coin.price,
+                status: "pending"
+            });
+        }
+
         await coin.save();
 
         res.json({ success: true, coinsBalance: user.coinsBalance, walletBalance: user.walletBalance });

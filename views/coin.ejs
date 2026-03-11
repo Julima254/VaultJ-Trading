@@ -2,124 +2,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VaultJ Coin Dashboard</title>
-<style>
-/* MOBILE FIRST */
-body { margin:0; font-family:Arial,sans-serif; background:#001f4d; color:#fff; }
-.container { max-width:95%; margin:20px auto; padding:20px; background:#002966; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
-h1,h2 { color:gold; text-align:center; margin-bottom:20px; }
-.wallet-summary p { font-size:16px; margin:8px 0; color:#00ff99; }
-.alert { padding:10px 15px; border-radius:5px; margin-bottom:15px; font-weight:bold; }
-.alert-success { background:#004d00; color:#b6ffb6; }
-.alert-danger { background:#660000; color:#ffb6b6; }
-.coin-actions { margin-top:25px; }
-.coin-actions form { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
-.coin-actions input { padding:10px; width:100%; max-width:200px; margin-bottom:10px; border-radius:5px; border:none; font-size:16px; }
-.coin-actions button { padding:10px 20px; background:gold; color:#001f4d; font-weight:bold; border:none; border-radius:5px; cursor:pointer; transition:0.3s; }
-.coin-actions button:hover { background:#ffd700cc; }
-#message p { font-weight:bold; text-align:center; }
-.charts { display:flex; flex-direction:column; gap:20px; margin-top:30px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VaultCoin | Premium Exchange (KSh)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --dark-blue: #0a192f;
+            --gold: #ffd700;
+            --soft-gold: #ffec8b;
+            --forest-green: #2ecc71;
+            --card-bg: #112240;
+        }
 
-/* TABLET */
-@media (min-width:600px) { .coin-actions form { flex-direction:row; justify-content:center; } .coin-actions input { margin-right:10px; margin-bottom:0; } }
+        body { 
+            background-color: var(--dark-blue); 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-/* DESKTOP */
-@media (min-width:992px) {
-.container { max-width:900px; padding:30px; }
-.wallet-summary { display:flex; justify-content:space-around; background:#003366; padding:15px; border-radius:10px; }
-.coin-actions { display:flex; justify-content:space-around; margin-top:40px; }
-.charts { flex-direction:row; gap:40px; }
-canvas { background:#002244; border-radius:10px; padding:10px; }
-}
-</style>
+        .market-card { 
+            background: var(--card-bg); 
+            border: 1px solid rgba(255, 215, 0, 0.2); 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+
+        .text-gold { color: var(--gold); }
+        .text-green { color: var(--forest-green); }
+
+        .btn-buy { 
+            background: var(--forest-green); 
+            color: white; 
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        .btn-sell { 
+            background: transparent; 
+            color: var(--gold); 
+            border: 1px solid var(--gold); 
+        }
+
+        .btn-buy:hover, .btn-sell:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+            color: white;
+        }
+
+        .balance-box {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--forest-green);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .table { color: #ccd6f6; }
+        .table thead { color: var(--gold); }
+
+        input.form-control {
+            background: #1d3359;
+            border: 1px solid #233554;
+            color: white;
+        }
+
+        input.form-control:focus {
+            background: #1d3359;
+            border-color: var(--gold);
+            color: white;
+            box-shadow: none;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>VaultJ Coin Dashboard</h1>
-
-    <% if (success && success.length>0) { %>
-        <div class="alert alert-success"><%= success %></div>
-    <% } %>
-    <% if (error && error.length>0) { %>
-        <div class="alert alert-danger"><%= error %></div>
-    <% } %>
-
-    <div class="wallet-summary">
-        <p><strong>Coins Balance:</strong> <%= user.coinsBalance || 0 %></p>
-        <p><strong>Wallet Balance:</strong> KES <%= user.walletBalance || 0 %></p>
-        <p><strong>Current Coin Price:</strong> KES <%= vaultCoin.price.toFixed(2) %></p>
+<div class="container py-5">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <h1 class="fw-bold mb-1">Vault<span class="text-gold">Coin</span></h1>
+            <p class="text-muted">Market Floor Price: <span class="text-gold fw-bold">KSh <%= vaultCoin.price.toLocaleString() %></span></p>
+        </div>
+        <div class="col-md-5">
+            <div class="balance-box d-flex justify-content-between">
+                <div>
+                    <small class="text-muted d-block">Available Wallet</small>
+                    <span class="fs-4 fw-bold text-green">KSh <span id="walletDisp"><%= user.walletBalance.toLocaleString() %></span></span>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block">Asset Balance</small>
+                    <span class="fs-4 fw-bold text-gold"><span id="coinDisp"><%= user.coinsBalance.toFixed(2) %></span> VTC</span>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="coin-actions">
-        <h2>Buy Coins</h2>
-        <form id="buyCoinsForm">
-            <input type="number" name="coinsAmount" placeholder="Coins to buy" min="1" max="50" required>
-            <button type="submit">Buy</button>
-        </form>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card market-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0 text-gold">Price Performance (KSh)</h5>
+                    <span class="badge bg-success">Live</span>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
 
-        <h2>Sell Coins</h2>
-        <form id="sellCoinsForm">
-            <input type="number" name="coinsAmount" placeholder="Coins to sell" min="1" max="50" required>
-            <button type="submit">Sell</button>
-        </form>
-    </div>
+            <div class="card market-card mt-4 p-4">
+                <h5 class="fw-bold mb-3 text-gold">Recent Market Orders</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order Type</th>
+                                <th>Amount (VTC)</th>
+                                <th>Price (KSh)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% orders.forEach(order => { %>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <td class="<%= order.type === 'buy' ? 'text-green' : 'text-danger' %> fw-bold">
+                                    <%= order.type.toUpperCase() %>
+                                </td>
+                                <td><%= order.coinsAmount %></td>
+                                <td>KSh <%= order.price.toLocaleString() %></td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <div id="message"></div>
+        <div class="col-lg-4">
+            <div class="card market-card p-4 shadow">
+                <h5 class="fw-bold mb-4 text-center">Exchange Terminal</h5>
+                
+                <div class="mb-3">
+                    <label class="form-label small text-muted">VTC Amount to Trade</label>
+                    <div class="input-group">
+                        <input type="number" id="tradeAmount" class="form-control form-control-lg" placeholder="0.00">
+                        <span class="input-group-text bg-dark text-gold border-0">VTC</span>
+                    </div>
+                </div>
 
-    <hr>
-    <h2>Market Charts</h2>
-    <div class="charts">
-        <canvas id="priceChart" width="600" height="300"></canvas>
-        <canvas id="volumeChart" width="600" height="300"></canvas>
+                <div class="d-grid gap-3">
+                    <button onclick="trade('buy')" class="btn btn-buy btn-lg fw-bold">BUY VTC</button>
+                    <button onclick="trade('sell')" class="btn btn-sell btn-lg fw-bold">SELL VTC</button>
+                </div>
+
+                <div class="mt-4 p-3 rounded" style="background: rgba(0,0,0,0.2);">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Exchange Fee</span>
+                        <span class="text-gold">5.0%</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Transaction</span>
+                        <span class="text-green">Verified</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <script>
-const orders = <%- JSON.stringify(orders) %>;
+const ctx = document.getElementById('priceChart').getContext('2d');
 
-const coinPriceLabels = orders.map(o => new Date(o.createdAt).toLocaleDateString());
-const coinPriceData = orders.map(o => o.price);
-const dailyVolumeLabels = orders.map(o => new Date(o.createdAt).toLocaleDateString());
-const dailyVolumeData = orders.map(o => o.coinsAmount);
+// Creating a gradient for the gold line
+const goldGradient = ctx.createLinearGradient(0, 0, 0, 400);
+goldGradient.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+goldGradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
 
-// Price Chart
-new Chart(document.getElementById('priceChart'), {
-    type:'line',
-    data:{ labels:coinPriceLabels, datasets:[{label:'VaultJ Coin Price (KES)', data:coinPriceData, borderColor:'gold', backgroundColor:'rgba(255,215,0,0.2)', tension:0.3 }] },
-    options:{ responsive:true }
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['8:00 AM', '10:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', 'Now'],
+        datasets: [{
+            label: 'Price in KSh',
+            data: [<%= vaultCoin.price * 0.95 %>, <%= vaultCoin.price * 0.98 %>, <%= vaultCoin.price * 0.94 %>, <%= vaultCoin.price * 0.99 %>, <%= vaultCoin.price * 0.97 %>, <%= vaultCoin.price %>],
+            borderColor: '#ffd700',
+            backgroundColor: goldGradient,
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#ffd700'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { 
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#8892b0', callback: function(value) { return 'KSh ' + value.toLocaleString(); } }
+            },
+            x: { 
+                grid: { display: false },
+                ticks: { color: '#8892b0' }
+            }
+        }
+    }
 });
 
-// Volume Chart
-new Chart(document.getElementById('volumeChart'), {
-    type:'bar',
-    data:{ labels:dailyVolumeLabels, datasets:[{label:'Daily Trading Volume (Coins)', data:dailyVolumeData, backgroundColor:'green'}] },
-    options:{ responsive:true }
-});
+async function trade(type) {
+    const coinsAmount = document.getElementById('tradeAmount').value;
+    if(!coinsAmount || coinsAmount <= 0) return alert("Please enter a valid amount.");
 
-// Buy/Sell Forms
-document.getElementById('buyCoinsForm').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const coinsAmount=parseFloat(e.target.coinsAmount.value);
-    const res=await fetch('/coin/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({coinsAmount})});
-    const data=await res.json();
-    const messageDiv=document.getElementById('message');
-    if(data.success){ messageDiv.innerHTML=`<p style="color:green;">Bought ${coinsAmount} Coins!</p>`; location.reload(); }
-    else messageDiv.innerHTML=`<p style="color:red;">${data.message}</p>`;
-});
+    try {
+        const response = await fetch(`/coin/${type}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coinsAmount })
+        });
+        const data = await response.json();
 
-document.getElementById('sellCoinsForm').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const coinsAmount=parseFloat(e.target.coinsAmount.value);
-    const res=await fetch('/coin/sell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({coinsAmount})});
-    const data=await res.json();
-    const messageDiv=document.getElementById('message');
-    if(data.success){ messageDiv.innerHTML=`<p style="color:green;">Sold ${coinsAmount} Coins!</p>`; location.reload(); }
-    else messageDiv.innerHTML=`<p style="color:red;">${data.message}</p>`;
-});
+        if(data.success) {
+            alert(`KSh transaction completed successfully!`);
+            location.reload(); 
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Server connection failed.");
+    }
+}
 </script>
+
 </body>
 </html>
