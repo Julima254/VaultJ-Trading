@@ -20,6 +20,7 @@ const adminPackages = require('./routes/adminPackages');
 const adminSettingsRoutes = require('./routes/adminSettings');
 const adminSpinRoutes = require('./routes/adminSpinPot');
 const spinRouter = require('./routes/spin');
+const coinRouter = require('./routes/coin');
 
 
 
@@ -339,7 +340,7 @@ app.use('/admin', adminPackages);
 app.use('/admin/settings', adminSettingsRoutes);
 app.use('/admin/spins', adminSpinRoutes);
 app.use('/spins', spinRouter);
-
+app.use('/coin', coinRouter);
 
 
 

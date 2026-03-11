@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const Transaction = require('../models/transaction');
+const VaultCoin = require('../models/vaultCoin'); 
 
 // Middleware to ensure user is logged in
 function isLoggedIn(req, res, next) {
@@ -25,6 +26,15 @@ const referralRates = {
     Silver: 0.3,     // 30%
     Gold: 0.4,       // 40%
     Platinum: 0.5    // 50%
+};
+
+// Coins awarded per package
+const coinsForPackage = {
+    Starter: 0.5,
+    Bronze: 1,
+    Silver: 2.5,
+    Gold: 5,
+    Platinum: 10
 };
 
 // GET /account-packages
@@ -67,7 +77,20 @@ router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
         // Deduct cost and assign package
         user.depositBalance -= cost;
         user.package = packageName;
+
+        // --- VaultJ Coins Integration ---
+        const coinsToAdd = coinsForPackage[packageName] || 0;
+        user.coinsBalance = (user.coinsBalance || 0) + coinsToAdd;
+
+        // Ensure VaultCoin document exists
+        let vaultCoin = await VaultCoin.findOne();
+        if (!vaultCoin) {
+            vaultCoin = await VaultCoin.create({});
+        }
+        vaultCoin.totalSupply += coinsToAdd;
+
         await user.save();
+        await vaultCoin.save();
 
         // --- Referral Commission Logic ---
         if (user.referrer) {
@@ -92,7 +115,7 @@ router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
             }
         }
 
-        req.flash("success", `You purchased the ${packageName} package`);
+        req.flash("success", `You purchased the ${packageName} package and received ${coinsToAdd} VaultJ Coins!`);
         res.redirect("/account-packages");
 
     } catch (err) {

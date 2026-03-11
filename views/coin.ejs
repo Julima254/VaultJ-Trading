@@ -1,0 +1,125 @@
+<%- include('partials/header.ejs'); -%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultJ Coin Dashboard</title>
+<style>
+/* MOBILE FIRST */
+body { margin:0; font-family:Arial,sans-serif; background:#001f4d; color:#fff; }
+.container { max-width:95%; margin:20px auto; padding:20px; background:#002966; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+h1,h2 { color:gold; text-align:center; margin-bottom:20px; }
+.wallet-summary p { font-size:16px; margin:8px 0; color:#00ff99; }
+.alert { padding:10px 15px; border-radius:5px; margin-bottom:15px; font-weight:bold; }
+.alert-success { background:#004d00; color:#b6ffb6; }
+.alert-danger { background:#660000; color:#ffb6b6; }
+.coin-actions { margin-top:25px; }
+.coin-actions form { display:flex; flex-direction:column; align-items:center; margin-bottom:20px; }
+.coin-actions input { padding:10px; width:100%; max-width:200px; margin-bottom:10px; border-radius:5px; border:none; font-size:16px; }
+.coin-actions button { padding:10px 20px; background:gold; color:#001f4d; font-weight:bold; border:none; border-radius:5px; cursor:pointer; transition:0.3s; }
+.coin-actions button:hover { background:#ffd700cc; }
+#message p { font-weight:bold; text-align:center; }
+.charts { display:flex; flex-direction:column; gap:20px; margin-top:30px; }
+
+/* TABLET */
+@media (min-width:600px) { .coin-actions form { flex-direction:row; justify-content:center; } .coin-actions input { margin-right:10px; margin-bottom:0; } }
+
+/* DESKTOP */
+@media (min-width:992px) {
+.container { max-width:900px; padding:30px; }
+.wallet-summary { display:flex; justify-content:space-around; background:#003366; padding:15px; border-radius:10px; }
+.coin-actions { display:flex; justify-content:space-around; margin-top:40px; }
+.charts { flex-direction:row; gap:40px; }
+canvas { background:#002244; border-radius:10px; padding:10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>VaultJ Coin Dashboard</h1>
+
+    <% if (success && success.length>0) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+    <% if (error && error.length>0) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <div class="wallet-summary">
+        <p><strong>Coins Balance:</strong> <%= user.coinsBalance || 0 %></p>
+        <p><strong>Wallet Balance:</strong> KES <%= user.walletBalance || 0 %></p>
+        <p><strong>Current Coin Price:</strong> KES <%= vaultCoin.price.toFixed(2) %></p>
+    </div>
+
+    <div class="coin-actions">
+        <h2>Buy Coins</h2>
+        <form id="buyCoinsForm">
+            <input type="number" name="coinsAmount" placeholder="Coins to buy" min="1" max="50" required>
+            <button type="submit">Buy</button>
+        </form>
+
+        <h2>Sell Coins</h2>
+        <form id="sellCoinsForm">
+            <input type="number" name="coinsAmount" placeholder="Coins to sell" min="1" max="50" required>
+            <button type="submit">Sell</button>
+        </form>
+    </div>
+
+    <div id="message"></div>
+
+    <hr>
+    <h2>Market Charts</h2>
+    <div class="charts">
+        <canvas id="priceChart" width="600" height="300"></canvas>
+        <canvas id="volumeChart" width="600" height="300"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const orders = <%- JSON.stringify(orders) %>;
+
+const coinPriceLabels = orders.map(o => new Date(o.createdAt).toLocaleDateString());
+const coinPriceData = orders.map(o => o.price);
+const dailyVolumeLabels = orders.map(o => new Date(o.createdAt).toLocaleDateString());
+const dailyVolumeData = orders.map(o => o.coinsAmount);
+
+// Price Chart
+new Chart(document.getElementById('priceChart'), {
+    type:'line',
+    data:{ labels:coinPriceLabels, datasets:[{label:'VaultJ Coin Price (KES)', data:coinPriceData, borderColor:'gold', backgroundColor:'rgba(255,215,0,0.2)', tension:0.3 }] },
+    options:{ responsive:true }
+});
+
+// Volume Chart
+new Chart(document.getElementById('volumeChart'), {
+    type:'bar',
+    data:{ labels:dailyVolumeLabels, datasets:[{label:'Daily Trading Volume (Coins)', data:dailyVolumeData, backgroundColor:'green'}] },
+    options:{ responsive:true }
+});
+
+// Buy/Sell Forms
+document.getElementById('buyCoinsForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const coinsAmount=parseFloat(e.target.coinsAmount.value);
+    const res=await fetch('/coin/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({coinsAmount})});
+    const data=await res.json();
+    const messageDiv=document.getElementById('message');
+    if(data.success){ messageDiv.innerHTML=`<p style="color:green;">Bought ${coinsAmount} Coins!</p>`; location.reload(); }
+    else messageDiv.innerHTML=`<p style="color:red;">${data.message}</p>`;
+});
+
+document.getElementById('sellCoinsForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const coinsAmount=parseFloat(e.target.coinsAmount.value);
+    const res=await fetch('/coin/sell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({coinsAmount})});
+    const data=await res.json();
+    const messageDiv=document.getElementById('message');
+    if(data.success){ messageDiv.innerHTML=`<p style="color:green;">Sold ${coinsAmount} Coins!</p>`; location.reload(); }
+    else messageDiv.innerHTML=`<p style="color:red;">${data.message}</p>`;
+});
+</script>
+</body>
+</html>

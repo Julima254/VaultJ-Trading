@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const Transaction = require("../models/transaction");
+const VaultCoin = require("../models/vaultCoin");
+const CoinOrder = require("../models/coinOrder");
 
 // ===== ADMIN GUARD =====
 function isAdmin(req, res, next) {
@@ -191,6 +193,25 @@ router.post("/withdrawals/:id/reject", isAdmin, async (req, res) => {
         req.flash("error", "Could not reject withdrawal.");
         res.redirect("/admin/withdrawals");
     }
+});
+
+// Fetch coin metrics
+router.get("/coin-dashboard", isAdmin, async (req, res) => {
+    const coin = await VaultCoin.findOne();
+    const totalCoinsCreated = coin.totalSupply;
+    const coinsInCirculation = await User.aggregate([
+        { $group: { _id: null, total: { $sum: "$coinsBalance" } } }
+    ]);
+    const dailyVolume = coin.dailyVolume;
+    const orders = await CoinOrder.find({ status: "pending" });
+
+    res.render("admin/coinDashboard", {
+        totalCoinsCreated,
+        coinsInCirculation: coinsInCirculation[0]?.total || 0,
+        currentPrice: coin.price,
+        dailyVolume,
+        pendingOrders: orders.length
+    });
 });
 
 module.exports = router;
