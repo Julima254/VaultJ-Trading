@@ -7,73 +7,190 @@
     <title>VaultCoin | Premium Exchange (KSh)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --dark-blue: #0a192f;
-            --gold: #ffd700;
-            --soft-gold: #ffec8b;
-            --forest-green: #2ecc71;
-            --card-bg: #112240;
-        }
+<style>
+    :root {
+        --dark-blue: #0a192f;
+        --gold: #ffd700;
+        --soft-gold: #ffec8b;
+        --forest-green: #2ecc71;
+        --card-bg: #112240;
 
-        body { 
-            background-color: var(--dark-blue); 
-            color: white; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        /* NEW readable colors */
+        --text-primary: #e6f1ff;
+        --text-secondary: #b8c7e0;
+        --text-muted: #9fb3c8;
+    }
 
-        .market-card { 
-            background: var(--card-bg); 
-            border: 1px solid rgba(255, 215, 0, 0.2); 
-            border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-        }
+    body { 
+        background-color: var(--dark-blue); 
+        color: var(--text-primary); 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-        .text-gold { color: var(--gold); }
-        .text-green { color: var(--forest-green); }
+    .market-card { 
+        background: var(--card-bg); 
+        border: 1px solid rgba(255, 215, 0, 0.25); 
+        border-radius: 15px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    }
 
-        .btn-buy { 
-            background: var(--forest-green); 
-            color: white; 
-            border: none;
-            transition: transform 0.2s;
-        }
+    .text-gold { color: var(--gold); }
+    .text-green { color: var(--forest-green); }
 
-        .btn-sell { 
-            background: transparent; 
-            color: var(--gold); 
-            border: 1px solid var(--gold); 
-        }
+    /* FIXED muted text */
+    .text-muted {
+        color: var(--text-muted) !important;
+    }
 
-        .btn-buy:hover, .btn-sell:hover {
-            transform: translateY(-2px);
-            opacity: 0.9;
-            color: white;
-        }
+    .btn-buy { 
+        background: var(--forest-green); 
+        color: white; 
+        border: none;
+        transition: transform 0.2s;
+    }
 
-        .balance-box {
-            background: rgba(46, 204, 113, 0.1);
-            border-left: 4px solid var(--forest-green);
-            padding: 15px;
-            border-radius: 8px;
-        }
+    .btn-sell { 
+        background: transparent; 
+        color: var(--gold); 
+        border: 1px solid var(--gold); 
+    }
 
-        .table { color: #ccd6f6; }
-        .table thead { color: var(--gold); }
+    .btn-buy:hover, .btn-sell:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+        color: white;
+    }
 
-        input.form-control {
-            background: #1d3359;
-            border: 1px solid #233554;
-            color: white;
-        }
+    .balance-box {
+        background: rgba(46, 204, 113, 0.15);
+        border-left: 4px solid var(--forest-green);
+        padding: 15px;
+        border-radius: 8px;
+    }
 
-        input.form-control:focus {
-            background: #1d3359;
-            border-color: var(--gold);
-            color: white;
-            box-shadow: none;
-        }
-    </style>
+    /* TABLE FIX */
+    .table { 
+        color: var(--text-secondary); 
+    }
+
+    .table thead { 
+        color: var(--gold); 
+    }
+
+    .table td {
+        color: var(--text-primary);
+    }
+
+    /* INPUT FIX */
+    input.form-control {
+        background: #1d3359;
+        border: 1px solid #2f4a75;
+        color: var(--text-primary);
+    }
+
+    input.form-control::placeholder {
+        color: #8aa0c3;
+    }
+
+    input.form-control:focus {
+        background: #1d3359;
+        border-color: var(--gold);
+        color: white;
+        box-shadow: none;
+    }
+
+    /* LABEL FIX */
+    .form-label {
+        color: var(--text-secondary);
+    }
+
+    /* SMALL TEXT (fees section) */
+    .small {
+        color: var(--text-secondary);
+    }
+
+    /* BADGE VISIBILITY */
+    .badge.bg-success {
+        background-color: #1f9d55 !important;
+        color: white;
+    }
+
+    /* =========================
+   FORCE SELL TEXT (TABLE)
+========================= */
+.table tbody tr td.text-danger,
+.table tbody tr td .text-danger {
+    color: #ff6b6b !important;
+    font-weight: 700 !important;
+}
+
+/* FORCE BUY TEXT */
+.table tbody tr td.text-green,
+.table tbody tr td .text-green {
+    color: #2ecc71 !important;
+    font-weight: 700 !important;
+}
+
+/* FORCE ALL TABLE TEXT VISIBILITY */
+.table tbody tr td {
+    color: #e6f1ff !important;
+    opacity: 1 !important;
+}
+
+/* =========================
+   FIX "EXCHANGE TERMINAL"
+========================= */
+.col-lg-4 .card.market-card h5 {
+    color: #ffffff !important;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* Extra visibility boost */
+.col-lg-4 .card.market-card {
+    color: #ffffff !important;
+}
+
+/* =========================
+   DEBUG VISIBILITY (REMOVE LATER)
+========================= */
+.table tbody tr {
+    background-color: rgba(255,255,255,0.03) !important;
+}
+
+/* =========================
+   FIX AMOUNT + PRICE COLUMNS
+========================= */
+
+/* Target 2nd column (Amount) */
+.table tbody tr td:nth-child(2) {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* Target 3rd column (Price) */
+.table tbody tr td:nth-child(3) {
+    color: #ccb00f !important; /* gold for money */
+    font-weight: 700;
+}
+
+/* Make KSh stand out */
+.table tbody tr td:nth-child(3) {
+    letter-spacing: 0.3px;
+}
+
+/* Ensure no fading */
+.table tbody tr td {
+    opacity: 1 !important;
+}
+
+.table tbody tr td:nth-child(2) {
+    color: #ccb00f !important; /* gold for money */
+    font-weight: 700;
+}
+
+
+</style>
 </head>
 <body>
 
