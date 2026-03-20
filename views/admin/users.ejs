@@ -1,0 +1,168 @@
+<%- include('../partials/adminHeader.ejs'); -%>
+
+<style>
+    :root {
+        --dark-blue: #001f3f;
+        --gold: #FFD700;
+        --green: #28a745;
+    }
+
+    /* FIX: This "main-content-wrapper" ensures the page content 
+       starts AFTER your fixed left menu. 
+       Adjust 260px to match your actual sidebar width.
+    */
+    .main-content-wrapper {
+        margin-left: 260px; 
+        padding: 30px;
+        transition: all 0.3s;
+    }
+
+    /* Responsive: On mobile, the sidebar usually hides, so remove the margin */
+    @media (max-width: 992px) {
+        .main-content-wrapper {
+            margin-left: 0;
+            padding: 15px;
+        }
+    }
+
+    body { background-color: #f4f7f6; }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        padding: 25px;
+        border-top: 5px solid var(--dark-blue);
+    }
+
+    .table thead {
+        background-color: var(--dark-blue);
+        color: white !important;
+    }
+
+    .table thead th { color: var(--gold) !important; border: none; padding: 15px; }
+    .btn-adjust { background-color: var(--gold); color: var(--dark-blue); border: none; font-weight: bold; }
+    .btn-adjust:hover { background-color: #e6c200; transform: translateY(-1px); }
+    .status-active { color: var(--green); font-weight: bold; }
+    
+    .search-box {
+        border: 2px solid var(--dark-blue);
+        border-radius: 25px;
+        padding: 12px 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+</style>
+
+<div class="main-content-wrapper">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold" style="color: var(--dark-blue);">User Management</h2>
+            <span class="badge bg-dark">Total Users: <%= users.length %></span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 col-lg-6">
+                <input type="text" id="userSearch" class="form-control search-box" 
+                       placeholder="🔍 Search by username, phone, or email..." onkeyup="filterUsers()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="userTable">
+                    <thead>
+                        <tr>
+                            <th>User Details</th>
+                            <th>Contact Info</th>
+                            <th>Wallet (Ksh)</th>
+                            <th>VTC Balance</th>
+                            <th>Status</th>
+                            <th>Joined Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(user => { %>
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark"><%= user.username || 'Unknown' %></div>
+                                <div class="small text-muted"><%= user.email %></div>
+                            </td>
+                            <td>
+                                <div><%= user.phone || 'N/A' %></div>
+                                <small class="badge bg-light text-dark border"><%= user.country || 'KE' %></small>
+                            </td>
+                            <td class="fw-bold text-primary">Ksh <%= (user.walletBalance || 0).toLocaleString() %></td>
+                            <td class="text-success fw-bold"><%= user.coinsBalance || 0 %> VTC</td>
+                            <td>
+                                <span class="<%= user.isActive ? 'status-active' : 'text-danger fw-bold' %>">
+                                    <i class="fas fa-circle small me-1"></i>
+                                    <%= user.isActive ? 'Active' : 'Suspended' %>
+                                </span>
+                            </td>
+                            <td><%= (user.createdAt && user.createdAt.toDateString) ? user.createdAt.toDateString() : 'N/A' %></td>
+                            <td>
+                                <div class="btn-group shadow-sm">
+                                    <form action="/admin/users/<%= user._id %>/toggle-status" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-light border" title="<%= user.isActive ? 'Suspend' : 'Activate' %>">
+                                            <i class="fas fa-power-off <%= user.isActive ? 'text-danger' : 'text-success' %>"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <button class="btn btn-sm btn-adjust ms-1" data-bs-toggle="modal" data-bs-target="#adjust<%= user._id %>">
+                                        <i class="fas fa-coins"></i> Adjust
+                                    </button>
+                                    
+                                    <a href="/admin/users/<%= user._id %>" class="btn btn-sm btn-outline-dark ms-1">View</a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <div class="modal fade" id="adjust<%= user._id %>" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0">
+                                    <form action="/admin/users/<%= user._id %>/adjust-balance" method="POST">
+                                        <div class="modal-header" style="background: var(--dark-blue); color: var(--gold);">
+                                            <h5 class="modal-title">Edit Balance: <%= user.username %></h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Wallet Amount (Ksh)</label>
+                                                <input type="number" name="walletAmount" class="form-control" placeholder="e.g. 200 or -200" step="0.01">
+                                                <small class="text-muted">Use negative numbers to deduct balance.</small>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">VaultCoin (VTC)</label>
+                                                <input type="number" name="coinAmount" class="form-control" placeholder="e.g. 10">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light">
+                                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Logic to search through the table instantly
+function filterUsers() {
+    let input = document.getElementById('userSearch').value.toLowerCase();
+    let rows = document.querySelectorAll('#userTable tbody tr');
+    
+    rows.forEach(row => {
+        let text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? '' : 'none';
+    });
+}
+</script>
+

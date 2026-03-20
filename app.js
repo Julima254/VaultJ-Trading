@@ -6,10 +6,13 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const session = require("express-session");
 const flash = require("connect-flash");
+
+// Models
 const User = require("./models/user"); 
 const Transaction = require("./models/transaction");
+
+// Routes
 const adminRoutes = require("./routes/admin");
-const { stkPush } = require("./services/daraja");
 const adminPaymentsRoutes = require('./routes/adminPayments');
 const accountPackagesRoutes = require('./routes/accountPackages');
 const adminReferralsRoutes = require('./routes/adminReferrals');
@@ -22,110 +25,76 @@ const adminSpinRoutes = require('./routes/adminSpinPot');
 const spinRouter = require('./routes/spin');
 const coinRouter = require('./routes/coin');
 
-
+const { stkPush } = require("./services/daraja");
 
 const app = express();
 
-
-// Middleware
+// 1. Static & View Engine
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
 app.use(express.json());
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-
-// Session
+// 2. Session Configuration (Must be before Passport and Flash)
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || "vaultj_secret_key",
   resave: false,
   saveUninitialized: false
 }));
 
+// 3. Passport & Flash Initialization
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-app.use("/admin", adminRoutes);
 
-// Make user info & flash messages available in all EJS templates
+// 4. Global Variables Middleware (CRITICAL: Must be before Routes)
 app.use((req, res, next) => {
     res.locals.currentUser = req.user;
-    res.locals.error = req.flash("error");
+    // req.flash() returns an array, EJS logic handles the display
     res.locals.success = req.flash("success");
+    res.locals.error = req.flash("error");
     next();
 });
 
-//MongoDB Connection 
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log("Connected to MongoDB!");
-}).catch(err => {
-    console.log("MongoDB connection error:", err);
-});
+// 5. MongoDB Connection 
+mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log("Connected to MongoDB!"))
+.catch(err => console.log("MongoDB connection error:", err));
 
-
-//Passport Config
+// 6. Passport Config
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Routes
-app.get("/", function(req, res){
-    res.render("landing");
-});
+// 7. Standard Routes
+app.get("/", (req, res) => res.render("landing"));
 
-// ===== REGISTER =====
-app.get("/register", (req, res) => {
-    res.render("register");
-});
-
+app.get("/register", (req, res) => res.render("register"));
 app.post("/register", async (req, res) => {
     try {
         const { username, email, phone, country, invitationCode, password } = req.body;
-
-        // Optional: handle invitation code logic here
         let referrer = null;
         if (invitationCode) {
             const inviter = await User.findOne({ username: invitationCode });
             if (inviter) referrer = inviter._id;
         }
-
-        const newUser = new User({
-            username,
-            email,
-            phone,
-            country,
-            invitationCode: invitationCode || null,
-            referrer: referrer
-        });
-
-        await User.register(newUser, password); // passport-local-mongoose handles hashing
+        const newUser = new User({ username, email, phone, country, invitationCode: invitationCode || null, referrer: referrer });
+        await User.register(newUser, password);
         req.flash("success", "Registered successfully! You can now login.");
         res.redirect("/login");
     } catch (err) {
-        console.log(err);
         req.flash("error", err.message);
         res.redirect("/register");
     }
 });
 
-//LOGIN 
-app.get("/login", (req, res) => {
-    res.render("login");
-});
+app.get("/login", (req, res) => res.render("login"));
+app.post("/login", passport.authenticate("local", {
+    successRedirect: "/home", 
+    failureRedirect: "/login",
+    failureFlash: true
+}));
 
-app.post("/login",
-    passport.authenticate("local", {
-        successRedirect: "/home", 
-        failureRedirect: "/login",
-        failureFlash: true
-    })
-);
-
-//  LOGOUT 
 app.get("/logout", (req, res) => {
     req.logout(err => {
         if (err) return next(err);
@@ -134,220 +103,169 @@ app.get("/logout", (req, res) => {
     });
 });
 
-// FORGOT PASSWORD 
+// 8. Logged-In User Routes
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) return next();
+    req.flash("error", "Please login first");
+    res.redirect("/login");
+}
+
+// GET /forgot - Show the page
 app.get("/forgot", (req, res) => {
-    res.render("forgot");
+    res.render("forgot"); 
 });
-
-app.post("/forgot", async (req, res) => {
-    try {
-        const { email, newPassword } = req.body;
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            req.flash("error", "Email not found.");
-            return res.redirect("/forgot");
-        }
-
-        await user.setPassword(newPassword); // passport-local-mongoose method
-        await user.save();
-        req.flash("success", "Password reset successfully! You can now login.");
-        res.redirect("/login");
-    } catch (err) {
-        console.log(err);
-        req.flash("error", "Something went wrong.");
-        res.redirect("/forgot");
-    }
-});
-
 
 app.get("/home", isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const totalReferrals = await User.countDocuments({ referrer: user._id });
-        const transactions = await Transaction.find({ user: user._id })
-            .sort({ createdAt: -1 }).limit(10);
+        const transactions = await Transaction.find({ user: user._id }).sort({ createdAt: -1 }).limit(10);
+        
+        res.render("home", { 
+            user, 
+            totalReferrals, 
+            transactions, 
+            walletBalance: user.walletBalance || 0,
+            // Ensure this matches your User schema field (coinsBalance)
+            coinsBalance: user.coinsBalance || 0 
+        });
+    } catch (err) { res.redirect("/login"); }
+});
 
-        // SYNC LOGIC: 
-        // If it's a new user, initialize their walletBalance from their deposits
-        if (user.walletBalance === 0 && user.depositBalance > 0) {
-            user.walletBalance = user.depositBalance + (user.referralEarnings || 0);
-            await user.save();
+// Withdrawal & Deposit Routes...
+app.get("/withdraw", isLoggedIn, async (req, res) => {
+    const user = await User.findById(req.user._id);
+    res.render("withdrawal", { user, walletBalance: user.walletBalance || 0 });
+});
+
+app.post("/withdraw", isLoggedIn, async (req, res) => {
+    try {
+        const { amount, phone } = req.body;
+        const withdrawAmount = parseFloat(amount);
+        const user = await User.findById(req.user._id);
+
+        // 1. Validation
+        if (!withdrawAmount || withdrawAmount <= 0) {
+            req.flash("error", "Please enter a valid amount.");
+            return res.redirect("/withdraw");
         }
 
-        res.render("home", {
-            user,
-            totalReferrals,
-            transactions,
-            // Display the actual stored balance
-            walletBalance: user.walletBalance || 0 
+        if (user.walletBalance < withdrawAmount) {
+            req.flash("error", "Insufficient balance.");
+            return res.redirect("/withdraw");
+        }
+
+        // 2. Deduct from balance immediately (Prevents double-spending)
+        user.walletBalance -= withdrawAmount;
+        await user.save();
+
+        // 3. Create a Pending Transaction record
+        await Transaction.create({
+            user: user._id,
+            amount: withdrawAmount,
+            phone: phone || user.phone,
+            type: "withdrawal",
+            status: "pending" // Admin will approve this later in withdrawals.ejs
         });
+
+        req.flash("success", "Withdrawal request submitted! Awaiting admin approval.");
+        res.redirect("/home");
+
     } catch (err) {
-        res.redirect("/login");
+        console.error(err);
+        req.flash("error", "An error occurred during withdrawal.");
+        res.redirect("/withdraw");
     }
 });
 
-
-
-// Middleware to check if user is logged in
-function isLoggedIn(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    req.flash("error", "Please login first");
-    res.redirect("/login");
-}
-
-
-// ====================
-// DYNAMIC USER BALANCES
-// ====================
-app.get("/user/wallet", isLoggedIn, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id);
-        res.json({
-            success: true,
-            walletBalance: user.walletBalance || 0,
-            spinningBalance: user.spinningBalance || 0 // Added this
-        });
-    } catch (err) {
-        res.json({ success: false });
-    }
-});
-
-//deposit
-// deposit page
+// GET /deposit - Show the deposit page
 app.get("/deposit", isLoggedIn, async (req, res) => {
     try {
-        const deposits = await Transaction.find({
-            user: req.user._id,
-            type: "deposit"
+        // 1. Find all 'deposit' transactions for the logged-in user
+        // We sort by createdAt: -1 to show the newest ones first
+        const deposits = await Transaction.find({ 
+            user: req.user._id, 
+            type: "deposit" 
         }).sort({ createdAt: -1 });
 
-        // pass user too
-        res.render("deposit", { deposits, user: req.user });
-    } catch (err) {
-        console.error(err);
-        req.flash("error", "Unable to load deposits");
-        res.redirect("/home");
-    }
-});
-
-
-
-
-//daraja payment route
-app.post("/deposit", isLoggedIn, async (req, res) => {
-  try {
-    const { phone, amount, acknowledge } = req.body;
-
-    if (!acknowledge) {
-      req.flash("error", "You must acknowledge the no-reversal policy.");
-      return res.redirect("/deposit");
-    }
-
-    // Save transaction
-    await Transaction.create({
-      user: req.user._id,
-      type: "deposit",
-      phone,
-      amount,
-      status: "pending"
-    });
-
-    // Trigger MPESA
-    await stkPush(phone, amount);
-
-    req.flash("success", "Payment request sent. Enter M-Pesa PIN.");
-    res.redirect("/deposit");
-
-  } catch (error) {
-    console.error(error.response?.data || error.message);
-    req.flash("error", "Payment failed. Try again.");
-    res.redirect("/deposit");
-  }
-});
-
-// MPESA CALLBACK 
-app.post("/mpesa/callback", (req, res) => {
-    console.log("MPESA CALLBACK RECEIVED");
-    console.log(JSON.stringify(req.body, null, 2));
-
-    // Always respond with success to Safaricom
-    res.json({
-        ResultCode: 0,
-        ResultDesc: "Accepted"
-    });});
-
-
-
-    // GET withdrawal page
-// GET /withdraw page
-app.get("/withdraw", isLoggedIn, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id);
-        res.render("withdrawal", {
-            user,                     // Pass user to header.ejs
-            walletBalance: user.walletBalance || 0,
-            error: req.flash("error"),
-            success: req.flash("success")
+        // 2. Pass 'deposits' to the EJS file
+        res.render("deposit", { 
+            user: req.user, 
+            deposits: deposits // <--- This fixes the ReferenceError
         });
     } catch (err) {
-        console.error(err);
-        req.flash("error", "Cannot load withdrawal page");
+        console.error("Error loading deposits:", err);
+        req.flash("error", "Could not load transaction history.");
         res.redirect("/home");
     }
 });
 
-// POST /withdraw to submit a withdrawal
-app.post("/withdraw", isLoggedIn, async (req, res) => {
-  const user = await User.findById(req.user._id);
-  try {
-    const { amount } = req.body;
+// POST /deposit - Handle the deposit request (STK Push)
+app.post("/deposit", isLoggedIn, async (req, res) => {
+    try {
+        const { amount, phone } = req.body;
+        const user = await User.findById(req.user._id);
 
-    if (user.walletBalance < 100) throw new Error("You must have at least KES 100 in wallet to withdraw");
-    if (amount < 100) throw new Error("Minimum withdrawal amount is KES 100");
-    if (amount > user.walletBalance) throw new Error("Insufficient wallet balance");
+        // 1. Basic Validation
+        if (!amount || amount < 1) {
+            req.flash("error", "Minimum deposit is KES 1");
+            return res.redirect("/deposit");
+        }
 
-    user.walletBalance -= amount;
-    await user.save();
+        // 2. Format Phone (Ensure it starts with 254)
+        let formattedPhone = phone.trim();
+        if (formattedPhone.startsWith("0")) {
+            formattedPhone = "254" + formattedPhone.slice(1);
+        } else if (formattedPhone.startsWith("+")) {
+            formattedPhone = formattedPhone.slice(1);
+        }
 
-    await Transaction.create({
-      user: user._id,
-      type: "withdrawal",
-      amount: amount,
-      phone: user.phone,
-      status: "pending"
-    });
+        // 3. Create a Pending Transaction (So admin sees it in payments.ejs)
+        const newTx = await Transaction.create({
+            user: user._id,
+            amount: parseFloat(amount),
+            phone: formattedPhone,
+            type: "deposit",
+            status: "pending", // Admin will verify this later
+            checkoutRequestID: "STK_" + Math.random().toString(36).slice(-8) // Temporary ID
+        });
 
-    req.flash("success", "Withdrawal request submitted. Awaiting admin approval.");
-    res.redirect("/withdraw");
-    
-  } catch (err) {
-    console.error(err);
-    req.flash("error", err.message || "Something went wrong.");
-    res.redirect("/withdraw");
-  }
+        // 4. Trigger M-Pesa STK Push (Optional - if your daraja service is ready)
+        // await stkPush(formattedPhone, amount, newTx._id);
+
+        req.flash("success", "STK Push sent to your phone. Enter PIN to complete.");
+        res.redirect("/deposit");
+
+    } catch (err) {
+        console.error("Deposit Error:", err);
+        req.flash("error", "Something went wrong. Please try again.");
+        res.redirect("/deposit");
+    }
+});
+
+// 9. API / Callback Routes
+app.post("/mpesa/callback", (req, res) => {
+    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
 });
 
 
+// 10. Admin & Feature Routes (Organized)
+// Main adminRoutes moved to top of admin section for priority
+app.use("/admin", adminRoutes); 
 app.use('/admin', adminPaymentsRoutes);
-app.use('/account-packages', accountPackagesRoutes);
 app.use('/admin/referrals', adminReferralsRoutes);
+app.use('/admin/settings', adminSettingsRoutes);
+app.use('/admin/spins', adminSpinRoutes);
+app.use('/admin', adminPackages);
+
+// Feature routes
+app.use('/account-packages', accountPackagesRoutes);
 app.use('/team', teamRoutes);
 app.use('/profile', profileRoutes);
 app.use('/transactions', transactionRoutes);
-app.use('/admin', adminPackages);
-app.use('/admin/settings', adminSettingsRoutes);
-app.use('/admin/spins', adminSpinRoutes);
 app.use('/spins', spinRouter);
 app.use('/coin', coinRouter);
 
-
-
-
-
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

@@ -4,169 +4,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings | Manage Admins</title>
     <style>
+        :root {
+            --sidebar-width: 260px; /* Adjust this to match your adminHeader's actual width */
+            --dark-blue: #001f4d;
+            --gold: #FFD700;
+            --light-bg: #f5f7fa;
+        }
+
         body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f5f7fa;
-    color: #1a1a1a;
-}
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background-color: var(--light-bg);
+            color: #1a1a1a;
+            display: block; /* Resetting flex to handle sidebar margin manually */
+        }
 
-h1 {
-    text-align: center;
-    color: darkblue;
-    margin-bottom: 20px;
-}
+        /* THE FIX: Shifting the main content area so it's not hidden under the sidebar */
+        .admin-content {
+            margin-left: var(--sidebar-width); 
+            padding: 40px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: margin 0.3s ease;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-}
+        /* Responsive: When sidebar collapses/hides on mobile */
+        @media (max-width: 992px) {
+            .admin-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
 
-thead {
-    background-color: darkblue;
-    color: gold;
-}
+        h1 {
+            color: var(--dark-blue);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--gold);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
 
-thead th {
-    padding: 12px 10px;
-    text-align: left;
-    font-size: 14px;
-}
+        /* FIXED TABLE CONTAINER (Scroll Fix) */
+        .settings-table-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: auto; /* Handles horizontal scroll */
+            max-height: 75vh; /* Keep scrollbar visible on screen */
+            border: 1px solid #ddd;
+        }
 
-tbody td {
-    padding: 12px 10px;
-    border-bottom: 1px solid #ddd;
-    font-size: 14px;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Ensures horizontal scroll trigger */
+        }
 
-/* Buttons */
-button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
+        thead {
+            background-color: var(--dark-blue);
+            color: var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
 
-button[type="submit"] {
-    background-color: green;
-    color: white;
-}
+        thead th {
+            padding: 15px;
+            text-align: left;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-button[type="submit"]:hover {
-    background-color: darkgreen;
-}
+        tbody td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
 
-form[style*="display:inline;"] {
-    margin-right: 5px;
-}
+        tbody tr:hover {
+            background-color: #f0f4ff;
+        }
 
-/* Active/Inactive Row Colors */
-tbody tr:nth-child(even) {
-    background-color: #f0f4ff;
-}
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 13px;
+        }
 
-tbody tr:hover {
-    background-color: #e0e8ff;
-}
+        .btn-make {
+            background-color: #28a745;
+            color: white;
+        }
 
-/* Responsive: Tablet view */
-@media (min-width: 600px) {
-    h1 {
-        font-size: 28px;
-    }
+        .btn-make:hover { background-color: #218838; }
 
-    thead th, tbody td {
-        padding: 14px 12px;
-        font-size: 15px;
-    }
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+        }
 
-    button {
-        padding: 8px 14px;
-        font-size: 14px;
-    }
-}
+        .btn-remove:hover { background-color: #c82333; }
 
-/* Responsive: Desktop view */
-@media (min-width: 992px) {
-     body {
-        display: flex;
-        margin: 0;
-    }
-
-    /* Permanent left menu */
-    .sidebar {
-        width: 220px; /* adjust menu width */
-        background-color: darkblue;
-        color: gold;
-        min-height: 100vh;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-
-    /* Main content shifted to right */
-    .content {
-        flex: 1;
-        padding: 40px;
-    }
-
-    h1 {
-        text-align: left;
-    }
-
-    thead th, tbody td {
-        padding: 16px 12px;
-        font-size: 16px;
-    }
-
-    button {
-        padding: 10px 16px;
-        font-size: 15px;
-    }
-}
+        /* Custom Scrollbar for the table */
+        .settings-table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .settings-table-wrapper::-webkit-scrollbar-track { background: #f1f1f1; }
+        .settings-table-wrapper::-webkit-scrollbar-thumb { 
+            background: var(--dark-blue); 
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Manage Admins</h1>
 
-<table>
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Admin</th>
-            <th>Active</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% users.forEach(user => { %>
-        <tr>
-            <td><%= user.username %></td>
-            <td><%= user.email %></td>
-            <td><%= user.isAdmin ? 'Yes' : 'No' %></td>
-            <td><%= user.isActive !== false ? 'Yes' : 'No' %></td>
-            <td>
-    <% if (!user.isAdmin) { %>
-    <form action="/admin/settings/users/<%= user._id %>/make-admin" method="POST" style="display:inline;">
-        <button type="submit">Make Admin</button>
-    </form>
-    <% } else { %>
-    <form action="/admin/settings/users/<%= user._id %>/remove-admin" method="POST" style="display:inline;">
-        <button type="submit">Remove Admin</button>
-    </form>
-    <% } %>
-</td>
-        </tr>
-        <% }) %>
-    </tbody>
-</table>
+    <div class="admin-content">
+        <h1>Manage Platform Admins</h1>
+
+        <div class="settings-table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Admin Status</th>
+                        <th>Account Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% users.forEach(user => { %>
+                    <tr>
+                        <td><strong><%= user.username %></strong></td>
+                        <td><%= user.email %></td>
+                        <td>
+                            <span style="color: <%= user.isAdmin ? 'green' : 'gray' %>">
+                                <%= user.isAdmin ? '● Administrator' : '○ User' %>
+                            </span>
+                        </td>
+                        <td>
+                            <%= user.isActive !== false ? '✅ Yes' : '❌ No' %>
+                        </td>
+                        <td>
+                            <% if (!user.isAdmin) { %>
+                                <form action="/admin/settings/users/<%= user._id %>/make-admin" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-make">Grant Access</button>
+                                </form>
+                            <% } else { %>
+                                <form action="/admin/settings/users/<%= user._id %>/remove-admin" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-remove">Revoke Access</button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </body>
 </html>
