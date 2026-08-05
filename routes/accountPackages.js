@@ -4,14 +4,12 @@ const User = require('../models/user');
 const Transaction = require('../models/transaction');
 const VaultCoin = require('../models/vaultCoin'); 
 
-// Middleware to ensure user is logged in
 function isLoggedIn(req, res, next) {
     if (req.isAuthenticated()) return next();
     req.flash('error', 'Please login first');
     res.redirect('/login');
 }
 
-// Define the packages and referral rates
 const packages = [
     { name: 'Starter', cost: 100 },
     { name: 'Bronze', cost: 200 },
@@ -21,14 +19,13 @@ const packages = [
 ];
 
 const referralRates = {
-    Starter: 0.2,    // 20%
-    Bronze: 0.25,    // 25%
-    Silver: 0.3,     // 30%
-    Gold: 0.4,       // 40%
-    Platinum: 0.5    // 50%
+    Starter: 0.2,
+    Bronze: 0.25,
+    Silver: 0.3,
+    Gold: 0.4,
+    Platinum: 0.5
 };
 
-// Coins awarded per package
 const coinsForPackage = {
     Starter: 0.5,
     Bronze: 1,
@@ -37,7 +34,6 @@ const coinsForPackage = {
     Platinum: 10
 };
 
-// GET /account-packages
 router.get('/', isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -49,7 +45,6 @@ router.get('/', isLoggedIn, async (req, res) => {
     }
 });
 
-// POST /account-packages/purchase/:packageName
 router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -69,20 +64,26 @@ router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
             return res.redirect("/account-packages");
         }
 
-        if (user.depositBalance < cost) {
-            req.flash("error", `You need at least KES ${cost} to purchase this package`);
+        // First-ever purchase: user is not active yet, so their only money is depositBalance.
+        // Any purchase after that (switching/upgrading package): user is already active,
+        // so their money has been landing in walletBalance since activation.
+        const sourceField = user.isActive ? "walletBalance" : "depositBalance";
+        const availableBalance = user[sourceField] || 0;
+
+        if (availableBalance < cost) {
+            req.flash("error", `You need at least KES ${cost} in your ${user.isActive ? "wallet" : "deposit"} balance to purchase this package`);
             return res.redirect("/account-packages");
         }
 
-        // Deduct cost and assign package
-        user.depositBalance -= cost;
+        // Deduct cost from the correct balance and assign package
+        user[sourceField] -= cost;
         user.package = packageName;
+        user.isActive = true;
 
         // --- VaultJ Coins Integration ---
         const coinsToAdd = coinsForPackage[packageName] || 0;
         user.coinsBalance = (user.coinsBalance || 0) + coinsToAdd;
 
-        // Ensure VaultCoin document exists
         let vaultCoin = await VaultCoin.findOne();
         if (!vaultCoin) {
             vaultCoin = await VaultCoin.create({});
@@ -99,15 +100,13 @@ router.post("/purchase/:packageName", isLoggedIn, async (req, res) => {
                 const commissionRate = referralRates[packageName];
                 const commission = Math.floor(cost * commissionRate);
 
-                // Update referrer wallet & earnings
                 referrer.walletBalance += commission;
                 referrer.referralEarnings = (referrer.referralEarnings || 0) + commission;
                 await referrer.save();
 
-                // Record commission transaction
                 await Transaction.create({
                     user: referrer._id,
-                    type: "bonus", // referral commission
+                    type: "bonus",
                     amount: commission,
                     status: "completed",
                     code: `REF-${user.username}-${Date.now()}`

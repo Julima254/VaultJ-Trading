@@ -24,6 +24,8 @@ const adminSettingsRoutes = require('./routes/adminSettings');
 const adminSpinRoutes = require('./routes/adminSpinPot');
 const spinRouter = require('./routes/spin');
 const coinRouter = require('./routes/coin');
+const depositRoutes = require('./routes/deposit');
+const mpesaCallbackRoutes = require('./routes/mpesaCallback');
 
 const { stkPush } = require("./services/daraja");
 
@@ -178,75 +180,11 @@ app.post("/withdraw", isLoggedIn, async (req, res) => {
     }
 });
 
-// GET /deposit - Show the deposit page
-app.get("/deposit", isLoggedIn, async (req, res) => {
-    try {
-        // 1. Find all 'deposit' transactions for the logged-in user
-        // We sort by createdAt: -1 to show the newest ones first
-        const deposits = await Transaction.find({ 
-            user: req.user._id, 
-            type: "deposit" 
-        }).sort({ createdAt: -1 });
-
-        // 2. Pass 'deposits' to the EJS file
-        res.render("deposit", { 
-            user: req.user, 
-            deposits: deposits // <--- This fixes the ReferenceError
-        });
-    } catch (err) {
-        console.error("Error loading deposits:", err);
-        req.flash("error", "Could not load transaction history.");
-        res.redirect("/home");
-    }
-});
-
-// POST /deposit - Handle the deposit request (STK Push)
-app.post("/deposit", isLoggedIn, async (req, res) => {
-    try {
-        const { amount, phone } = req.body;
-        const user = await User.findById(req.user._id);
-
-        // 1. Basic Validation
-        if (!amount || amount < 1) {
-            req.flash("error", "Minimum deposit is KES 1");
-            return res.redirect("/deposit");
-        }
-
-        // 2. Format Phone (Ensure it starts with 254)
-        let formattedPhone = phone.trim();
-        if (formattedPhone.startsWith("0")) {
-            formattedPhone = "254" + formattedPhone.slice(1);
-        } else if (formattedPhone.startsWith("+")) {
-            formattedPhone = formattedPhone.slice(1);
-        }
-
-        // 3. Create a Pending Transaction (So admin sees it in payments.ejs)
-        const newTx = await Transaction.create({
-            user: user._id,
-            amount: parseFloat(amount),
-            phone: formattedPhone,
-            type: "deposit",
-            status: "pending", // Admin will verify this later
-            checkoutRequestID: "STK_" + Math.random().toString(36).slice(-8) // Temporary ID
-        });
-
-        // 4. Trigger M-Pesa STK Push (Optional - if your daraja service is ready)
-        // await stkPush(formattedPhone, amount, newTx._id);
-
-        req.flash("success", "STK Push sent to your phone. Enter PIN to complete.");
-        res.redirect("/deposit");
-
-    } catch (err) {
-        console.error("Deposit Error:", err);
-        req.flash("error", "Something went wrong. Please try again.");
-        res.redirect("/deposit");
-    }
-});
 
 // 9. API / Callback Routes
-app.post("/mpesa/callback", (req, res) => {
-    res.json({ ResultCode: 0, ResultDesc: "Accepted" });
-});
+app.use("/mpesa", mpesaCallbackRoutes);
+
+// Feature routes
 
 
 // 10. Admin & Feature Routes (Organized)
@@ -257,6 +195,7 @@ app.use('/admin/referrals', adminReferralsRoutes);
 app.use('/admin/settings', adminSettingsRoutes);
 app.use('/admin/spins', adminSpinRoutes);
 app.use('/admin', adminPackages);
+app.use('/deposit', depositRoutes);
 
 // Feature routes
 app.use('/account-packages', accountPackagesRoutes);

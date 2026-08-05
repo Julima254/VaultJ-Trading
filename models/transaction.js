@@ -23,7 +23,17 @@ const transactionSchema = new mongoose.Schema({
     },
 
     code: {
-        type: String // MPESA receipt number (filled on callback)
+        type: String // MPESA receipt number (filled on callback, or pasted in manually for paybill deposits)
+    },
+
+    method: {
+        type: String,
+        enum: ["stk", "paybill"],
+        default: "stk"
+    },
+
+    checkoutRequestID: {
+        type: String // Daraja STK push tracking ID
     },
 
     status: {

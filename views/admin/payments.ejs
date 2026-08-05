@@ -114,6 +114,19 @@
 
         .verify-btn { background: var(--green); color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
         .reject-btn { background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; margin-left: 5px; }
+
+        /* Auto (STK) badge — shown instead of action buttons for STK deposits */
+        .auto-badge {
+            display: inline-block;
+            background: rgba(255, 204, 0, 0.12);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
     </style>
 </head>
 <body>
@@ -174,7 +187,7 @@
                             <td><small><%= p.checkoutRequestID || '-' %></small></td>
                             <td><%= p.createdAt.toLocaleString() %></td>
                             <td>
-                                <% if (p.type === 'deposit' && p.status === 'pending') { %>
+                                <% if (p.type === 'deposit' && p.status === 'pending' && p.method === 'paybill') { %>
                                     <form method="POST" action="/admin/payments/verify/<%= p._id %>" style="display:inline;">
                                         <input type="text" name="receipt" placeholder="Code" style="width: 80px; background: #000; color: #fff; border: 1px solid var(--gold);">
                                         <button type="submit" class="verify-btn">Verify</button>
@@ -182,6 +195,8 @@
                                     <form method="POST" action="/admin/payments/reject/<%= p._id %>" style="display:inline;">
                                         <button type="submit" class="reject-btn">Reject</button>
                                     </form>
+                                <% } else if (p.type === 'deposit' && p.status === 'pending' && p.method === 'stk') { %>
+                                    <span class="auto-badge">Auto (STK)</span>
                                 <% } else { %>
                                     -
                                 <% } %>

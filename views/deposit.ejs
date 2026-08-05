@@ -77,7 +77,8 @@
 }
 
 .deposit-container input[type="tel"],
-.deposit-container input[type="number"] {
+.deposit-container input[type="number"],
+.deposit-container input[type="text"] {
   width: 100%;
   padding: 12px;
   margin-bottom: 16px;
@@ -110,6 +111,53 @@
 
 .deposit-container button:hover {
   opacity: 0.9;
+}
+
+/* ===== PAYBILL TOGGLE LINK ===== */
+.paybill-toggle-link {
+  display: block;
+  text-align: center;
+  color: var(--dark-blue);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  margin: -10px 0 20px 0;
+  background: none;
+  border: none;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+/* ===== PAYBILL PANEL ===== */
+.paybill-panel {
+  background: #fff;
+  border: 1px solid #eee;
+  border-left: 4px solid var(--green);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 30px;
+}
+
+.paybill-details {
+  background: var(--light-bg);
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.paybill-details p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+}
+
+.paybill-details strong {
+  color: var(--dark-blue);
+}
+
+.paybill-details .value {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 /* ===== TRANSACTION HISTORY ===== */
@@ -209,11 +257,11 @@
   <!-- Deposit Notice -->
   <div class="deposit-notice">
     <p>
-      ⏱️ Automatic deposits are approved within <strong>3 minutes</strong>.
+      Pay Via Mpesa Prompt <strong>we'll send a payment prompt to your phone</strong>.
     </p>
   </div>
 
-  <!-- Deposit Form -->
+  <!-- Deposit Form (STK Push) -->
   <form action="/deposit" method="POST">
 
     <label>Phone Number</label>
@@ -243,6 +291,46 @@
     <button type="submit">Deposit Now</button>
 
   </form>
+
+  <!-- Prompt not received? Paybill fallback toggle -->
+  <button type="button" class="paybill-toggle-link" onclick="document.getElementById('paybillPanel').classList.toggle('hidden')">
+    Prompt not received? Use Paybill instead
+  </button>
+
+  <!-- Paybill Panel (hidden by default) -->
+  <div id="paybillPanel" class="paybill-panel hidden">
+
+    <h3>Pay via Paybill</h3>
+
+    <div class="paybill-details">
+      <p><strong>Paybill Number:</strong> <span class="value">400200</span></p>
+      <p><strong>Account Number:</strong> <span class="value"><%= currentUser && currentUser.username ? currentUser.username : "N/A" %></span></p>
+      <p>Go to M-Pesa &rarr; Lipa na M-Pesa &rarr; Paybill, enter the details above, then paste your confirmation code below.</p>
+    </div>
+
+    <form action="/deposit/manual" method="POST">
+
+      <label>Amount Paid (KES)</label>
+      <input 
+        type="number" 
+        name="amount" 
+        min="1" 
+        required 
+      >
+
+      <label>M-Pesa Confirmation Code</label>
+      <input 
+        type="text" 
+        name="mpesaCode" 
+        placeholder="e.g. QGH7X8Y9Z1" 
+        required 
+      >
+
+      <button type="submit">Submit Confirmation</button>
+
+    </form>
+
+  </div>
 
   <!-- Transaction History -->
   <div class="deposit-history">
@@ -277,6 +365,10 @@
   </div>
 
 </div>
+
+<style>
+  .hidden { display: none; }
+</style>
 
 </body>
 </html>

@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     default: false
 },
     referralEarnings: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true } 
+    isActive: { type: Boolean, default: false }
 }, { timestamps: true });
 
 userSchema.plugin(passportLocalMongoose);
