@@ -1,300 +1,326 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark-blue: #0a1a3c;
+    --dark-blue-light: #14295e;
+    --gold: #d4af37;
+    --gold-light: #e8cd6a;
+    --green: #1b7340;
+    --light-grey: #e9e9ec;
+    --white: #ffffff;
+    --header-height: 64px;
+    --footer-height: 66px;
+  }
 
-    <style>
-        /* ===== RESET ===== */
-* {
-    box-sizing: border-box;
+  body {
+    padding-top: var(--header-height);
+    padding-bottom: var(--footer-height);
+    background: var(--light-grey);
+    font-family: 'Segoe UI', Arial, sans-serif;
     margin: 0;
-    padding: 0;
-    font-family: 'Montserrat', sans-serif;
-}
+  }
 
-/* ===== HEADER ===== */
-.header {
-    width: 100%;
-    background: #0f1f35; /* Dark blue */
-    border-bottom: 1px solid rgba(255, 215, 0, 0.25);
-    position: sticky;
+  /* ===== HEADER ===== */
+  .site-header {
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: var(--dark-blue);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     z-index: 1000;
-}
+  }
 
-.nav-container {
-    max-width: 1400px;
-    margin: auto;
-    padding: 12px 16px;
+  .header-inner {
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-}
+    padding: 0 16px;
+  }
 
-/* ===== LOGO ===== */
-.logo img {
+  .header-logo img {
     height: 40px;
-}
-
-/* ===== USER INFO ===== */
-.userinfo {
-    text-align: right;
-    color: #E5E7EB; /* light gray */
-}
-
-.userinfo .username {
     display: block;
-    font-weight: 600;
-    color: #FFD700; /* gold */
-}
+  }
 
-.userinfo p {
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .badge-admin {
+    background: var(--gold);
+    color: var(--dark-blue);
+    font-weight: 700;
     font-size: 12px;
-    color: #10B981; /* green */
-}
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
-/* ===== HAMBURGER MENU ===== */
-.menu-toggle {
-    background: none;
-    border: 1px solid #FFD700;
-    color: #FFD700;
-    font-size: 22px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-/* ===== NAV ===== */
-.nav {
-    position: fixed;
-    top: 64px;
-    right: -100%;
-    width: 260px;
-    height: calc(100vh - 64px);
-    background: #0f1f35;
-    transition: right 0.3s ease;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.4);
-}
-
-.nav.open {
-    right: 0;
-}
-
-.nav ul {
-    list-style: none;
-    padding: 20px;
-}
-
-.nav ul li {
-    margin-bottom: 12px;
-}
-
-.nav ul li a {
-    display: block;
-    padding: 12px 14px;
-    border-radius: 8px;
-    text-decoration: none;
-    color: #E5E7EB;
-    font-weight: 500;
-    transition: all 0.25s ease;
-}
-
-.nav ul li a:hover {
-    background: rgba(255, 215, 0, 0.12);
-    color: #FFD700;
-}
-
-/* ===== LOGOUT ===== */
-.logout-btn {
-    background: rgba(16, 185, 129, 0.15);
-    color: #10B981 !important;
+  .header-username {
+    color: var(--white);
     font-weight: 600;
-}
+    font-size: 14px;
+  }
 
-/* ===== STATUS INDICATOR ===== */
-.status {
+  .status-pill {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
     font-weight: 600;
-}
+  }
 
-/* Dot */
-.status-dot {
+  .status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-}
+  }
 
-/* Online */
-.status.online {
-    color: #10B981; /* green */
-}
+  .status-active {
+    background: rgba(27, 115, 64, 0.2);
+    color: var(--green);
+  }
+  .status-active .status-dot { background: var(--green); }
 
-.status.online .status-dot {
-    background: #10B981;
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
-}
+  .status-inactive {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold);
+  }
+  .status-inactive .status-dot { background: var(--gold); }
 
-/* Inactive */
-.status.inactive {
-    color: #FBBF24; /* gold */
-}
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+  }
 
-.status.inactive .status-dot {
-    background: #FBBF24;
-    box-shadow: 0 0 6px rgba(251, 191, 36, 0.7);
-}
+  /* ===== Slide-in side menu ===== */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease;
+    z-index: 1001;
+  }
+  .menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
 
-/* ===== ADMIN LINK ===== */
-.admin-link {
-    display: inline-block;
-    margin-left: 20px;
-    padding: 8px 14px;
-    background-color: #FFD700; /* gold */
-    color: #0f1f35; /* dark blue text */
-    font-weight: 600;
-    border-radius: 6px;
+  .side-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 280px;
+    max-width: 85vw;
+    background: var(--dark-blue-light);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1002;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+  }
+  .side-menu.open {
+    transform: translateX(0);
+  }
+
+  .side-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    color: var(--gold);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .side-menu-close {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 26px;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .side-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+  }
+
+  .side-menu-list li a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    color: var(--white);
     text-decoration: none;
-    transition: all 0.3s ease;
-}
+    font-size: 15px;
+    transition: background 0.2s ease;
+  }
 
-.admin-link:hover {
-    background-color: #10B981; /* green on hover */
-    color: #fff;
-}
+  .side-menu-list li a:hover {
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--gold);
+  }
 
+  .side-menu-list li a svg {
+    flex-shrink: 0;
+    color: var(--gold);
+  }
 
+  .side-menu-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 8px 20px;
+  }
 
-/* ================= TABLET ================= */
-@media (min-width: 768px) {
-    .logo img {
-        height: 46px;
-    }
+  .logout-link {
+    color: #e57373 !important;
+  }
+  .logout-link svg { color: #e57373 !important; }
 
-    .userinfo {
-        display: block;
-    }
+  /* ===== Responsive ===== */
+  @media (min-width: 600px) and (max-width: 1024px) {
+    .header-username { font-size: 15px; }
+  }
 
-    .nav {
-        width: 300px;
-    }
-}
+  @media (min-width: 1025px) {
+    .header-inner { padding: 0 32px; }
+  }
 
-/* ================= DESKTOP ================= */
-@media (min-width: 1024px) {
-    .nav-container {
-        padding: 14px 30px;
-    }
+  @media (max-width: 360px) {
+    .header-username { display: none; }
+  }
+</style>
 
-    .menu-toggle {
-        font-size: 24px;
-        padding: 8px 14px;
-    }
-
-    .nav {
-        width: 340px;
-    }
-
-    .nav ul li a {
-        font-size: 15px;
-    }
-}
-
-    </style>
-</head>
-<body>
-    <header class="header">
-  <div class="nav-container">
+<header class="site-header">
+  <div class="header-inner">
 
     <!-- Logo -->
-    <div class="logo">
-      <a href="/home">
-        <img src="/images/logo.png" alt="VaultJ Trading logo" />
-      </a>
+    <a href="/dashboard" class="header-logo">
+      <img src="/images/logo.png" alt="Logo" />
+    </a>
+
+    <!-- Right side: admin badge, username, status, hamburger -->
+    <div class="header-right">
+
+      <% if (user) { %>
+        <% if (user.isAdmin) { %>
+          <span class="badge badge-admin">Admin</span>
+        <% } %>
+
+        <span class="header-username"><%= user.username %></span>
+
+        <span class="status-pill <%= user.isActive ? 'status-active' : 'status-inactive' %>">
+          <span class="status-dot"></span>
+          <%= user.isActive ? 'Active' : 'Not Active' %>
+        </span>
+      <% } %>
+
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dark overlay behind slide-in menu -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+
+  <!-- Slide-in side menu -->
+  <nav class="side-menu" id="sideMenu" aria-hidden="true">
+    <div class="side-menu-header">
+      <span>Menu</span>
+      <button class="side-menu-close" id="sideMenuClose" aria-label="Close menu">&times;</button>
     </div>
 
-    <% if (currentUser && currentUser.isAdmin) { %>
-    <a href="/admin" class="admin-link">Admin</a>
-<% } %>
-
-
-    <!-- user account information-->
-     <div class="userinfo">
-  <% if(currentUser){ %>
-    <span class="username"><%= currentUser.username %></span>
-  <% } %>
-  <p class="status <%= user.package && user.package !== 'None' ? 'active' : 'inactive' %>">
-    <span class="status-dot"></span>
-    <%= user.package && user.package !== 'None' ? 'Active' : 'Inactive' %>
-</p>
-
-
-</div>
-    <!-- Hamburger menu (always visible) -->
-    <button class="menu-toggle" aria-label="Toggle menu">☰</button>
-
-    <!-- Navigation -->
-    <nav class="nav">
-      <ul>
-        <li><a href="/home">Home</a></li>
-        <li><a href="/account-packages">Account Packages</a></li>
-        <li><a href="#" id="copyReferralLink">Copy referral Link</a></li>
-        <li><a href="/spins">VaultJ spins</a></li>
-        <li><a href="/coin">VaultJ Coin</a></li>
-        <li><a href="/transactions">Transactions</a></li>
-        <li><a href="/team">My Team</a></li>
-        <li><a href="/profile">Profile</a></li>
-        <li>
-  <a href="https://wa.me/254741058364" target="_blank" rel="noopener noreferrer">
-    Customer Care
-  </a>
-</li>
-        <li><a href="/logout" class="logout-btn">Logout</a></li>
-      </ul>
-    </nav>
-
-
-  </div>
+    <ul class="side-menu-list">
+      <li>
+        <a href="/referral">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          <span>Referral Link</span>
+        </a>
+      </li>
+      <li>
+        <a href="/transactions">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span>Transactions</span>
+        </a>
+      </li>
+      <li>
+        <a href="/my-team">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>My Team</span>
+        </a>
+      </li>
+      <li>
+        <a href="/profile">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </a>
+      </li>
+      <li>
+        <a href="/customer-care">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11a9 9 0 0 1 18 0"/><path d="M21 12v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 12v5a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+          <span>Customer Care</span>
+        </a>
+      </li>
+      <li class="side-menu-divider"></li>
+      <li>
+        <a href="/logout" class="logout-link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Logout</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
 </header>
 
-<!-- Menu Toggle JS -->
 <script>
-const menuToggle = document.querySelector('.menu-toggle');
-const nav = document.querySelector('.nav');
+  document.addEventListener("DOMContentLoaded", function () {
+    const hamburgerBtn = document.getElementById("hamburgerBtn");
+    const sideMenu = document.getElementById("sideMenu");
+    const menuOverlay = document.getElementById("menuOverlay");
+    const sideMenuClose = document.getElementById("sideMenuClose");
 
-menuToggle.addEventListener('click', () => {
-    nav.classList.toggle('open');
-});
-</script>
-
-
-<script>
-const copyBtn = document.getElementById('copyReferralLink');
-
-copyBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-
-    // Replace 'yourwebsite.com/register?ref=' with your actual referral URL
-    const referralLink = `<%= currentUser ? "https://vaultj-trading.onrender.com/register?ref=" + currentUser.username : "" %>`;
-
-    if (!referralLink) {
-        alert("No referral link available.");
-        return;
+    function openMenu() {
+      sideMenu.classList.add("open");
+      menuOverlay.classList.add("active");
+      sideMenu.setAttribute("aria-hidden", "false");
+      hamburgerBtn.setAttribute("aria-expanded", "true");
     }
 
-    // Copy to clipboard
-    navigator.clipboard.writeText(referralLink).then(() => {
-        alert("Referral link copied to clipboard!");
-    }).catch(err => {
-        console.error("Failed to copy: ", err);
-        alert("Failed to copy referral link.");
-    });
-});
+    function closeMenu() {
+      sideMenu.classList.remove("open");
+      menuOverlay.classList.remove("active");
+      sideMenu.setAttribute("aria-hidden", "true");
+      hamburgerBtn.setAttribute("aria-expanded", "false");
+    }
+
+    hamburgerBtn.addEventListener("click", openMenu);
+    sideMenuClose.addEventListener("click", closeMenu);
+    menuOverlay.addEventListener("click", closeMenu);
+  });
 </script>
-</body>
-</html>

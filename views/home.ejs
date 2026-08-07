@@ -1,128 +1,228 @@
-<%- include('partials/header.ejs'); -%>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background:#0a1a3f;">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <title>VaultJ-Trading</title>
-    <link rel="stylesheet" href="/styles/main.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a1a3f" />
+  <meta name="color-scheme" content="dark" />
+  <title>Home | VaultJ Trading</title>
+  <style>
+    :root {
+      --dark-blue: #0a1a3f;
+      --dark-blue-light: #12275c;
+      --gold: #d4af37;
+      --green: #2ecc71;
+      --light-gray: #e6e6e6;
+      --red: #e74c3c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--dark-blue);
+      min-height: 100%;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: var(--light-gray);
+      padding-bottom: 90px;
+    }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 20px;
+    }
+
+    .stat-card {
+      background: var(--dark-blue-light);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 18px 22px;
+      min-width: 160px;
+      flex: 1 1 160px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 19px;
+      font-weight: bold;
+      color: var(--green);
+    }
+
+    .stat-value.package-value {
+      color: #fff;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      padding: 10px 20px 30px;
+    }
+
+    .action-btn {
+      background: var(--gold);
+      color: var(--dark-blue);
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .action-btn:active { transform: scale(0.96); }
+
+    .section-title {
+      text-align: center;
+      margin: 10px 16px 18px;
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--gold);
+    }
+
+    .transactions-table-wrap {
+      margin: 0 20px 30px;
+      overflow-x: auto;
+    }
+
+    table.transactions-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      background: var(--dark-blue-light);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .transactions-table th {
+      text-align: left;
+      font-size: 13px;
+      color: var(--gold);
+      padding: 10px 14px;
+      border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+      background: var(--dark-blue-light);
+    }
+
+    .transactions-table td {
+      font-size: 13px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+      background: transparent;
+    }
+
+    .transactions-table tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .code-cell { color: var(--green); font-weight: 600; }
+    .amount-cell { color: var(--light-gray); }
+    .status-cell.status-completed { color: var(--green); font-weight: bold; }
+    .status-cell.status-pending { color: var(--gold); font-weight: bold; }
+    .status-cell.status-failed { color: var(--red); font-weight: bold; }
+    .date-cell { color: var(--gold); }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 16px;
+      opacity: 0.6;
+      font-size: 13px;
+      background: var(--dark-blue-light);
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-<main class="user-dashboard">
 
-    <!-- ===================== TOP SUMMARY SECTION ====================== -->
-    <section class="dashboard-summary">
+  <%- include('partials/header') %>
 
-        <div class="summary-item">
-            <p>My Package</p>
-            <h4><%= user.package %></h4>
-        </div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">My Package</div>
+      <div class="stat-value package-value"><%= user.package || "No Active Package" %></div>
+    </div>
 
-        <div class="summary-item">
-            <p>Wallet Balance</p>
-            <h4>KES <span id="wallet-balance"><%= walletBalance %></span></h4>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Wallet Balance</div>
+      <div class="stat-value">KES <%= (user.walletBalance || 0).toFixed(2) %></div>
+    </div>
 
-        <div class="summary-item">
-            <p>Referral Earnings</p>
-            <h4>KES <%= user.referralEarnings || 0 %></h4>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Referral Earnings</div>
+      <div class="stat-value">KES <%= (user.referralEarnings || 0).toFixed(2) %></div>
+    </div>
 
-        <div class="summary-item">
-            <p>Total Referrals</p>
-            <h4><%= totalReferrals %></h4>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Referrals</div>
+      <div class="stat-value"><%= user.totalReferrals || 0 %></div>
+    </div>
 
-        <div class="summary-item">
-            <p>Deposit Balance</p>
-            <h4>KES <%= user.depositBalance %></h4>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Deposit Balance</div>
+      <div class="stat-value">KES <%= (user.depositBalance || 0).toFixed(2) %></div>
+    </div>
 
-        <div class="summary-item">
-            <p>Spinning Balance</p>
-            <h4>KES <span id="spinning-balance"><%= user.spinningBalance || 0 %></span></h4>
-        </div>
+    <div class="stat-card">
+      <div class="stat-label">Spinning Balance</div>
+      <div class="stat-value">KES <%= (user.spinningBalance || 0).toFixed(2) %></div>
+    </div>
 
-        <div class="summary-item">
-    <p>Coin Balance</p>
-    <h4><span id="coin-balance"><%= coinsBalance %></span> VJC</h4>
-</div>
+    <div class="stat-card">
+      <div class="stat-label">Coin Balance</div>
+      <div class="stat-value"><%= user.coinBalance || 0 %> VJC</div>
+    </div>
+  </div>
 
-    </section>
+  <div class="action-buttons">
+    <button class="action-btn" onclick="location.href='/deposit'">Deposit</button>
+    <button class="action-btn" onclick="location.href='/withdraw'">Withdraw</button>
+    <button class="action-btn" onclick="location.href='/upgrade'">Upgrade Package</button>
+  </div>
 
-    <!-- ===================== ACTION BUTTONS ====================== -->
-    <section class="dashboard-actions">
-        <a href="/deposit" class="action-btn">Deposit</a>
-        <a href="/withdraw" class="action-btn">Withdraw</a>
-        <a href="/account-packages" class="action-btn">Upgrade Package</a>
-    </section>
+  <div class="section-title">Recent Transactions</div>
 
-    <!-- ===================== RECENT TRANSACTIONS ====================== -->
-    <section class="recent-transactions">
-        <h4>Recent Transactions</h4>
+  <div class="transactions-table-wrap">
+    <% if (transactions && transactions.length > 0) { %>
+      <table class="transactions-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% transactions.forEach(function(tx) { %>
+            <tr>
+              <td class="code-cell"><%= tx.code || tx.note || "-" %></td>
+              <td class="amount-cell">KES <%= (tx.amount || 0).toFixed(2) %></td>
+              <td class="status-cell status-<%= tx.status %>"><%= tx.status %></td>
+              <td class="date-cell">
+                <%= new Date(tx.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <div class="empty-state">No transactions yet. Make your first deposit to get started.</div>
+    <% } %>
+  </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
+  <%- include('partials/footer') %>
 
-            <tbody>
-                <% if (!transactions || transactions.length === 0) { %>
-                    <tr>
-                        <td colspan="4" style="text-align:center;">No transactions found</td>
-                    </tr>
-                <% } else { %>
-                    <% transactions.forEach(tx => { %>
-                        <tr>
-                            <td><%= tx.code %></td>
-                            <td>KES <%= tx.amount %></td>
-                            <td><%= tx.status %></td>
-                            <td><%= tx.createdAt.toDateString() %></td>
-                        </tr>
-                    <% }) %>
-                <% } %>
-            </tbody>
-        </table>
-    </section>
-
-</main>
-
-<script>
-    // ===========================
-    // DYNAMIC BALANCE UPDATES
-    // ===========================
-    const walletEl = document.getElementById("wallet-balance");
-    const spinningEl = document.getElementById("spinning-balance");
-
-    // Function to fetch latest balances from server
-    async function updateBalances() {
-        try {
-            const res = await fetch('/user/wallet'); // backend endpoint
-            const data = await res.json();
-
-            if(data.success) {
-                walletEl.textContent = data.walletBalance;
-                spinningEl.textContent = data.spinningBalance || 0;
-            }
-        } catch(err) {
-            console.error("Failed to update balances:", err);
-        }
-    }
-
-    // Function to add spin reward instantly
-    function afterSpinUpdate(reward) {
-        spinningEl.textContent = Number(spinningEl.textContent) + reward;
-        walletEl.textContent = Number(walletEl.textContent) + reward;
-    }
-
-    // Auto-refresh balances every 10 seconds
-    setInterval(updateBalances, 10000);
-</script>
 </body>
 </html>

@@ -4,384 +4,348 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 
     <title>VaultJ-Trading</title>
     <style>
-        /* ===== GLOBAL RESET ===== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-/* ===== LANDING CONTAINER ===== */
-.land-container {
-    width: 100%;
-    padding: 20px;
-    background: linear-gradient(135deg, #1D3557, #0f1f35);
-    display: flex;
-    flex-direction: column;      /* stack items vertically */
-    justify-content: flex-start; /* start from top */
-    align-items: center;         /* center horizontally only */
-}
+        .land-container {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #1D3557, #0f1f35);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
 
-/* ===== CAROUSEL ===== */
-#carousel {
-    width: 100%;
-    max-width: 100%;
-    height: 220px; /* mobile height */
-    border-radius: 14px;
-    overflow: hidden;
-    position: relative;
-    background-color: #0f1f35;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
+        /* ===== CAROUSEL ===== */
+        #carousel {
+            width: 100%;
+            max-width: 100%;
+            height: 220px;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            background-color: #0f1f35;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
 
-/* ===== SLIDES ===== */
-.slide {
-    object-fit: cover;
-    border-radius: 14px;
-}
+        /* ===== SLIDES ===== */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+            opacity: 0;
+        }
 
-/* ===== NAV BUTTONS ===== */
-#prevBtn,
-#nextBtn {
-    background: rgba(29, 53, 87, 0.85);
-    border: 1px solid #FFD700;
-    color: #FFD700;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    font-size: 18px;
-    cursor: pointer;
-    transition: transform 0.2s ease, background 0.2s ease;
-}
+        .slide.active {
+            opacity: 1;
+        }
 
-#prevBtn:hover,
-#nextBtn:hover {
-    background: #10B981;
-    color: #1D3557;
-    transform: scale(1.1);
-}
+        /* ===== NAV BUTTONS ===== */
+        #prevBtn,
+        #nextBtn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: rgba(29, 53, 87, 0.85);
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
 
-.handle-register {
-    display: flex;
-    flex-direction: column; /* mobile first */
-    gap: 15px;
-    width: 100%;
-    max-width: 320px;
-    margin: 30px auto;
-    margin-top: 40px;
-}
+        #prevBtn { left: 10px; }
+        #nextBtn { right: 10px; }
 
-/* ===== BUTTON BASE ===== */
-.handle-register a {
-    text-decoration: none;
-}
+        #prevBtn:hover,
+        #nextBtn:hover {
+            background: #10B981;
+            color: #1D3557;
+            transform: translateY(-50%) scale(1.1);
+        }
 
-.handle-register button {
-    width: 100%;
-    padding: 14px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.3s ease;
-}
+        .handle-register {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 320px;
+            margin: 30px auto;
+            margin-top: 40px;
+        }
 
-/* ===== CREATE ACCOUNT ===== */
-.handle-register a:first-child button {
-    background-color: #FFD700; /* Gold */
-    color: #1D3557;
-}
+        .handle-register a {
+            text-decoration: none;
+        }
 
-.handle-register a:first-child button:hover {
-    background-color: #10B981; /* Green */
-    color: #1D3557;
-}
+        .handle-register button {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
 
-/* ===== LOGIN BUTTON ===== */
-.handle-register a:last-child button {
-    background-color: transparent;
-    color: #FFD700;
-    border: 2px solid #FFD700;
-}
+        .handle-register a:first-child button {
+            background-color: #FFD700;
+            color: #1D3557;
+        }
 
-.handle-register a:last-child button:hover {
-    background-color: #1D3557;
-    color: #10B981;
-    border-color: #10B981;
-}
+        .handle-register a:first-child button:hover {
+            background-color: #10B981;
+            color: #1D3557;
+        }
 
-.ways {
-    display: flex;
-    flex-direction: column; /* mobile first: stacked */
-    gap: 20px;
-    width: 100%;
-    max-width: 350px;
-    margin: 30px auto;
-      font-family: 'Montserrat', sans-serif;
-}
+        .handle-register a:last-child button {
+            background-color: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+        }
 
-/* ===== CHILD CARDS ===== */
-.ways-child {
-    background: #1D3557; /* Dark Blue */
-    color: #FFD700; /* Gold text */
-    padding: 20px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease, background 0.3s ease;
-}
+        .handle-register a:last-child button:hover {
+            background-color: #1D3557;
+            color: #10B981;
+            border-color: #10B981;
+        }
 
-/* ===== EMOJI ICON ===== */
-.ways-child:first-child::before,
-.ways-child::before {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
+        .ways {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 350px;
+            margin: 30px auto;
+            font-family: 'Montserrat', sans-serif;
+        }
 
-/* Or direct emoji styling inside div */
-.ways-child div.emoji {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
+        .ways-child {
+            background: #1D3557;
+            color: #FFD700;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
 
-/* ===== HEADINGS ===== */
-.ways-child h6 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
+        .ways-child div.emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
 
-/* ===== PARAGRAPHS ===== */
-.ways-child p {
-    font-size: 14px;
-    color: #10B981; /* Green */
-}
+        .ways-child h6 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
 
-/* ===== HOVER EFFECT ===== */
-.ways-child:hover {
-    transform: translateY(-5px);
-    background: #0f1f35; /* slightly darker blue */
-}
+        .ways-child p {
+            font-size: 14px;
+            color: #10B981;
+        }
 
+        .ways-child:hover {
+            transform: translateY(-5px);
+            background: #0f1f35;
+        }
 
-/* ===== TABLET VIEW ===== */
-@media (min-width: 768px) {
-    #carousel {
-        height: 320px;
-        max-width: 700px;
-    }
+        /* ===== TABLET VIEW ===== */
+        @media (min-width: 768px) {
+            #carousel {
+                height: 320px;
+                max-width: 700px;
+            }
 
-    #prevBtn,
-    #nextBtn {
-        width: 48px;
-        height: 48px;
-        font-size: 20px;
-    }
+            #prevBtn,
+            #nextBtn {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
 
-     .handle-register {
-        flex-direction: row;
-        max-width: 500px;
-    }
+            .handle-register {
+                flex-direction: row;
+                max-width: 500px;
+            }
 
-    .handle-register button {
-        font-size: 17px;
-        padding: 15px 24px;
-    }
+            .handle-register button {
+                font-size: 17px;
+                padding: 15px 24px;
+            }
 
-    .ways {
-        flex-direction: row; /* side by side */
-        max-width: 700px;
-        justify-content: space-between;
-        gap: 20px;
-    }
+            .ways {
+                flex-direction: row;
+                max-width: 700px;
+                justify-content: space-between;
+                gap: 20px;
+            }
 
-    .ways-child {
-        flex: 1;
-        padding: 25px;
-    }
+            .ways-child {
+                flex: 1;
+                padding: 25px;
+            }
 
-    .ways-child h6 {
-        font-size: 20px;
-    }
+            .ways-child h6 {
+                font-size: 20px;
+            }
 
-    .ways-child p {
-        font-size: 15px;
-    }
-}
+            .ways-child p {
+                font-size: 15px;
+            }
+        }
 
-/* ===== DESKTOP VIEW ===== */
-@media (min-width: 1024px) {
-   .land-container {
-        padding: 60px;
-        flex-direction: column; /* keep stacking */
-        justify-content: flex-start; /* start from top */
-        align-items: center; /* center horizontally */
-    }
+        /* ===== DESKTOP VIEW ===== */
+        @media (min-width: 1024px) {
+            .land-container {
+                padding: 60px;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
+            }
 
-    #carousel {
-        height: 420px;
-        max-width: 900px;
-    }
+            #carousel {
+                height: 420px;
+                max-width: 900px;
+            }
 
-    #prevBtn {
-        left: 20px;
-    }
+            .handle-register {
+                max-width: 600px;
+                gap: 25px;
+                display: flex;
+                justify-content: center;
+                margin: 30px auto;
+            }
 
-    #nextBtn {
-        right: 20px;
-    }
+            .handle-register button {
+                font-size: 18px;
+                padding: 16px 30px;
+            }
 
-      .handle-register {
-        max-width: 600px;
-        gap: 25px;
-        display: flex;
-        justify-content: center; /* center buttons horizontally */
-        margin-left: 20%;
-    }
+            .ways {
+                max-width: 900px;
+                gap: 30px;
+            }
 
-   .handle-register button {
-        font-size: 18px;
-        padding: 16px 30px;
-    }
+            .ways-child {
+                padding: 30px;
+                border-radius: 16px;
+            }
 
-     .ways {
-        max-width: 900px;
-        gap: 30px;
-    }
+            .ways-child h6 {
+                font-size: 22px;
+            }
 
-    .ways-child {
-        padding: 30px;
-        border-radius: 16px;
-    }
-
-    .ways-child h6 {
-        font-size: 22px;
-    }
-
-    .ways-child p {
-        font-size: 16px;
-    }
-}
-
+            .ways-child p {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="land-container">
-        <div id="carousel" style="width:600px;height:400px;position:relative;overflow:hidden;">
-    <img src="/images/landing1.png" class="slide">
-    <img src="/images/landing2.png" class="slide">
-    <img src="/images/landing3.png" class="slide">
-    <img src="/images/landing4.png" class="slide">
- <!-- Buttons -->
-    <button id="prevBtn" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:10;">
-        ❮
-    </button>
-    <button id="nextBtn" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:10;">
-        ❯
-    </button>
-</div>
-<!-- Buttons Section -->
-<div class="handle-register">
-    <a href="/register">
-        <button>Create Account</button>
-    </a>
+        <div id="carousel">
+            <img src="/images/landing1.png" class="slide active" alt="VaultJ promo slide 1">
+            <img src="/images/landing2.png" class="slide" alt="VaultJ promo slide 2">
+            <img src="/images/landing3.png" class="slide" alt="VaultJ promo slide 3">
+            <img src="/images/landing4.png" class="slide" alt="VaultJ promo slide 4">
 
-    <a href="/login">
-        <button>Login</button>
-    </a>
-</div>
+            <button id="prevBtn">❮</button>
+            <button id="nextBtn">❯</button>
+        </div>
 
-<div class="ways">
-    <div class="ways-child">
-        🔗
-        <h6>Earn with Your Referral Link</h6>
-        <p>Earn Money by Referring Friends</p>
+        <div class="handle-register">
+            <a href="/register">
+                <button>Create Account</button>
+            </a>
+            <a href="/login">
+                <button>Login</button>
+            </a>
+        </div>
+
+        <div class="ways">
+            <div class="ways-child">
+                <div class="emoji">🔗</div>
+                <h6>Earn with Your Referral Link</h6>
+                <p>Earn Money by Referring Friends</p>
+            </div>
+
+            <div class="ways-child">
+                <div class="emoji">🎡</div>
+                <h6>Earn by Spinning</h6>
+                <p>Spin the Wheel & Collect Points</p>
+            </div>
+
+            <div class="ways-child">
+                <div class="emoji">💰</div>
+                <h6>Earn with VaultJ Coin</h6>
+                <p>Trade Coins, Watch Prices Move</p>
+            </div>
+        </div>
     </div>
 
-    <div class="ways-child">
-        🎡
-        <h6>Earn by Spinning</h6>
-        <p>Spin the Wheel & Collect Points</p>
-    </div>
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentIndex = 0;
+        let isAnimating = false;
+        let autoTimer;
 
-    <div class="ways-child">
-        💰
-        <h6>Earn with VaultJ Coin</h6>
-        <p>Trade Coins, Watch Prices Move</p>
-    </div>
-</div>
+        function fadeToNext(nextIndex) {
+            if (isAnimating || nextIndex === currentIndex) return;
+            isAnimating = true;
 
-
-</div>
-
-<script>
-const slides = document.querySelectorAll('.slide');
-let currentIndex = 0;
-let opacity = 1;
-let isAnimating = false;
-
-// Initial setup
-slides.forEach((img, index) => {
-    img.style.position = "absolute";
-    img.style.top = 0;
-    img.style.left = 0;
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.opacity = index === 0 ? 1 : 0;
-});
-
-// Fade logic
-function fadeToNext(nextIndex) {
-    if (isAnimating) return;
-    isAnimating = true;
-
-    let fadeOut = setInterval(() => {
-        if (opacity <= 0) {
-            clearInterval(fadeOut);
-            slides[currentIndex].style.opacity = 0;
-
+            slides[currentIndex].classList.remove('active');
+            slides[nextIndex].classList.add('active');
             currentIndex = nextIndex;
-            opacity = 0;
 
-            let fadeIn = setInterval(() => {
-                if (opacity >= 1) {
-                    clearInterval(fadeIn);
-                    isAnimating = false;
-                }
-                slides[currentIndex].style.opacity = opacity;
-                opacity += 0.05;
-            }, 50);
-
-        } else {
-            slides[currentIndex].style.opacity = opacity;
-            opacity -= 0.05;
+            setTimeout(() => { isAnimating = false; }, 600);
         }
-    }, 50);
-}
 
-// Next / Prev
-document.getElementById("nextBtn").addEventListener("click", () => {
-    fadeToNext((currentIndex + 1) % slides.length);
-});
+        function nextSlide() {
+            fadeToNext((currentIndex + 1) % slides.length);
+        }
 
-document.getElementById("prevBtn").addEventListener("click", () => {
-    fadeToNext((currentIndex - 1 + slides.length) % slides.length);
-});
+        function prevSlide() {
+            fadeToNext((currentIndex - 1 + slides.length) % slides.length);
+        }
 
-// Auto slide every 4 seconds
-setInterval(() => {
-    fadeToNext((currentIndex + 1) % slides.length);
-}, 4000);
-</script>
-    </div>
+        function resetAutoTimer() {
+            clearInterval(autoTimer);
+            autoTimer = setInterval(nextSlide, 4000);
+        }
+
+        document.getElementById("nextBtn").addEventListener("click", () => {
+            nextSlide();
+            resetAutoTimer();
+        });
+
+        document.getElementById("prevBtn").addEventListener("click", () => {
+            prevSlide();
+            resetAutoTimer();
+        });
+
+        resetAutoTimer();
+    </script>
 </body>
 </html>

@@ -1,0 +1,70 @@
+<style>
+  .site-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--footer-height, 66px);
+    background: var(--dark-blue, #0a1a3c);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
+    z-index: 999;
+  }
+
+  .footer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--light-grey, #e9e9ec);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    flex: 1;
+    padding: 6px 0;
+    transition: color 0.2s ease;
+  }
+
+  .footer-item svg {
+    color: inherit;
+  }
+
+  .footer-item:hover,
+  .footer-item.active {
+    color: var(--gold, #d4af37);
+  }
+
+  /* ===== Responsive ===== */
+  @media (min-width: 600px) and (max-width: 1024px) {
+    .footer-item { font-size: 12px; }
+  }
+
+  @media (min-width: 1025px) {
+    .footer-item { font-size: 13px; }
+    .footer-item svg { width: 24px; height: 24px; }
+  }
+</style>
+
+<footer class="site-footer">
+  <a href="/home" class="footer-item <%= currentPage === 'home' ? 'active' : '' %>">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  <span>Home</span>
+</a>
+
+  <a href="/packages" class="footer-item <%= currentPage === 'packages' ? 'active' : '' %>">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    <span>Packages</span>
+  </a>
+
+  <a href="/vault-jspins" class="footer-item <%= currentPage === 'jspins' ? 'active' : '' %>">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5.5a5 5 0 0 0-10 0"/></svg>
+    <span>Vault J Spins</span>
+  </a>
+
+  <a href="/vault-coin" class="footer-item <%= currentPage === 'coin' ? 'active' : '' %>">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 0 1 0 3H9m0 0h4.5a1.5 1.5 0 0 1 0 3H9"/></svg>
+    <span>Vault Coin</span>
+  </a>
+</footer>

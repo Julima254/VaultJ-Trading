@@ -1,203 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* ===== GLOBAL RESET ===== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - VaultJ Trading</title>
+<style>
+:root {
+  --dark-blue: #0a1930;
+  --dark-blue-2: #112645;
+  --panel: #14294a;
+  --gold: #d4af37;
+  --gold-hover: #e6c453;
+  --green: #1fa971;
+  --light-grey: #d6dae1;
+  --muted-grey: #8f9aad;
+  --border: #23385c;
+  --error: #ff6b6b;
 }
-
-/* ===== BODY & BACKGROUND ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    min-height: 100vh;
-    background: url('/images/login-back.jpg') no-repeat center center fixed;
-    background-size: cover;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+  background: linear-gradient(160deg, var(--dark-blue) 0%, #081222 100%);
+  color: var(--light-grey);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-
-/* ===== REGISTER CARD ===== */
-.register-card {
-    background: rgba(29, 53, 87, 0.95); /* dark blue overlay */
-    padding: 30px 25px;
-    border-radius: 12px;
-    width: 100%;
-    max-width: 380px; /* mobile first */
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    color: #FFD700; /* gold text */
+.auth-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
 }
-
-/* Heading */
-.register-card h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #FFD700;
-    font-size: 1.8rem;
+.brand { text-align: center; margin-bottom: 28px; }
+.brand h1 { color: var(--gold); font-size: 26px; letter-spacing: 1px; }
+.brand span { color: var(--green); }
+.brand p { color: var(--muted-grey); font-size: 13px; margin-top: 4px; }
+h2.form-title { color: var(--light-grey); font-size: 19px; margin-bottom: 20px; font-weight: 600; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: var(--muted-grey); margin-bottom: 6px; }
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--dark-blue-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--light-grey);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
 }
-
-/* Flash messages */
-.flash {
-    padding: 10px 12px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-weight: 500;
+.form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+.form-group input::placeholder { color: #5c6a80; }
+.optional-tag { color: var(--green); font-size: 11px; margin-left: 6px; }
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: var(--gold);
+  color: var(--dark-blue);
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
 }
-.flash.error {  color: #EF476F; }
-.flash.success { color: #06D6A0; }
-
-/* Labels */
-.register-card label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #FFD700;
+.btn-primary:hover { background: var(--gold-hover); }
+.form-footer { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted-grey); }
+.form-footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
+.form-footer a:hover { text-decoration: underline; }
+.error-msg {
+  background: rgba(255,107,107,0.1);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
 }
-
-/* Inputs */
-.register-card input,
-.register-card select {
-    width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: none;
-    outline: none;
-    font-size: 1rem;
-}
-
-/* Focus */
-.register-card input:focus,
-.register-card select:focus {
-    border: 2px solid #10B981; /* green accent */
-    background-color: #f0f0f0;
-}
-
-/* Button */
-.register-card button {
-    width: 100%;
-    padding: 14px;
-    background-color: #FFD700; /* gold */
-    color: #1D3557;
-    font-size: 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s ease;
-}
-.register-card button:hover {
-    background-color: #10B981; /* green */
-    color: #fff;
-}
-
-/* Login link */
-.register-card .login-link {
-    display: block;
-    text-align: center;
-    margin-top: 15px;
-    color: #10B981; /* green */
-    text-decoration: none;
-    font-weight: 600;
-}
-.register-card .login-link:hover {
-    text-decoration: underline;
-}
-
-/* ===== TABLET VIEW ===== */
-@media (min-width: 768px) {
-    .register-card {
-        max-width: 500px;
-        padding: 40px 35px;
-    }
-    .register-card h2 {
-        font-size: 2rem;
-    }
-    .register-card input,
-    .register-card select {
-        font-size: 1.05rem;
-        padding: 13px 15px;
-    }
-    .register-card button {
-        font-size: 1.05rem;
-        padding: 15px;
-    }
-}
-
-/* ===== DESKTOP VIEW ===== */
-@media (min-width: 1024px) {
-    .register-card {
-        max-width: 550px;
-        padding: 50px 40px;
-    }
-    .register-card h2 {
-        font-size: 2.2rem;
-    }
-    .register-card input,
-    .register-card select {
-        font-size: 1.1rem;
-        padding: 14px 16px;
-    }
-    .register-card button {
-        font-size: 1.1rem;
-        padding: 16px;
-    }
-}
-
-    </style>
+</style>
 </head>
 <body>
-     <div class="register-card">
-        <h2>Create VaultJ Account</h2>
-
-        <!-- Flash messages -->
-        <% if (error) { %>
-            <div class="flash error"><%= error %></div>
-        <% } %>
-        <% if (success) { %>
-            <div class="flash success"><%= success %></div>
-        <% } %>
-
-        <form action="/register" method="POST">
-            <label>Username</label>
-                <input type="text" name="username" placeholder="Username" required>
-
-                <label>Email</label>
-                <input type="email" name="email" placeholder="Enter your email" required>
-
-                <label>Phone Number</label>
-                <input type="tel" name="phone" placeholder="Enter your phone number" required pattern="[0-9]{10,15}">
-
-                <label>Country</label>
-                <select name="country" required>
-                    <option value="">Select your country</option>
-                    <option value="Kenya">Kenya</option>
-                    <option value="Uganda">Uganda</option>
-                    <option value="Tanzania">Tanzania</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                </select>
-
-                <label>Invitation Code</label>
-                <input type="text" name="invitationCode" placeholder="Enter invitation code">
-
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Password" required>
-
-                <label>Confirm Password</label>
-                <input type="password" name="confirmPassword" placeholder="Confirm password" required>
-
-            <button type="submit">Register</button>
-        </form>
-
-        <a href="/login" class="login-link">Already have an account? Login</a>
+  <div class="auth-card">
+    <div class="brand">
+      <h1>Vault<span>J</span> Trading</h1>
+      <p>Create your trading account</p>
     </div>
+
+    <h2 class="form-title">Register</h2>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-msg"><%= error %></div>
+    <% } %>
+
+    <form action="/register" method="POST">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Choose a username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" placeholder="e.g. 0741 058 364" required>
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country</label>
+        <select id="country" name="country" required>
+          <option value="" disabled selected>Select your country</option>
+          <option value="Kenya">Kenya</option>
+          <option value="Uganda">Uganda</option>
+          <option value="Tanzania">Tanzania</option>
+          <option value="Nigeria">Nigeria</option>
+          <option value="South Africa">South Africa</option>
+          <option value="Ghana">Ghana</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="invitationCode">Invitation Code <span class="optional-tag">(optional)</span></label>
+        <input type="text" id="invitationCode" name="invitationCode" placeholder="Enter invitation code">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Create a password" required>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+      </div>
+
+      <button type="submit" class="btn-primary">Create Account</button>
+    </form>
+
+    <div class="form-footer">
+      Already have an account? <a href="/login">Log In</a>
+    </div>
+  </div>
 </body>
 </html>
