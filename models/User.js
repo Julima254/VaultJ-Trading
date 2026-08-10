@@ -21,6 +21,21 @@ const userSchema = new mongoose.Schema(
     spinningBalance: { type: Number, default: 0 },
     coinBalance: { type: Number, default: 0 },
 
+    // ---- New fields for home dashboard ----
+    package: { type: String, default: "No Active Package" },
+    packagePrice: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: false }, // becomes true after first package purchase
+    walletBalance: { type: Number, default: 0 },
+    referralEarnings: { type: Number, default: 0 },
+    totalReferrals: { type: Number, default: 0 },
+    depositBalance: { type: Number, default: 0 },
+    spinningBalance: { type: Number, default: 0 },
+    coinBalance: { type: Number, default: 0 },
+
+    // ---- Referral linkage ----
+    referralCode: { type: String, unique: true, sparse: true }, // this user's own shareable code
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+
     // ---- Admin ----
     isAdmin: { type: Boolean, default: false },
   },

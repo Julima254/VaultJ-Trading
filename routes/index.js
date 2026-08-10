@@ -56,12 +56,23 @@ router.post("/register", async (req, res) => {
       return res.render("register", { error: "Username or email already in use." });
     }
 
+    // ---- Link this user to whoever referred them (if a valid code was entered) ----
+    let referredBy = null;
+    if (invitationCode) {
+      const referrer = await User.findOne({ referralCode: invitationCode });
+      if (referrer) {
+        referredBy = referrer._id;
+      }
+    }
+
     const newUser = new User({
       username,
       email,
       phone,
       country,
       invitationCode: invitationCode || null,
+      referredBy,
+      referralCode: username, // this user's own shareable code — others enter this as their invitationCode
       password, // hashed automatically by the pre-save hook
     });
 

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Packages</title>
+  <style>
+    body {
+      background: #f0f0f0; /* light grey */
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background: #0a1f44; /* dark blue */
+      color: #fff;
+      padding: 25px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      color: #ffd700; /* gold */
+      font-size: 26px;
+    }
+    .status-banner {
+      max-width: 900px;
+      margin: 20px auto 0;
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .status-error {
+      background: #ffe0e0;
+      color: #a10000;
+      border: 1px solid #a10000;
+    }
+    .status-success {
+      background: #e3f8e6;
+      color: #1a7a2e; /* green */
+      border: 1px solid #1a7a2e;
+    }
+    .current-package {
+      max-width: 900px;
+      margin: 20px auto;
+      background: #fff;
+      border-left: 6px solid #0a1f44;
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .current-package span {
+      color: #ffd700;
+      background: #0a1f44;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .grid {
+      max-width: 1100px;
+      margin: 30px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 0 20px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #d9d9d9;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-header {
+      background: #0a1f44;
+      color: #ffd700;
+      text-align: center;
+      padding: 18px 10px;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    .card-body {
+      padding: 20px;
+      text-align: center;
+      flex-grow: 1;
+      background: #f7f7f7; /* light grey */
+    }
+    .price {
+      font-size: 28px;
+      font-weight: bold;
+      color: #0a1f44;
+      margin: 10px 0;
+    }
+    .referral {
+      color: #1a7a2e; /* green */
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .buy-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      background: #ffd700; /* gold */
+      color: #0a1f44;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .buy-btn:hover {
+      background: #e6c200;
+    }
+    .active-badge {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      background: #1a7a2e;
+      color: #fff;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+  <div class="header">
+    <h1>Choose Your Package</h1>
+  </div>
+
+  <% if (error) { %>
+    <div class="status-banner status-error"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="status-banner status-success"><%= success %></div>
+  <% } %>
+
+  <div class="current-package">
+    Current package: <span><%= user.package %></span>
+    &nbsp;|&nbsp; Status:
+    <span style="background:<%= user.isActive ? '#1a7a2e' : '#a10000' %>">
+      <%= user.isActive ? 'Active' : 'Inactive' %>
+    </span>
+    <br><br>
+    Deposit Balance: <strong>Ksh <%= user.depositBalance %></strong>
+    &nbsp;|&nbsp;
+    Wallet Balance: <strong>Ksh <%= user.walletBalance %></strong>
+  </div>
+
+  <div class="grid">
+    <% Object.keys(packages).forEach(key => { const pkg = packages[key]; %>
+      <div class="card">
+        <div class="card-header">
+          <h2><%= pkg.name %></h2>
+        </div>
+        <div class="card-body">
+          <div class="price">Ksh <%= pkg.price %></div>
+          <div class="referral"><%= pkg.referral * 100 %>% Referral Earning</div>
+        </div>
+        <% if (user.package === pkg.name && user.isActive) { %>
+          <div class="active-badge">✓ Current Package</div>
+        <% } else { %>
+          <form action="/packages/buy" method="POST">
+            <input type="hidden" name="packageKey" value="<%= key %>">
+            <button type="submit" class="buy-btn">Buy Now</button>
+          </form>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+<%- include('partials/footer') %>
+</body>
+</html>
