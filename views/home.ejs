@@ -59,6 +59,29 @@
       color: var(--green);
     }
 
+
+    @media (max-width: 600px) {
+  .stat-card {
+    flex: 1 1 calc(50% - 7px);
+    min-width: 0;
+    padding: 14px 12px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 16px;
+  }
+
+  .stats-row {
+    padding: 14px;
+    gap: 14px;
+  }
+}
+
     .stat-value.package-value {
       color: #fff;
     }
@@ -142,6 +165,7 @@
       background: var(--dark-blue-light);
       border-radius: 10px;
     }
+  
   </style>
 </head>
 <body>

@@ -20,6 +20,9 @@ const userSchema = new mongoose.Schema(
     depositBalance: { type: Number, default: 0 },
     spinningBalance: { type: Number, default: 0 },
     coinBalance: { type: Number, default: 0 },
+
+    // ---- Admin ----
+    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
