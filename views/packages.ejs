@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Packages</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       background: #f0f0f0; /* light grey */
       font-family: Arial, Helvetica, sans-serif;
@@ -53,6 +57,7 @@
       padding: 2px 10px;
       border-radius: 4px;
       font-weight: bold;
+      display: inline-block;
     }
     .grid {
       max-width: 1100px;
@@ -120,6 +125,63 @@
       background: #1a7a2e;
       color: #fff;
       font-weight: bold;
+    }
+
+    /* --- Mobile responsiveness --- */
+    @media (max-width: 600px) {
+      .header {
+        padding: 20px 15px;
+      }
+      .header h1 {
+        font-size: 22px;
+      }
+      .status-banner {
+        margin: 15px 15px 0;
+        font-size: 14px;
+      }
+      .current-package {
+        margin: 15px;
+        padding: 15px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .current-package br {
+        display: none;
+      }
+      .current-package span {
+        margin: 4px 0;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+        padding: 0 15px;
+        gap: 15px;
+        margin: 20px auto;
+      }
+      .card-header {
+        padding: 14px 10px;
+      }
+      .card-header h2 {
+        font-size: 18px;
+      }
+      .price {
+        font-size: 24px;
+      }
+      .buy-btn {
+        padding: 14px;
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .header h1 {
+        font-size: 20px;
+      }
+      .price {
+        font-size: 22px;
+      }
+      .current-package {
+        font-size: 13px;
+      }
     }
   </style>
 </head>
