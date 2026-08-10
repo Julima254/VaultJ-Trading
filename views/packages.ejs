@@ -64,34 +64,47 @@
       margin: 30px auto;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
+      gap: 24px;
       padding: 0 20px;
     }
+
+    /* --- Base card --- */
     .card {
+      position: relative;
       background: #ffffff;
-      border: 1px solid #d9d9d9;
-      border-radius: 10px;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
+    .card:hover {
+      transform: translateY(-6px);
+    }
+
     .card-header {
-      background: #0a1f44;
-      color: #ffd700;
       text-align: center;
-      padding: 18px 10px;
+      padding: 22px 10px 14px;
+      position: relative;
+    }
+    .icon {
+      font-size: 34px;
+      display: block;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
     }
     .card-header h2 {
       margin: 0;
       font-size: 20px;
       letter-spacing: 1px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     .card-body {
       padding: 20px;
       text-align: center;
       flex-grow: 1;
-      background: #f7f7f7; /* light grey */
+      background: #fdfdfd;
     }
     .price {
       font-size: 28px;
@@ -100,23 +113,24 @@
       margin: 10px 0;
     }
     .referral {
-      color: #1a7a2e; /* green */
       font-weight: bold;
       margin-bottom: 15px;
+      color: #1a7a2e;
     }
     .buy-btn {
       display: block;
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       border: none;
-      background: #ffd700; /* gold */
-      color: #0a1f44;
       font-weight: bold;
       font-size: 15px;
       cursor: pointer;
+      color: #fff;
+      letter-spacing: 0.5px;
+      transition: filter 0.2s ease;
     }
     .buy-btn:hover {
-      background: #e6c200;
+      filter: brightness(1.1);
     }
     .active-badge {
       display: block;
@@ -125,6 +139,92 @@
       background: #1a7a2e;
       color: #fff;
       font-weight: bold;
+    }
+
+    /* --- Themed color cycles (4 tiers, repeats if more packages) --- */
+
+    /* Tier 1 — Bronze */
+    .card:nth-child(4n+1) {
+      border: 1px solid #cd8a4f;
+      box-shadow: 0 0 18px rgba(205, 138, 79, 0.35);
+    }
+    .card:nth-child(4n+1):hover {
+      box-shadow: 0 0 30px rgba(205, 138, 79, 0.65);
+    }
+    .card:nth-child(4n+1) .card-header {
+      background: linear-gradient(135deg, #a9642f, #cd8a4f);
+    }
+    .card:nth-child(4n+1) .buy-btn {
+      background: #cd8a4f;
+    }
+    .card:nth-child(4n+1) .referral { color: #a9642f; }
+
+    /* Tier 2 — Silver */
+    .card:nth-child(4n+2) {
+      border: 1px solid #9aa5b1;
+      box-shadow: 0 0 18px rgba(154, 165, 177, 0.4);
+    }
+    .card:nth-child(4n+2):hover {
+      box-shadow: 0 0 30px rgba(154, 165, 177, 0.7);
+    }
+    .card:nth-child(4n+2) .card-header {
+      background: linear-gradient(135deg, #6b7280, #9aa5b1);
+    }
+    .card:nth-child(4n+2) .buy-btn {
+      background: #6b7280;
+    }
+    .card:nth-child(4n+2) .referral { color: #4b5563; }
+
+    /* Tier 3 — Gold */
+    .card:nth-child(4n+3) {
+      border: 1px solid #ffd700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.45);
+    }
+    .card:nth-child(4n+3):hover {
+      box-shadow: 0 0 34px rgba(255, 215, 0, 0.8);
+    }
+    .card:nth-child(4n+3) .card-header {
+      background: linear-gradient(135deg, #b8860b, #ffd700);
+    }
+    .card:nth-child(4n+3) .card-header h2 {
+      color: #0a1f44;
+      text-shadow: none;
+    }
+    .card:nth-child(4n+3) .buy-btn {
+      background: #ffd700;
+      color: #0a1f44;
+    }
+    .card:nth-child(4n+3) .referral { color: #b8860b; }
+
+    /* Tier 4 — Platinum / Diamond */
+    .card:nth-child(4n+4) {
+      border: 1px solid #00c9d1;
+      box-shadow: 0 0 20px rgba(0, 201, 209, 0.45);
+    }
+    .card:nth-child(4n+4):hover {
+      box-shadow: 0 0 34px rgba(0, 201, 209, 0.8);
+    }
+    .card:nth-child(4n+4) .card-header {
+      background: linear-gradient(135deg, #0a1f44, #00c9d1);
+    }
+    .card:nth-child(4n+4) .buy-btn {
+      background: #00c9d1;
+    }
+    .card:nth-child(4n+4) .referral { color: #0891a3; }
+
+    /* Icons per tier (using unicode, no external assets needed) */
+    .card:nth-child(4n+1) .icon::before { content: "🥉"; }
+    .card:nth-child(4n+2) .icon::before { content: "🥈"; }
+    .card:nth-child(4n+3) .icon::before { content: "🥇"; }
+    .card:nth-child(4n+4) .icon::before { content: "💎"; }
+
+    /* Active package glow pulse */
+    .card.is-active {
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 18px rgba(26, 122, 46, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(26, 122, 46, 0.8); }
     }
 
     /* --- Mobile responsiveness --- */
@@ -154,14 +254,17 @@
       .grid {
         grid-template-columns: 1fr;
         padding: 0 15px;
-        gap: 15px;
+        gap: 18px;
         margin: 20px auto;
       }
       .card-header {
-        padding: 14px 10px;
+        padding: 18px 10px 12px;
       }
       .card-header h2 {
         font-size: 18px;
+      }
+      .icon {
+        font-size: 30px;
       }
       .price {
         font-size: 24px;
@@ -212,16 +315,17 @@
   </div>
 
   <div class="grid">
-    <% Object.keys(packages).forEach(key => { const pkg = packages[key]; %>
-      <div class="card">
+    <% Object.keys(packages).forEach(key => { const pkg = packages[key]; const isCurrent = user.package === pkg.name && user.isActive; %>
+      <div class="card<%= isCurrent ? ' is-active' : '' %>">
         <div class="card-header">
+          <span class="icon"></span>
           <h2><%= pkg.name %></h2>
         </div>
         <div class="card-body">
           <div class="price">Ksh <%= pkg.price %></div>
           <div class="referral"><%= pkg.referral * 100 %>% Referral Earning</div>
         </div>
-        <% if (user.package === pkg.name && user.isActive) { %>
+        <% if (isCurrent) { %>
           <div class="active-badge">✓ Current Package</div>
         <% } else { %>
           <form action="/packages/buy" method="POST">
