@@ -1,0 +1,201 @@
+
+<style>
+  :root {
+    --dark-blue: #0a1a3c;
+    --gold: #d4af37;
+    --green: #1a8a4c;
+    --light-gray: #f2f2f2;
+  }
+
+  * { box-sizing: border-box; }
+
+  /* ===== Top bar (mobile/tablet only) ===== */
+  .admin-topbar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--dark-blue);
+    padding: 12px 16px;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    z-index: 1001;
+  }
+
+  .admin-topbar .logo-link img {
+    height: 36px;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+  }
+
+  .hamburger-btn span {
+    display: block;
+    width: 26px;
+    height: 3px;
+    background: var(--gold);
+    margin: 5px 0;
+    border-radius: 2px;
+    transition: 0.3s;
+  }
+
+  /* ===== Sidebar ===== */
+  .admin-sidebar {
+    background: var(--dark-blue);
+    width: 240px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+
+  .admin-sidebar .logo-container {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  }
+
+  .admin-sidebar .logo-container img {
+    max-width: 130px;
+  }
+
+  .admin-sidebar nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+
+  .admin-sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    color: var(--light-gray);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .admin-sidebar nav a:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-left-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .admin-sidebar nav a.active {
+    background: rgba(26, 138, 76, 0.25);
+    border-left-color: var(--green);
+    color: var(--gold);
+  }
+
+  .admin-sidebar .logout-link {
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    color: var(--gold) !important;
+  }
+
+  /* ===== Overlay (mobile/tablet) ===== */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  /* ===== Desktop (fixed left sidebar) ===== */
+  @media (min-width: 993px) {
+    .admin-sidebar {
+      left: 0 !important;
+    }
+    .admin-topbar {
+      display: none !important;
+    }
+    .admin-content-push {
+      margin-left: 240px;
+    }
+  }
+
+  /* ===== Mobile & Tablet (hamburger) ===== */
+  @media (max-width: 992px) {
+    .admin-topbar {
+      display: flex;
+    }
+    .admin-sidebar {
+      left: -260px;
+      top: 0;
+      padding-top: 0;
+    }
+    .admin-sidebar.open {
+      left: 0;
+    }
+    .sidebar-overlay.show {
+      display: block;
+    }
+    .admin-content-push {
+      margin-top: 60px;
+    }
+  }
+</style>
+
+<!-- Top bar for mobile/tablet -->
+<div class="admin-topbar">
+  <a href="/dashboard" class="logo-link">
+    <img src="/images/logo.png" alt="Logo">
+  </a>
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</div>
+
+<!-- Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="logo-container">
+    <a href="/dashboard">
+      <img src="/images/logo.png" alt="Logo">
+    </a>
+  </div>
+
+  <nav>
+    <a href="/admin" class="<%= typeof page !== 'undefined' && page === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+    <a href="/admin/users" class="<%= typeof page !== 'undefined' && page === 'users' ? 'active' : '' %>">User Management</a>
+    <a href="/admin/payments" class="<%= typeof page !== 'undefined' && page === 'payments' ? 'active' : '' %>">Payments</a>
+    <a href="/admin/withdrawals" class="<%= typeof page !== 'undefined' && page === 'withdrawals' ? 'active' : '' %>">Withdrawals</a>
+    <a href="/admin/referrals" class="<%= typeof page !== 'undefined' && page === 'referrals' ? 'active' : '' %>">Referrals</a>
+    <a href="/admin/packages" class="<%= typeof page !== 'undefined' && page === 'packages' ? 'active' : '' %>">Packages</a>
+    <a href="/admin/spins" class="<%= typeof page !== 'undefined' && page === 'spins' ? 'active' : '' %>">Spins</a>
+    <a href="/admin/vault" class="<%= typeof page !== 'undefined' && page === 'vault' ? 'active' : '' %>">Vault</a>
+    <a href="/admin/jcoin" class="<%= typeof page !== 'undefined' && page === 'jcoin' ? 'active' : '' %>">J Coin</a>
+    <a href="/logout" class="logout-link">Logout</a>
+  </nav>
+</aside>
+
+<script>
+  (function () {
+    const btn = document.getElementById('hamburgerBtn');
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    function toggleSidebar() {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('show');
+    }
+
+    if (btn) btn.addEventListener('click', toggleSidebar);
+    if (overlay) overlay.addEventListener('click', toggleSidebar);
+  })();
+</script>

@@ -61,6 +61,16 @@
     border-radius: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .badge-admin:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
   }
 
   .header-username {
@@ -225,7 +235,7 @@
 
       <% if (user) { %>
         <% if (user.isAdmin) { %>
-          <span class="badge badge-admin">Admin</span>
+          <a href="/admin" class="badge-admin">Admin</a>
         <% } %>
 
         <span class="header-username"><%= user.username %></span>

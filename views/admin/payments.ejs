@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payments — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
+
+    /* ---- Fixed sidebar ---- */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
+
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
+
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
+
+    /* ---- Summary cards ---- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card.pending { border-top-color: var(--gold); }
+    .card.deposits { border-top-color: var(--green); }
+    .card.withdrawals { border-top-color: var(--dark-blue); }
+    .card.failed { border-top-color: var(--red); }
+
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .filter-bar button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .filter-bar button:hover { background: var(--dark-blue-light); }
+
+    .filter-bar a.clear {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      align-self: center;
+    }
+
+    /* ---- Quick status chips ---- */
+    .chips { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      background: var(--white);
+    }
+
+    .chip.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    /* ---- Table ---- */
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover { background: #fafbfc; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge.pending { background: #fdf4dd; color: #8a6d1a; }
+    .badge.completed { background: #e3f5ec; color: var(--green); }
+    .badge.failed { background: #fbe6e3; color: var(--red); }
+
+    .type-tag {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .type-tag.deposit { color: var(--green); }
+    .type-tag.withdraw { color: var(--dark-blue); }
+
+    .amount { font-weight: 700; }
+
+    .actions button {
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+
+    .actions .approve { background: var(--green); color: var(--white); }
+    .actions .reject { background: var(--red); color: var(--white); }
+    .actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    /* ---- Pagination ---- */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 0 4px;
+    }
+
+    .pagination a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .pagination a.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+   <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Payments</h1>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card pending">
+        <div class="label">Pending (<%= summary.pendingCount %>)</div>
+        <div class="value">KES <%= summary.pendingSum.toLocaleString() %></div>
+      </div>
+      <div class="card deposits">
+        <div class="label">Completed Deposits</div>
+        <div class="value">KES <%= summary.completedDepositSum.toLocaleString() %></div>
+      </div>
+      <div class="card withdrawals">
+        <div class="label">Completed Withdrawals</div>
+        <div class="value">KES <%= summary.completedWithdrawSum.toLocaleString() %></div>
+      </div>
+      <div class="card failed">
+        <div class="label">Failed</div>
+        <div class="value"><%= summary.failedCount %></div>
+      </div>
+    </div>
+
+    <!-- Quick status chips -->
+    <div class="chips">
+      <% ['all','pending','completed','failed'].forEach(function(s) { %>
+        <a class="chip <%= filters.status === s ? 'active' : '' %>"
+           href="/admin/payments?type=<%= filters.type %>&method=<%= filters.method %>&status=<%= s %>&search=<%= filters.search %>">
+          <%= s.charAt(0).toUpperCase() + s.slice(1) %>
+        </a>
+      <% }) %>
+    </div>
+
+    <!-- Filter bar -->
+    <form class="filter-bar" method="GET" action="/admin/payments">
+      <div class="filter-group">
+        <label>Type</label>
+        <select name="type">
+          <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>All</option>
+          <option value="deposit" <%= filters.type === 'deposit' ? 'selected' : '' %>>Deposit</option>
+          <option value="withdraw" <%= filters.type === 'withdraw' ? 'selected' : '' %>>Withdraw</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All</option>
+          <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+          <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Method</label>
+        <select name="method">
+          <option value="all" <%= filters.method === 'all' ? 'selected' : '' %>>All</option>
+          <option value="stk" <%= filters.method === 'stk' ? 'selected' : '' %>>STK Push</option>
+          <option value="manual" <%= filters.method === 'manual' ? 'selected' : '' %>>Manual</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Search (username, email, M-Pesa code)</label>
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="e.g. QAB12CD or jane@doe.com" />
+      </div>
+
+      <button type="submit">Apply</button>
+      <a class="clear" href="/admin/payments">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Type</th>
+            <th>Method</th>
+            <th>Amount</th>
+            <th>Code</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (transactions.length === 0) { %>
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">No transactions match these filters.</div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% transactions.forEach(function(tx) { %>
+              <tr data-id="<%= tx._id %>">
+                <td><%= new Date(tx.createdAt).toLocaleString() %></td>
+                <td>
+                  <%= tx.userId ? (tx.userId.username || tx.userId.email) : 'Unknown user' %>
+                </td>
+                <td><span class="type-tag <%= tx.type %>"><%= tx.type %></span></td>
+                <td><%= tx.method || 'stk' %></td>
+                <td class="amount">KES <%= tx.amount.toLocaleString() %></td>
+                <td><%= tx.code || '—' %></td>
+                <td><span class="badge <%= tx.status %>"><%= tx.status %></span></td>
+                <td class="actions">
+                  <% if (tx.status === 'pending') { %>
+                    <button class="approve" onclick="reviewPayment('<%= tx._id %>', 'approve')">Approve</button>
+                    <button class="reject" onclick="reviewPayment('<%= tx._id %>', 'reject')">Reject</button>
+                  <% } else { %>
+                    <span style="color:#9aa1ab;font-size:12px;">Reviewed</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+        <a class="<%= p === pagination.currentPage ? 'active' : '' %>"
+           href="/admin/payments?type=<%= filters.type %>&status=<%= filters.status %>&method=<%= filters.method %>&search=<%= filters.search %>&page=<%= p %>">
+          <%= p %>
+        </a>
+      <% } %>
+    </div>
+  </main>
+
+  <script>
+    async function reviewPayment(id, action) {
+      const confirmMsg = action === "approve"
+        ? "Approve this transaction? This will update the user's balance."
+        : "Reject this transaction?";
+      if (!confirm(confirmMsg)) return;
+
+      let reason = "";
+      if (action === "reject") {
+        reason = prompt("Reason for rejection (optional):") || "";
+      }
+
+      try {
+        const res = await fetch(`/admin/payments/${id}/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.message || "Something went wrong.");
+        }
+      } catch (err) {
+        alert("Network error. Please try again.");
+      }
+    }
+  </script>
+</body>
+</html>

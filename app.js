@@ -8,6 +8,7 @@ const indexRoutes = require("./routes/index");
 const homeRoutes = require("./routes/home");
 const depositRoutes = require("./routes/deposit");
 const packagesRoutes = require("./routes/packages");
+const adminRoutes = require("./routes/admin");
 
 
 const app = express();
@@ -62,7 +63,9 @@ app.use(async (req, res, next) => {
 app.use("/", indexRoutes);
 app.use("/", homeRoutes);
 app.use("/", depositRoutes);
-app.use("/", packagesRoutes)
+app.use("/", packagesRoutes);
+app.use("/", adminRoutes);
+app.use("/", require("./routes/adminPayments"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
