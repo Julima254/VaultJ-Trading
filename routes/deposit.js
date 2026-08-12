@@ -10,13 +10,24 @@ function requireLogin(req, res, next) {
 }
 
 // Credit a user's deposit: goes to depositBalance while inactive,
-// walletBalance once the user is active. Done atomically.
+// walletBalance once the user is active.
+//
+// Atomic: uses a single findOneAndUpdate with isActive in the query filter,
+// so there's no read-then-write gap where the user could activate in between
+// (which was causing the same deposit to land in BOTH fields).
 async function creditDeposit(userId, amount) {
-  const depositor = await User.findById(userId).select("isActive");
-  if (!depositor) return;
+  const creditedInactive = await User.findOneAndUpdate(
+    { _id: userId, isActive: false },
+    { $inc: { depositBalance: amount } }
+  );
 
-  const incField = depositor.isActive ? "walletBalance" : "depositBalance";
-  await User.findByIdAndUpdate(userId, { $inc: { [incField]: amount } });
+  if (!creditedInactive) {
+    // Either user doesn't exist, or isActive was true — try crediting wallet instead
+    await User.findOneAndUpdate(
+      { _id: userId, isActive: true },
+      { $inc: { walletBalance: amount } }
+    );
+  }
 }
 
 // GET /deposit — show the deposit page
@@ -102,8 +113,23 @@ router.post("/daraja/callback", express.json(), async (req, res) => {
 
     const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = callback;
 
-    const tx = await Transaction.findOne({ checkoutRequestId: CheckoutRequestID });
-    if (!tx) return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    // Atomically claim this transaction for processing — flips status away from
+    // "pending" in the same operation that reads it, so if Safaricom retries the
+    // same callback (which it does on timeout), the second call finds status is
+    // no longer "pending" and does nothing. This is what was causing the same
+    // deposit to be credited twice (once to depositBalance, once to walletBalance
+    // after the user activated in between).
+    const tx = await Transaction.findOneAndUpdate(
+      { checkoutRequestId: CheckoutRequestID, status: "pending" },
+      { $set: { status: "processing" } },
+      { new: true }
+    );
+
+    if (!tx) {
+      // Either no such transaction, or it was already processed/claimed —
+      // safe to just ack and stop.
+      return res.json({ ResultCode: 0, ResultDesc: "Accepted" });
+    }
 
     if (ResultCode === 0) {
       const items = CallbackMetadata?.Item || [];
@@ -190,15 +216,23 @@ router.get("/admin/deposits/pending", requireLogin, requireAdmin, async (req, re
 // POST /admin/deposits/:id/approve
 router.post("/admin/deposits/:id/approve", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const tx = await Transaction.findById(req.params.id);
-    if (!tx || tx.status !== "pending") {
+    // Atomically claim the transaction the same way the callback does, so a
+    // double-click or duplicate request can't run creditDeposit twice.
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, status: "pending" },
+      {
+        $set: {
+          status: "completed",
+          reviewedBy: req.session.userId,
+          reviewedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!tx) {
       return res.status(400).json({ success: false, message: "Transaction not found or already reviewed." });
     }
-
-    tx.status = "completed";
-    tx.reviewedBy = req.session.userId;
-    tx.reviewedAt = new Date();
-    await tx.save();
 
     await creditDeposit(tx.userId, tx.amount);
 
@@ -212,16 +246,22 @@ router.post("/admin/deposits/:id/approve", requireLogin, requireAdmin, async (re
 // POST /admin/deposits/:id/reject
 router.post("/admin/deposits/:id/reject", requireLogin, requireAdmin, async (req, res) => {
   try {
-    const tx = await Transaction.findById(req.params.id);
-    if (!tx || tx.status !== "pending") {
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, status: "pending" },
+      {
+        $set: {
+          status: "failed",
+          reviewedBy: req.session.userId,
+          reviewedAt: new Date(),
+          note: req.body.reason || "Rejected by admin",
+        },
+      },
+      { new: true }
+    );
+
+    if (!tx) {
       return res.status(400).json({ success: false, message: "Transaction not found or already reviewed." });
     }
-
-    tx.status = "failed";
-    tx.reviewedBy = req.session.userId;
-    tx.reviewedAt = new Date();
-    tx.note = req.body.reason || "Rejected by admin";
-    await tx.save();
 
     res.json({ success: true });
   } catch (err) {
