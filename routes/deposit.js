@@ -9,6 +9,16 @@ function requireLogin(req, res, next) {
   next();
 }
 
+// Credit a user's deposit: goes to depositBalance while inactive,
+// walletBalance once the user is active. Done atomically.
+async function creditDeposit(userId, amount) {
+  const depositor = await User.findById(userId).select("isActive");
+  if (!depositor) return;
+
+  const incField = depositor.isActive ? "walletBalance" : "depositBalance";
+  await User.findByIdAndUpdate(userId, { $inc: { [incField]: amount } });
+}
+
 // GET /deposit — show the deposit page
 router.get("/deposit", requireLogin, (req, res) => {
   res.render("deposit", {
@@ -44,7 +54,7 @@ router.post("/deposit/stk", requireLogin, async (req, res) => {
     }
 
     await Transaction.create({
-      user: req.session.userId,
+      userId: req.session.userId,
       type: "deposit",
       amount: amt,
       phone: daraja.formatPhone(phone),
@@ -73,7 +83,7 @@ router.get("/deposit/status/:checkoutRequestId", requireLogin, async (req, res) 
   try {
     const tx = await Transaction.findOne({
       checkoutRequestId: req.params.checkoutRequestId,
-      user: req.session.userId,
+      userId: req.session.userId,
     });
 
     if (!tx) return res.status(404).json({ status: "not_found" });
@@ -104,9 +114,7 @@ router.post("/daraja/callback", express.json(), async (req, res) => {
       tx.amount = get("Amount") || tx.amount;
       await tx.save();
 
-      await User.findByIdAndUpdate(tx.user, {
-        $inc: { walletBalance: tx.amount, depositBalance: tx.amount },
-      });
+      await creditDeposit(tx.userId, tx.amount);
     } else {
       tx.status = "failed";
       tx.note = ResultDesc;
@@ -192,9 +200,7 @@ router.post("/admin/deposits/:id/approve", requireLogin, requireAdmin, async (re
     tx.reviewedAt = new Date();
     await tx.save();
 
-    await User.findByIdAndUpdate(tx.userId, {
-      $inc: { walletBalance: tx.amount, depositBalance: tx.amount },
-    });
+    await creditDeposit(tx.userId, tx.amount);
 
     res.json({ success: true });
   } catch (err) {

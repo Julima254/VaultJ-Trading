@@ -12,16 +12,7 @@ const userSchema = new mongoose.Schema(
     resetToken: { type: String, default: null },
     resetTokenExpires: { type: Date, default: null },
 
-    // ---- New fields for home dashboard ----
-    package: { type: String, default: "No Active Package" },
-    walletBalance: { type: Number, default: 0 },
-    referralEarnings: { type: Number, default: 0 },
-    totalReferrals: { type: Number, default: 0 },
-    depositBalance: { type: Number, default: 0 },
-    spinningBalance: { type: Number, default: 0 },
-    coinBalance: { type: Number, default: 0 },
-
-    // ---- New fields for home dashboard ----
+    // ---- Home dashboard ----
     package: { type: String, default: "No Active Package" },
     packagePrice: { type: Number, default: 0 },
     isActive: { type: Boolean, default: false }, // becomes true after first package purchase
