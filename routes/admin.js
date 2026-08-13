@@ -4,6 +4,8 @@ const router = express.Router();
 const requireAdmin = require("../middleware/requireAdmin");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
+const PACKAGES = require("../config/packages");
+
 
 router.get("/admin", requireAdmin, async (req, res) => {
   try {
@@ -93,8 +95,6 @@ router.get("/admin", requireAdmin, async (req, res) => {
     };
 
     // ---- Platform profit (simple model: deposits - withdrawals) ----
-    // Adjust this formula to match your actual business logic
-    // (e.g. subtract referral payouts, spin payouts, package costs, etc.)
     const platformProfit = totalDeposits - totalWithdrawals;
 
     // ---- Chart data: deposits vs withdrawals per day (last 7 days) ----
@@ -191,5 +191,120 @@ router.get("/admin", requireAdmin, async (req, res) => {
     res.status(500).send("Something went wrong loading the admin dashboard.");
   }
 });
+
+router.get("/admin/packages", requireAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}, "package username email createdAt").lean();
+
+    const totalUsers = users.length;
+
+    // Build a lookup so we can match a user's stored package value
+    // (which may be the package NAME, e.g. "Gold") back to its config KEY (e.g. "gold").
+    const nameToKey = {};
+    Object.entries(PACKAGES).forEach(([key, pkg]) => {
+      if (pkg.name) {
+        nameToKey[pkg.name.trim().toLowerCase()] = key;
+      }
+    });
+
+    function resolvePackageKey(rawValue) {
+      if (!rawValue) return null;
+      // Case 1: value is already a valid key (e.g. "gold")
+      if (PACKAGES[rawValue]) return rawValue;
+      // Case 2: value is the display name (e.g. "Gold") - match case-insensitively
+      const match = nameToKey[rawValue.trim().toLowerCase()];
+      return match || null;
+    }
+
+    // ---- Per-package stats ----
+    const stats = {};
+    Object.keys(PACKAGES).forEach((key) => {
+      stats[key] = { activeUsers: 0, revenue: 0 };
+    });
+
+    let usersWithPackage = 0;
+
+    users.forEach((u) => {
+      const key = resolvePackageKey(u.package);
+      if (key) {
+        stats[key].activeUsers += 1;
+        stats[key].revenue += PACKAGES[key].price || 0;
+        usersWithPackage += 1;
+      }
+    });
+
+    const usersWithNoPackage = totalUsers - usersWithPackage;
+    const adoptionRate =
+      totalUsers > 0
+        ? ((usersWithPackage / totalUsers) * 100).toFixed(1)
+        : "0.0";
+
+    // ---- Recent package activity: last 10 users with a resolvable package ----
+    const recentActivity = users
+      .map((u) => ({ ...u, resolvedKey: resolvePackageKey(u.package) }))
+      .filter((u) => u.resolvedKey)
+      .sort((a, b) => {
+        const aDate = a.createdAt ? new Date(a.createdAt) : a._id.getTimestamp();
+        const bDate = b.createdAt ? new Date(b.createdAt) : b._id.getTimestamp();
+        return bDate - aDate;
+      })
+      .slice(0, 10)
+      .map((u) => ({
+        name: u.username || u.email || "Unknown user",
+        packageKey: u.resolvedKey,
+        packageName: PACKAGES[u.resolvedKey].name,
+        date: u.createdAt ? new Date(u.createdAt) : u._id.getTimestamp(),
+      }));
+
+    res.render("admin/packages", {
+      currentPage: "packages",
+      packages: PACKAGES,
+      stats,
+      totalUsers,
+      usersWithPackage,
+      usersWithNoPackage,
+      adoptionRate,
+      recentActivity,
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading admin packages:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+router.get("/admin/packages/:key/users", requireAdmin, async (req, res) => {
+  try {
+    const { key } = req.params;
+    const pkg = PACKAGES[key];
+
+    if (!pkg) {
+      return res.status(404).send("Package not found");
+    }
+
+    // Match users whose `package` field equals either the key itself
+    // or the package's display name (case-insensitive), covering both storage styles.
+    const users = await User.find({
+      package: { $regex: new RegExp(`^(${key}|${pkg.name})$`, "i") },
+    })
+      .select("username email package walletBalance isActive createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.render("admin/packageUsers", {
+      currentPage: "packages",
+      packageKey: key,
+      pkg,
+      users,
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading package users:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 
 module.exports = router;

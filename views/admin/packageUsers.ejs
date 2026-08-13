@@ -1,0 +1,127 @@
+<%- include('../partials/adminHeader') %>
+
+<style>
+  :root {
+    --dark-blue: #0a1f44;
+    --gold: #d4af37;
+    --light-gray: #f4f5f7;
+    --border-gray: #e1e3e8;
+    --text-muted: #6b7280;
+  }
+
+  .admin-content-wrap {
+    background: var(--light-gray);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  @media (min-width: 992px) {
+    .admin-content-wrap {
+      margin-left: 260px;
+      padding: 32px 40px;
+    }
+  }
+
+  .pkg-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .pkg-page-header h1 {
+    color: var(--dark-blue);
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .pkg-page-header p {
+    color: var(--text-muted);
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+  }
+
+  .pkg-back-link {
+    color: var(--dark-blue);
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .pkg-table-section {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--border-gray);
+    overflow: hidden;
+  }
+
+  table.pkg-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table.pkg-table thead th {
+    background: var(--dark-blue);
+    color: #fff;
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 12px 16px;
+  }
+
+  table.pkg-table tbody td {
+    padding: 14px 16px;
+    font-size: 0.9rem;
+    color: var(--dark-blue);
+    border-bottom: 1px solid var(--border-gray);
+  }
+
+  table.pkg-table tbody tr:hover { background: var(--light-gray); }
+
+  .pkg-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+</style>
+
+<div class="admin-content-wrap">
+
+  <div class="pkg-page-header">
+    <div>
+      <h1><%= pkg.name %> — Users</h1>
+      <p><%= users.length %> user<%= users.length === 1 ? '' : 's' %> on this package</p>
+    </div>
+    <a href="/admin/packages" class="pkg-back-link">&larr; Back to Packages</a>
+  </div>
+
+  <div class="pkg-table-section">
+    <% if (!users || users.length === 0) { %>
+      <div class="pkg-empty">No users on this package yet.</div>
+    <% } else { %>
+      <table class="pkg-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Activated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach((u) => { %>
+            <tr>
+              <td><%= u.name || '—' %></td>
+              <td><%= u.email || '—' %></td>
+              <td>
+                <%= new Date(u.packageActivatedAt || u.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+</div>
