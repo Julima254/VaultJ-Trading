@@ -271,3 +271,4 @@ router.post("/admin/deposits/:id/reject", requireLogin, requireAdmin, async (req
 });
 
 module.exports = router;
+module.exports.creditDeposit = creditDeposit;

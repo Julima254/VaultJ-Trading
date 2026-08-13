@@ -227,6 +227,83 @@
       50% { box-shadow: 0 0 30px rgba(26, 122, 46, 0.8); }
     }
 
+    /* --- Confirmation modal --- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 31, 68, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 15px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: modalPop 0.2s ease;
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      background: #0a1f44;
+      color: #ffd700;
+      padding: 18px 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .modal-body {
+      padding: 20px;
+      text-align: center;
+      color: #333;
+      line-height: 1.6;
+    }
+    .modal-body .modal-pkg-name {
+      color: #0a1f44;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .modal-body .modal-pkg-price {
+      color: #1a7a2e;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .modal-actions {
+      display: flex;
+      border-top: 1px solid #eee;
+    }
+    .modal-actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .modal-cancel {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .modal-cancel:hover {
+      background: #e2e2e2;
+    }
+    .modal-confirm {
+      background: #1a7a2e;
+      color: #fff;
+    }
+    .modal-confirm:hover {
+      filter: brightness(1.1);
+    }
+
     /* --- Mobile responsiveness --- */
     @media (max-width: 600px) {
       .header {
@@ -328,14 +405,64 @@
         <% if (isCurrent) { %>
           <div class="active-badge">✓ Current Package</div>
         <% } else { %>
-          <form action="/packages/buy" method="POST">
-            <input type="hidden" name="packageKey" value="<%= key %>">
-            <button type="submit" class="buy-btn">Buy Now</button>
-          </form>
+          <button
+            type="button"
+            class="buy-btn"
+            onclick="openBuyModal('<%= key %>', '<%= pkg.name %>', '<%= pkg.price %>')"
+          >
+            Buy Now
+          </button>
         <% } %>
       </div>
     <% }) %>
   </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="buyModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">Confirm Purchase</div>
+      <div class="modal-body">
+        Are you sure you want to purchase the
+        <div class="modal-pkg-name" id="modalPkgName"></div>
+        package for
+        <div class="modal-pkg-price" id="modalPkgPrice"></div>
+        ?
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" onclick="closeBuyModal()">Cancel</button>
+        <button type="button" class="modal-confirm" onclick="confirmBuy()">Yes, Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="buyForm" action="/packages/buy" method="POST" style="display:none;">
+    <input type="hidden" name="packageKey" id="buyFormPackageKey" value="">
+  </form>
+
+  <script>
+    function openBuyModal(key, name, price) {
+      document.getElementById('modalPkgName').textContent = name;
+      document.getElementById('modalPkgPrice').textContent = 'Ksh ' + price;
+      document.getElementById('buyFormPackageKey').value = key;
+      document.getElementById('buyModalOverlay').classList.add('open');
+    }
+
+    function closeBuyModal() {
+      document.getElementById('buyModalOverlay').classList.remove('open');
+    }
+
+    function confirmBuy() {
+      document.getElementById('buyForm').submit();
+    }
+
+    // Close modal when clicking outside the box
+    document.getElementById('buyModalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeBuyModal();
+      }
+    });
+  </script>
+
 <%- include('partials/footer') %>
 </body>
 </html>

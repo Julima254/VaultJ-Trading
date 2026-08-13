@@ -279,6 +279,7 @@
       justify-content: center;
       gap: 6px;
       padding: 18px 0 4px;
+      flex-wrap: wrap;
     }
 
     .pagination a {
@@ -296,10 +297,76 @@
       border-color: var(--dark-blue);
     }
 
+    /* ---- Responsive ---- */
     @media (max-width: 900px) {
       .sidebar { display: none; }
       .main { margin-left: 0; }
       .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group select,
+      .filter-group input { min-width: 0; width: 100%; }
+      .filter-bar button { width: 100%; }
+      .filter-bar a.clear { align-self: center; }
+
+      /* Stack the table into cards */
+      .table-wrap { background: transparent; box-shadow: none; overflow: visible; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+
+      tbody td.actions {
+        justify-content: flex-start;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      tbody td.actions::before { display: none; }
+
+      tbody td.actions button { margin-right: 0; }
     }
   </style>
 </head>
@@ -406,16 +473,16 @@
           <% } else { %>
             <% transactions.forEach(function(tx) { %>
               <tr data-id="<%= tx._id %>">
-                <td><%= new Date(tx.createdAt).toLocaleString() %></td>
-                <td>
+                <td data-label="Date"><%= new Date(tx.createdAt).toLocaleString() %></td>
+                <td data-label="User">
                   <%= tx.userId ? (tx.userId.username || tx.userId.email) : 'Unknown user' %>
                 </td>
-                <td><span class="type-tag <%= tx.type %>"><%= tx.type %></span></td>
-                <td><%= tx.method || 'stk' %></td>
-                <td class="amount">KES <%= tx.amount.toLocaleString() %></td>
-                <td><%= tx.code || '—' %></td>
-                <td><span class="badge <%= tx.status %>"><%= tx.status %></span></td>
-                <td class="actions">
+                <td data-label="Type"><span class="type-tag <%= tx.type %>"><%= tx.type %></span></td>
+                <td data-label="Method"><%= tx.method || 'stk' %></td>
+                <td data-label="Amount" class="amount">KES <%= tx.amount.toLocaleString() %></td>
+                <td data-label="Code"><%= tx.code || '—' %></td>
+                <td data-label="Status"><span class="badge <%= tx.status %>"><%= tx.status %></span></td>
+                <td data-label="Action" class="actions">
                   <% if (tx.status === 'pending') { %>
                     <button class="approve" onclick="reviewPayment('<%= tx._id %>', 'approve')">Approve</button>
                     <button class="reject" onclick="reviewPayment('<%= tx._id %>', 'reject')">Reject</button>

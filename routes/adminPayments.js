@@ -3,6 +3,7 @@ const router = express.Router();
 const requireAdmin = require("../middleware/requireAdmin");
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
+const { creditDeposit } = require("./deposit");
 
 const PAGE_SIZE = 20;
 
@@ -91,23 +92,30 @@ router.get("/admin/payments", requireAdmin, async (req, res) => {
 // POST /admin/payments/:id/approve
 router.post("/admin/payments/:id/approve", requireAdmin, async (req, res) => {
   try {
-    const tx = await Transaction.findById(req.params.id);
-    if (!tx || tx.status !== "pending") {
+    // Atomically claim the transaction (status: "pending" in the filter) so a
+    // double-click or duplicate request can't process — or credit — it twice.
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, status: "pending" },
+      {
+        $set: {
+          status: "completed",
+          reviewedBy: req.session.userId,
+          reviewedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!tx) {
       return res
         .status(400)
         .json({ success: false, message: "Transaction not found or already reviewed." });
     }
 
-    tx.status = "completed";
-    tx.reviewedBy = req.session.userId;
-    tx.reviewedAt = new Date();
-    await tx.save();
-
-    // Deposits: credit the user on approval.
+    // Deposits: credit the user on approval — goes to depositBalance while
+    // inactive, walletBalance once active. Never both.
     if (tx.type === "deposit") {
-      await User.findByIdAndUpdate(tx.userId, {
-        $inc: { walletBalance: tx.amount, depositBalance: tx.amount },
-      });
+      await creditDeposit(tx.userId, tx.amount);
     }
     // Withdrawals: assumes balance was already deducted when the withdrawal
     // was requested, so approval here just confirms payout — no balance change.
@@ -122,18 +130,24 @@ router.post("/admin/payments/:id/approve", requireAdmin, async (req, res) => {
 // POST /admin/payments/:id/reject
 router.post("/admin/payments/:id/reject", requireAdmin, async (req, res) => {
   try {
-    const tx = await Transaction.findById(req.params.id);
-    if (!tx || tx.status !== "pending") {
+    const tx = await Transaction.findOneAndUpdate(
+      { _id: req.params.id, status: "pending" },
+      {
+        $set: {
+          status: "failed",
+          reviewedBy: req.session.userId,
+          reviewedAt: new Date(),
+          note: req.body.reason || "Rejected by admin",
+        },
+      },
+      { new: true }
+    );
+
+    if (!tx) {
       return res
         .status(400)
         .json({ success: false, message: "Transaction not found or already reviewed." });
     }
-
-    tx.status = "failed";
-    tx.reviewedBy = req.session.userId;
-    tx.reviewedAt = new Date();
-    tx.note = req.body.reason || "Rejected by admin";
-    await tx.save();
 
     // Withdrawals: refund the held amount back to the wallet on rejection.
     if (tx.type === "withdraw") {

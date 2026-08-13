@@ -19,7 +19,10 @@ router.get("/register", (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-  res.render("login", { error: null });
+  const success = req.query.registered
+    ? "Account created successfully! Please log in."
+    : null;
+  res.render("login", { error: null, success });
 });
 
 router.get("/forgot-password", (req, res) => {
@@ -78,7 +81,7 @@ router.post("/register", async (req, res) => {
 
     await newUser.save();
 
-    res.redirect("/login");
+    res.redirect("/login?registered=true");
   } catch (err) {
     console.error(err);
     res.render("register", { error: "Something went wrong. Please try again." });
@@ -90,7 +93,7 @@ router.post("/login", async (req, res) => {
     const { identifier, password } = req.body;
 
     if (!identifier || !password) {
-      return res.render("login", { error: "Please enter your username/email and password." });
+      return res.render("login", { error: "Please enter your username/email and password.", success: null });
     }
 
     const user = await User.findOne({
@@ -98,12 +101,12 @@ router.post("/login", async (req, res) => {
     });
 
     if (!user) {
-      return res.render("login", { error: "Invalid credentials." });
+      return res.render("login", { error: "Invalid credentials.", success: null });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.render("login", { error: "Invalid credentials." });
+      return res.render("login", { error: "Invalid credentials.", success: null });
     }
 
     req.session.userId = user._id;
@@ -112,7 +115,7 @@ router.post("/login", async (req, res) => {
     res.redirect("/home");
   } catch (err) {
     console.error(err);
-    res.render("login", { error: "Something went wrong. Please try again." });
+    res.render("login", { error: "Something went wrong. Please try again.", success: null });
   }
 });
 
