@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spins — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
+
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
+
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card.staked { border-top-color: var(--dark-blue); }
+    .card.payout { border-top-color: var(--red); }
+    .card.net { border-top-color: var(--green); }
+    .card.pool { border-top-color: var(--gold); }
+
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .card .subvalue {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ---- Pool balance editor (lives inside the pool card) ---- */
+    .pool-edit {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .pool-edit input {
+      flex: 1;
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      min-width: 0;
+    }
+
+    .pool-edit button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .pool-edit button:hover { background: var(--dark-blue-light); }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .filter-bar button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .filter-bar button:hover { background: var(--dark-blue-light); }
+
+    .filter-bar a.clear {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      align-self: center;
+    }
+
+    .chips { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      background: var(--white);
+    }
+
+    .chip.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover { background: #fafbfc; }
+
+    .amount { font-weight: 700; }
+    .amount.positive { color: var(--green); }
+    .amount.negative { color: var(--red); }
+
+    .multiplier-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fdf4dd;
+      color: #8a6d1a;
+    }
+
+    .pool-delta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .pagination a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .pagination a.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group select,
+      .filter-group input { min-width: 0; width: 100%; }
+      .filter-bar button { width: 100%; }
+      .filter-bar a.clear { align-self: center; }
+
+      .table-wrap { background: transparent; box-shadow: none; overflow: visible; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Vault Jspins — Spin History</h1>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card staked">
+        <div class="label">Total Spins (<%= summary.count %>)</div>
+        <div class="value">KES <%= summary.totalStaked.toLocaleString() %></div>
+        <div class="subvalue">Total staked</div>
+      </div>
+      <div class="card payout">
+        <div class="label">Total Payout</div>
+        <div class="value">KES <%= summary.totalPayout.toLocaleString() %></div>
+      </div>
+      <div class="card net">
+        <div class="label">Net to Pool</div>
+        <div class="value">KES <%= summary.netToPool.toLocaleString() %></div>
+      </div>
+      <div class="card pool">
+        <div class="label">Current Pool Balance</div>
+        <div class="value" id="poolBalanceValue">KES <%= poolBalance.toLocaleString() %></div>
+        <div class="pool-edit">
+          <input type="number" id="poolBalanceInput" min="0" step="0.01" placeholder="New balance" />
+          <button onclick="updatePool()">Update</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick range chips -->
+    <div class="chips">
+      <% ['all','today','7d','30d'].forEach(function(r) { %>
+        <a class="chip <%= filters.range === r ? 'active' : '' %>"
+           href="/admin/spins?range=<%= r %>&search=<%= filters.search %>">
+          <%= r === 'all' ? 'All Time' : r === 'today' ? 'Today' : r === '7d' ? 'Last 7 Days' : 'Last 30 Days' %>
+        </a>
+      <% }) %>
+    </div>
+
+    <!-- Filter bar -->
+    <form class="filter-bar" method="GET" action="/admin/spins">
+      <input type="hidden" name="range" value="<%= filters.range %>" />
+      <div class="filter-group">
+        <label>Search (username, email)</label>
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="e.g. jane@doe.com" />
+      </div>
+
+      <button type="submit">Apply</button>
+      <a class="clear" href="/admin/spins">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Stake</th>
+            <th>Multiplier</th>
+            <th>Payout</th>
+            <th>Pool Before → After</th>
+            <th>Wallet Before → After</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (spins.length === 0) { %>
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">No spins match these filters.</div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% spins.forEach(function(s) { %>
+              <tr>
+                <td data-label="Date"><%= new Date(s.createdAt).toLocaleString() %></td>
+                <td data-label="User">
+                  <%= s.user ? (s.user.username || s.user.email) : 'Unknown user' %>
+                </td>
+                <td data-label="Stake" class="amount">KES <%= s.stake.toLocaleString() %></td>
+                <td data-label="Multiplier">
+                  <span class="multiplier-tag"><%= s.multiplier %>x</span>
+                </td>
+                <td data-label="Payout" class="amount <%= s.payout > s.stake ? 'positive' : 'negative' %>">
+                  KES <%= s.payout.toLocaleString() %>
+                </td>
+                <td data-label="Pool Before → After">
+                  <span class="pool-delta">
+                    <%= s.poolBefore.toLocaleString() %> → <%= s.poolAfter.toLocaleString() %>
+                  </span>
+                </td>
+                <td data-label="Wallet Before → After">
+                  <span class="pool-delta">
+                    <%= s.walletBefore.toLocaleString() %> → <%= s.walletAfter.toLocaleString() %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+        <a class="<%= p === pagination.currentPage ? 'active' : '' %>"
+           href="/admin/spins?range=<%= filters.range %>&search=<%= filters.search %>&page=<%= p %>">
+          <%= p %>
+        </a>
+      <% } %>
+    </div>
+  </main>
+
+  <script>
+    async function updatePool() {
+      const input = document.getElementById("poolBalanceInput");
+      const value = parseFloat(input.value);
+
+      if (!Number.isFinite(value) || value < 0) {
+        alert("Enter a valid pool amount.");
+        return;
+      }
+
+      if (!confirm(`Set prize pool balance to KES ${value.toLocaleString()}?`)) return;
+
+      try {
+        const res = await fetch("/admin/vault-jspins/pool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ balance: value }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("poolBalanceValue").textContent =
+            "KES " + data.balance.toLocaleString();
+          input.value = "";
+        } else {
+          alert(data.message || "Something went wrong.");
+        }
+      } catch (err) {
+        alert("Network error. Please try again.");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -4,7 +4,9 @@ const router = express.Router();
 const requireAdmin = require("../middleware/requireAdmin");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
+const PrizePool = require("../models/PrizePool");
 const PACKAGES = require("../config/packages");
+const SpinLog = require("../models/SpinLog");
 
 
 router.get("/admin", requireAdmin, async (req, res) => {
@@ -302,6 +304,132 @@ router.get("/admin/packages/:key/users", requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error("Error loading package users:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// ---- Vault Jspins: prize pool management ----
+
+router.get("/admin/vault-jspins/pool", requireAdmin, async (req, res) => {
+  try {
+    const pool = await PrizePool.getPool();
+    res.json({ ok: true, balance: pool.balance });
+  } catch (err) {
+    console.error("Error fetching prize pool:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+router.post("/admin/vault-jspins/pool", requireAdmin, async (req, res) => {
+  try {
+    const amount = Number(req.body.balance);
+    if (!Number.isFinite(amount) || amount < 0) {
+      return res.status(400).json({ ok: false, message: "Enter a valid pool amount." });
+    }
+
+    const pool = await PrizePool.getPool();
+    pool.balance = amount;
+    pool.updatedBy = req.session.userId;
+    await pool.save();
+
+    res.json({ ok: true, balance: pool.balance });
+  } catch (err) {
+    console.error("Error updating prize pool:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+
+// ---- Vault Jspins: spin history page ----
+router.get("/admin/spins", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const range = req.query.range || "all";
+    const search = (req.query.search || "").trim();
+
+    // ---- Date range filter ----
+    let dateFilter = {};
+    const now = new Date();
+    if (range === "today") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    } else if (range === "7d") {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    } else if (range === "30d") {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 29);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    }
+
+    // ---- User search (username/email) ----
+    let userFilter = {};
+    if (search) {
+      const matchedUsers = await User.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      })
+        .select("_id")
+        .lean();
+      userFilter = { user: { $in: matchedUsers.map((u) => u._id) } };
+    }
+
+    const query = { ...dateFilter, ...userFilter };
+
+    const [spins, totalSpins, pool] = await Promise.all([
+      SpinLog.find(query)
+        .populate("user", "username email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      SpinLog.countDocuments(query),
+      PrizePool.getPool(),
+    ]);
+
+    const summaryAgg = await SpinLog.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          totalStaked: { $sum: "$stake" },
+          totalPayout: { $sum: "$payout" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const summary = {
+      totalStaked: summaryAgg[0]?.totalStaked || 0,
+      totalPayout: summaryAgg[0]?.totalPayout || 0,
+      count: summaryAgg[0]?.count || 0,
+      netToPool:
+        (summaryAgg[0]?.totalStaked || 0) - (summaryAgg[0]?.totalPayout || 0),
+    };
+
+    const totalPages = Math.max(Math.ceil(totalSpins / limit), 1);
+
+    res.render("admin/spins", {
+      currentPage: "spins",
+      spins,
+      summary,
+      poolBalance: pool.balance,
+      filters: { range, search },
+      pagination: { currentPage: page, totalPages },
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading spins admin page:", err);
     res.status(500).send("Server error");
   }
 });
