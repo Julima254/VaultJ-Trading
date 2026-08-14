@@ -478,5 +478,100 @@ router.get("/admin/referrals", requireAdmin, async (req, res) => {
   }
 });
 
+// ---- Withdrawals overview page ----
+router.get("/admin/withdrawals", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status || "all";
+    const search = (req.query.search || "").trim();
+
+    const query = { type: "withdraw" };
+    if (status !== "all") query.status = status;
+
+    if (search) {
+      const matchedUsers = await User.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      })
+        .select("_id")
+        .lean();
+
+      query.$or = [
+        { userId: { $in: matchedUsers.map((u) => u._id) } },
+        { code: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const [withdrawals, totalCount] = await Promise.all([
+      Transaction.find(query)
+        .populate("userId", "username email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Transaction.countDocuments(query),
+    ]);
+
+    // ---- Summary stats (overall totals, unaffected by filters) ----
+    const summaryAgg = await Transaction.aggregate([
+      { $match: { type: "withdraw" } },
+      {
+        $group: {
+          _id: "$status",
+          sum: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const summary = {
+      totalRequestedSum: 0,
+      totalRequestedCount: 0,
+      completedSum: 0,
+      completedCount: 0,
+      pendingSum: 0,
+      pendingCount: 0,
+      failedSum: 0,
+      failedCount: 0,
+    };
+
+    summaryAgg.forEach((s) => {
+      summary.totalRequestedSum += s.sum;
+      summary.totalRequestedCount += s.count;
+      if (s._id === "completed") {
+        summary.completedSum = s.sum;
+        summary.completedCount = s.count;
+      } else if (s._id === "pending") {
+        summary.pendingSum = s.sum;
+        summary.pendingCount = s.count;
+      } else if (s._id === "failed") {
+        summary.failedSum = s.sum;
+        summary.failedCount = s.count;
+      }
+    });
+
+    const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
+
+    res.render("admin/withdrawals", {
+      currentPage: "withdrawals",
+      withdrawals,
+      summary,
+      filters: { status, search },
+      pagination: { currentPage: page, totalPages },
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading admin withdrawals:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 
 module.exports = router;

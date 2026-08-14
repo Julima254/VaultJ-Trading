@@ -11,7 +11,8 @@ const packagesRoutes = require("./routes/packages");
 const adminRoutes = require("./routes/admin");
 const vaultJspinsRoutes = require("./routes/vaultJspins");
 const teamRoutes = require("./routes/team");
-
+const withdrawRoutes = require("./routes/withdraw");
+const darajaCallbackRoutes = require("./routes/darajaCallbacks");
 
 const app = express();
 
@@ -70,7 +71,8 @@ app.use("/", adminRoutes);
 app.use("/", require("./routes/adminPayments"));
 app.use("/", vaultJspinsRoutes);
 app.use("/", teamRoutes);
-
+app.use("/", withdrawRoutes);
+app.use("/", darajaCallbackRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

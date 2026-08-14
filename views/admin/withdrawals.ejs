@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Withdrawals — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
+
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
+
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card.total { border-top-color: var(--dark-blue); }
+    .card.completed { border-top-color: var(--green); }
+    .card.pending { border-top-color: var(--gold); }
+    .card.failed { border-top-color: var(--red); }
+
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .card .subvalue {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .filter-bar {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .filter-bar button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .filter-bar button:hover { background: var(--dark-blue-light); }
+
+    .filter-bar a.clear {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      align-self: center;
+    }
+
+    .chips { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      background: var(--white);
+    }
+
+    .chip.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover { background: #fafbfc; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge.pending { background: #fdf4dd; color: #8a6d1a; }
+    .badge.completed { background: #e3f5ec; color: var(--green); }
+    .badge.failed { background: #fbe6e3; color: var(--red); }
+
+    .amount { font-weight: 700; }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .pagination a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .pagination a.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group select,
+      .filter-group input { min-width: 0; width: 100%; }
+      .filter-bar button { width: 100%; }
+      .filter-bar a.clear { align-self: center; }
+
+      .table-wrap { background: transparent; box-shadow: none; overflow: visible; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Withdrawals</h1>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card total">
+        <div class="label">Total Requested</div>
+        <div class="value">KES <%= summary.totalRequestedSum.toLocaleString() %></div>
+        <div class="subvalue"><%= summary.totalRequestedCount %> requests</div>
+      </div>
+      <div class="card completed">
+        <div class="label">Completed</div>
+        <div class="value">KES <%= summary.completedSum.toLocaleString() %></div>
+        <div class="subvalue"><%= summary.completedCount %> paid out</div>
+      </div>
+      <div class="card pending">
+        <div class="label">Pending</div>
+        <div class="value">KES <%= summary.pendingSum.toLocaleString() %></div>
+        <div class="subvalue"><%= summary.pendingCount %> in progress</div>
+      </div>
+      <div class="card failed">
+        <div class="label">Failed / Refunded</div>
+        <div class="value">KES <%= summary.failedSum.toLocaleString() %></div>
+        <div class="subvalue"><%= summary.failedCount %> reversed</div>
+      </div>
+    </div>
+
+    <!-- Quick status chips -->
+    <div class="chips">
+      <% ['all','pending','completed','failed'].forEach(function(s) { %>
+        <a class="chip <%= filters.status === s ? 'active' : '' %>"
+           href="/admin/withdrawals?status=<%= s %>&search=<%= filters.search %>">
+          <%= s.charAt(0).toUpperCase() + s.slice(1) %>
+        </a>
+      <% }) %>
+    </div>
+
+    <!-- Filter bar -->
+    <form class="filter-bar" method="GET" action="/admin/withdrawals">
+      <div class="filter-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All</option>
+          <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+          <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed / Refunded</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Search (username, email, phone, M-Pesa code)</label>
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="e.g. jane@doe.com or QAB12CD" />
+      </div>
+
+      <button type="submit">Apply</button>
+      <a class="clear" href="/admin/withdrawals">Clear</a>
+    </form>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th>Phone</th>
+            <th>Amount</th>
+            <th>Code</th>
+            <th>Status</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (withdrawals.length === 0) { %>
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">No withdrawal records match these filters.</div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% withdrawals.forEach(function(tx) { %>
+              <tr>
+                <td data-label="Date"><%= new Date(tx.createdAt).toLocaleString() %></td>
+                <td data-label="User">
+                  <%= tx.userId ? (tx.userId.username || tx.userId.email) : 'Unknown user' %>
+                </td>
+                <td data-label="Phone"><%= tx.phone || '—' %></td>
+                <td data-label="Amount" class="amount">KES <%= tx.amount.toLocaleString() %></td>
+                <td data-label="Code"><%= tx.code || '—' %></td>
+                <td data-label="Status"><span class="badge <%= tx.status %>"><%= tx.status %></span></td>
+                <td data-label="Note"><%= tx.note || '—' %></td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+        <a class="<%= p === pagination.currentPage ? 'active' : '' %>"
+           href="/admin/withdrawals?status=<%= filters.status %>&search=<%= filters.search %>&page=<%= p %>">
+          <%= p %>
+        </a>
+      <% } %>
+    </div>
+  </main>
+
+</body>
+</html>

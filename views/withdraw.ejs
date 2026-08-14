@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Withdraw</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #f0f0f0;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background: #0a1f44;
+      color: #fff;
+      padding: 25px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      color: #ffd700;
+      font-size: 26px;
+    }
+    .status-banner {
+      max-width: 900px;
+      margin: 20px auto 0;
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .status-error {
+      background: #ffe0e0;
+      color: #a10000;
+      border: 1px solid #a10000;
+    }
+    .status-success {
+      background: #e3f8e6;
+      color: #1a7a2e;
+      border: 1px solid #1a7a2e;
+    }
+    .balance-box {
+      max-width: 900px;
+      margin: 20px auto;
+      background: #fff;
+      border-left: 6px solid #0a1f44;
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .balance-box span {
+      color: #ffd700;
+      background: #0a1f44;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .panel {
+      max-width: 900px;
+      margin: 24px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .panel-header {
+      background: linear-gradient(135deg, #0a1f44, #16305f);
+      color: #ffd700;
+      padding: 18px 22px;
+      font-size: 19px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .panel-body {
+      padding: 22px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      color: #0a1f44;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      margin-bottom: 18px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #0a1f44;
+    }
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: -12px;
+      margin-bottom: 18px;
+    }
+    .withdraw-btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      color: #0a1f44;
+      background: #ffd700;
+      transition: filter 0.2s ease;
+    }
+    .withdraw-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    /* Recent withdrawals table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      color: #0a1f44;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 12px;
+      color: #fff;
+      display: inline-block;
+    }
+    .badge-pending { background: #b8860b; }
+    .badge-completed { background: #1a7a2e; }
+    .badge-failed { background: #a10000; }
+    .empty-row {
+      text-align: center;
+      color: #999;
+      padding: 30px 0;
+    }
+
+    /* Confirmation modal (matches packages page pattern) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 31, 68, 0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 15px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      animation: modalPop 0.2s ease;
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      background: #0a1f44;
+      color: #ffd700;
+      padding: 18px 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .modal-body {
+      padding: 20px;
+      text-align: center;
+      color: #333;
+      line-height: 1.6;
+    }
+    .modal-body .modal-amount {
+      color: #1a7a2e;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .modal-body .modal-phone {
+      color: #0a1f44;
+      font-weight: bold;
+    }
+    .modal-actions {
+      display: flex;
+      border-top: 1px solid #eee;
+    }
+    .modal-actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .modal-cancel {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .modal-cancel:hover {
+      background: #e2e2e2;
+    }
+    .modal-confirm {
+      background: #1a7a2e;
+      color: #fff;
+    }
+    .modal-confirm:hover {
+      filter: brightness(1.1);
+    }
+
+    @media (max-width: 600px) {
+      .header { padding: 20px 15px; }
+      .header h1 { font-size: 22px; }
+      .status-banner { margin: 15px 15px 0; font-size: 14px; }
+      .balance-box { margin: 15px; padding: 15px; font-size: 14px; }
+      .panel { margin: 15px; }
+      .panel-body { padding: 18px; }
+      table { font-size: 13px; }
+      th, td { padding: 10px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <div class="header">
+    <h1>Withdraw Funds</h1>
+  </div>
+
+  <% if (error) { %>
+    <div class="status-banner status-error"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="status-banner status-success"><%= success %></div>
+  <% } %>
+
+  <div class="balance-box">
+    Wallet Balance: <span>Ksh <%= user.walletBalance %></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Request Withdrawal</div>
+    <div class="panel-body">
+      <form id="withdrawForm" action="/withdraw" method="POST">
+        <label for="amount">Amount (Ksh)</label>
+        <input
+          type="number"
+          id="amount"
+          name="amount"
+          min="<%= minWithdraw %>"
+          step="1"
+          placeholder="Enter amount"
+          required
+        >
+        <div class="hint">Minimum withdrawal: Ksh <%= minWithdraw %></div>
+
+        <label for="phone">M-Pesa Phone Number</label>
+        <input
+          type="text"
+          id="phone"
+          name="phone"
+          placeholder="07XXXXXXXX"
+          required
+        >
+
+        <button type="button" class="withdraw-btn" onclick="openWithdrawModal()">
+          Withdraw Now
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Recent Withdrawals</div>
+    <div class="panel-body" style="padding: 0 22px 10px;">
+      <% if (recentWithdrawals && recentWithdrawals.length) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentWithdrawals.forEach(tx => { %>
+              <tr>
+                <td><%= new Date(tx.createdAt).toLocaleDateString() %></td>
+                <td>Ksh <%= tx.amount %></td>
+                <td>
+                  <span class="badge badge-<%= tx.status %>"><%= tx.status %></span>
+                </td>
+                <td><%= tx.code || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="empty-row">No withdrawals yet.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="withdrawModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">Confirm Withdrawal</div>
+      <div class="modal-body">
+        Withdraw <div class="modal-amount" id="modalAmount"></div>
+        to <div class="modal-phone" id="modalPhone"></div>?
+        <br><br>
+        This amount will be deducted from your wallet immediately.
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" onclick="closeWithdrawModal()">Cancel</button>
+        <button type="button" class="modal-confirm" onclick="confirmWithdraw()">Yes, Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openWithdrawModal() {
+      const amount = document.getElementById('amount').value;
+      const phone = document.getElementById('phone').value;
+      const min = <%= minWithdraw %>;
+
+      if (!amount || Number(amount) < min) {
+        alert('Minimum withdrawal is Ksh ' + min);
+        return;
+      }
+      if (!phone) {
+        alert('Please enter your M-Pesa phone number.');
+        return;
+      }
+
+      document.getElementById('modalAmount').textContent = 'Ksh ' + amount;
+      document.getElementById('modalPhone').textContent = phone;
+      document.getElementById('withdrawModalOverlay').classList.add('open');
+    }
+
+    function closeWithdrawModal() {
+      document.getElementById('withdrawModalOverlay').classList.remove('open');
+    }
+
+    function confirmWithdraw() {
+      document.getElementById('withdrawForm').submit();
+    }
+
+    document.getElementById('withdrawModalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) {
+        closeWithdrawModal();
+      }
+    });
+  </script>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
