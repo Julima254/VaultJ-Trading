@@ -56,11 +56,13 @@ router.post("/vault-jspins/spin", requireLogin, async (req, res) => {
       // Backend is the sole source of truth for the outcome
       const { multiplier, payout, eligibleMultipliers } = resolveSpin(stake, pool.balance);
 
-      const walletBefore = user.walletBalance;
-      const poolBefore = pool.balance;
+     const walletBefore = user.walletBalance;
+const poolBefore = pool.balance;
+const spinningBalanceBefore = user.spinningBalance || 0;
 
-      user.walletBalance = round2(user.walletBalance - stake + payout);
-      pool.balance = round2(pool.balance - payout);
+user.walletBalance = round2(user.walletBalance - stake + payout);
+user.spinningBalance = round2(spinningBalanceBefore + payout);
+pool.balance = round2(pool.balance - payout);
 
       await user.save({ session });
       await pool.save({ session });
@@ -81,13 +83,14 @@ router.post("/vault-jspins/spin", requireLogin, async (req, res) => {
       );
 
       responsePayload = {
-        ok: true,
-        multiplier,
-        payout,
-        stake,
-        walletBalance: user.walletBalance,
-        poolBalance: pool.balance,
-      };
+  ok: true,
+  multiplier,
+  payout,
+  stake,
+  walletBalance: user.walletBalance,
+  spinningBalance: user.spinningBalance,
+  poolBalance: pool.balance,
+};
     });
 
     res.json(responsePayload);
