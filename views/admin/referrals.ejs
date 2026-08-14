@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Referrals — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
+
+    /* ---- Fixed sidebar ---- */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
+
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
+
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
+
+    /* ---- Summary cards ---- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card.referred { border-top-color: var(--gold); }
+    .card.earnings { border-top-color: var(--green); }
+
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* ---- Section titles ---- */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark-blue);
+      margin: 0 0 12px;
+    }
+
+    .section-block { margin-bottom: 28px; }
+
+    /* ---- Table ---- */
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafbfc; }
+
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--light-gray);
+      color: var(--dark-blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .rank.top {
+      background: var(--gold);
+      color: var(--dark-blue);
+    }
+
+    .amount { font-weight: 700; color: var(--green); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.completed { background: #e3f5ec; color: var(--green); }
+    .badge.pending { background: #fdf4dd; color: #8a6d1a; }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .cards { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+      .cards { grid-template-columns: 1fr; }
+
+      .table-wrap { background: transparent; box-shadow: none; overflow: visible; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead { position: absolute; top: -9999px; left: -9999px; }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>Referrals</h1>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card referred">
+        <div class="label">Users Referred</div>
+        <div class="value"><%= stats.totalReferredUsers %></div>
+      </div>
+      <div class="card">
+        <div class="label">Active Referrers</div>
+        <div class="value"><%= stats.usersWithReferrals %></div>
+      </div>
+      <div class="card earnings">
+        <div class="label">Total Commissions Paid</div>
+        <div class="value">KES <%= stats.totalCommissionsPaid.toLocaleString() %></div>
+      </div>
+    </div>
+
+    <!-- Top referrers -->
+    <div class="section-block">
+      <h2 class="section-title">Top Referrers</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Username</th>
+              <th>Referral Code</th>
+              <th>Total Referrals</th>
+              <th>Earnings</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (topReferrers.length === 0) { %>
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">No referral activity yet.</div>
+                </td>
+              </tr>
+            <% } else { %>
+              <% topReferrers.forEach(function(ref, i) { %>
+                <tr>
+                  <td data-label="#"><span class="rank <%= i < 3 ? 'top' : '' %>"><%= i + 1 %></span></td>
+                  <td data-label="Username"><%= ref.username %></td>
+                  <td data-label="Referral Code"><%= ref.referralCode %></td>
+                  <td data-label="Total Referrals"><%= ref.totalReferrals %></td>
+                  <td data-label="Earnings" class="amount">KES <%= ref.referralEarnings.toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent referral signups -->
+    <div class="section-block">
+      <h2 class="section-title">Recent Referral Signups</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>New User</th>
+              <th>Referred By</th>
+              <th>Package</th>
+              <th>Status</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recentReferrals.length === 0) { %>
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">No referred signups yet.</div>
+                </td>
+              </tr>
+            <% } else { %>
+              <% recentReferrals.forEach(function(u) { %>
+                <tr>
+                  <td data-label="New User"><%= u.username %></td>
+                  <td data-label="Referred By"><%= u.referredBy ? u.referredBy.username : "—" %></td>
+                  <td data-label="Package"><%= u.package %></td>
+                  <td data-label="Status">
+                    <% if (u.isActive) { %>
+                      <span class="badge completed">Active</span>
+                    <% } else { %>
+                      <span class="badge pending">No Package</span>
+                    <% } %>
+                  </td>
+                  <td data-label="Joined"><%= new Date(u.createdAt).toLocaleDateString() %></td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>

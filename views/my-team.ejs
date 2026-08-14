@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Team</title>
+  <style>
+    :root {
+      --darkblue: #0b1f3a;
+      --gold: #d4af37;
+      --green: #2e7d32;
+      --lightgray: #f2f2f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--lightgray);
+      color: var(--darkblue);
+    }
+
+    .team-header {
+      background: var(--darkblue);
+      color: #fff;
+      padding: 24px 20px;
+    }
+
+    .team-header h1 {
+      margin: 0 0 4px 0;
+      font-size: 22px;
+    }
+
+    .team-header p {
+      margin: 0;
+      color: var(--gold);
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      border-top: 4px solid var(--gold);
+      box-shadow: 0 1px 4px rgba(11, 31, 58, 0.1);
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--darkblue);
+    }
+
+    .stat-card.earnings {
+      border-top-color: var(--green);
+    }
+
+    .stat-card.earnings .value {
+      color: var(--green);
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--darkblue);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--gold);
+    }
+
+    .team-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(11, 31, 58, 0.1);
+    }
+
+    .team-table th {
+      background: var(--darkblue);
+      color: #fff;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+
+    .team-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--lightgray);
+    }
+
+    .team-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.active {
+      background: rgba(46, 125, 50, 0.12);
+      color: var(--green);
+    }
+
+    .badge.inactive {
+      background: rgba(0, 0, 0, 0.08);
+      color: #777;
+    }
+
+    .empty-state {
+      background: #fff;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      color: #777;
+    }
+
+    .empty-state .gold-text {
+      color: var(--gold);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<%- include('partials/header') %>
+  <div class="team-header">
+    <h1>My Team</h1>
+    <p>Track the people you've referred and what you've earned from them</p>
+  </div>
+
+  <div class="container">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Referrals</div>
+        <div class="value"><%= totalReferrals %></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Active Packages</div>
+        <div class="value"><%= activeReferrals %></div>
+      </div>
+
+      <div class="stat-card earnings">
+        <div class="label">Your Referral Earnings</div>
+        <div class="value">Ksh <%= user.referralEarnings.toLocaleString() %></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="label">Your Referral Code</div>
+        <div class="value" style="font-size: 18px;"><%= user.referralCode %></div>
+      </div>
+    </div>
+
+    <div class="section-title">Team Members</div>
+
+    <% if (teamMembers.length === 0) { %>
+      <div class="empty-state">
+        <p>You haven't referred anyone yet.</p>
+        <p>Share your code <span class="gold-text"><%= user.referralCode %></span> to start building your team.</p>
+      </div>
+    <% } else { %>
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Package</th>
+            <th>Status</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% teamMembers.forEach(function(member) { %>
+            <tr>
+              <td><%= member.username %></td>
+              <td><%= member.package %></td>
+              <td>
+                <% if (member.isActive) { %>
+                  <span class="badge active">Active</span>
+                <% } else { %>
+                  <span class="badge inactive">No Package</span>
+                <% } %>
+              </td>
+              <td><%= new Date(member.createdAt).toLocaleDateString() %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+
+  </div>
+  <%- include('partials/footer') %>
+</body>
+</html>

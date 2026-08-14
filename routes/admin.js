@@ -434,5 +434,49 @@ router.get("/admin/spins", requireAdmin, async (req, res) => {
   }
 });
 
+router.get("/admin/referrals", requireAdmin, async (req, res) => {
+  try {
+    // ---- Overview stats ----
+    const totalReferredUsers = await User.countDocuments({ referredBy: { $ne: null } });
+    const usersWithReferrals = await User.countDocuments({ totalReferrals: { $gt: 0 } });
+
+    const earningsAgg = await User.aggregate([
+      { $group: { _id: null, totalEarnings: { $sum: "$referralEarnings" } } },
+    ]);
+    const totalCommissionsPaid = earningsAgg[0]?.totalEarnings || 0;
+
+    // ---- Top referrers, ranked by earnings ----
+    const topReferrers = await User.find({ totalReferrals: { $gt: 0 } })
+      .select("username referralCode totalReferrals referralEarnings walletBalance")
+      .sort({ referralEarnings: -1 })
+      .limit(10)
+      .lean();
+
+    // ---- Most recent referral signups (who referred whom) ----
+    const recentReferrals = await User.find({ referredBy: { $ne: null } })
+      .populate("referredBy", "username referralCode")
+      .select("username package isActive createdAt referredBy")
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.render("admin/referrals", {
+      currentPage: "referrals",
+      stats: {
+        totalReferredUsers,
+        usersWithReferrals,
+        totalCommissionsPaid,
+      },
+      topReferrers,
+      recentReferrals,
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading admin referrals:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 
 module.exports = router;

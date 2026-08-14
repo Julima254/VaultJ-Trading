@@ -82,17 +82,15 @@ exports.buyPackage = async (req, res) => {
 
     await user.save();
 
-    // Pay referral commission to whoever referred this buyer
-    if (user.referredBy) {
+    // ---- Referral commission: ONLY on this user's first-ever activation ----
+    // Prevents the referrer from being paid again on repeat/upgrade purchases.
+    if (isFirstPurchase && user.referredBy) {
       const referrer = await User.findById(user.referredBy);
       if (referrer) {
         const commission = price * selected.referral;
         referrer.walletBalance += commission;
         referrer.referralEarnings += commission;
-
-        if (isFirstPurchase) {
-          referrer.totalReferrals += 1;
-        }
+        referrer.totalReferrals += 1;
 
         await referrer.save();
       }

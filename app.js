@@ -10,6 +10,7 @@ const depositRoutes = require("./routes/deposit");
 const packagesRoutes = require("./routes/packages");
 const adminRoutes = require("./routes/admin");
 const vaultJspinsRoutes = require("./routes/vaultJspins");
+const teamRoutes = require("./routes/team");
 
 
 const app = express();
@@ -68,6 +69,8 @@ app.use("/", packagesRoutes);
 app.use("/", adminRoutes);
 app.use("/", require("./routes/adminPayments"));
 app.use("/", vaultJspinsRoutes);
+app.use("/", teamRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
