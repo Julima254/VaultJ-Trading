@@ -12,7 +12,6 @@ let currentRotation = 0;
 
 function angleForMultiplier(multiplier) {
   const index = MULTIPLIER_ORDER.indexOf(multiplier);
-  // Center of the segment, then correct so it lands under the top pointer
   const segmentCenter = index * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
   return 360 - segmentCenter;
 }
@@ -20,8 +19,8 @@ function angleForMultiplier(multiplier) {
 async function spin() {
   const stake = Number(stakeInput.value);
 
-  if (!Number.isFinite(stake) || stake <= 0) {
-    resultEl.textContent = "Enter a valid stake amount.";
+  if (!Number.isFinite(stake) || stake < 5) {
+    resultEl.textContent = "Minimum stake is KSh 5.";
     resultEl.className = "lose";
     return;
   }
@@ -46,7 +45,6 @@ async function spin() {
       return;
     }
 
-    // Backend decided the outcome — frontend only animates to it
     const targetAngle = angleForMultiplier(data.multiplier);
     const fullSpins = 5 * 360;
     currentRotation += fullSpins + ((targetAngle - (currentRotation % 360) + 360) % 360);
@@ -54,17 +52,24 @@ async function spin() {
     wheel.style.transform = `rotate(${currentRotation}deg)`;
 
     setTimeout(() => {
-      walletEl.textContent = data.walletBalance.toFixed(2);
-      poolEl.textContent = data.poolBalance.toFixed(2);
+      try {
+        if (walletEl) walletEl.textContent = data.walletBalance.toFixed(2);
+        if (poolEl) poolEl.textContent = data.poolBalance.toFixed(2);
 
-      if (data.multiplier === 0) {
-        resultEl.textContent = `×0 — You lost KSh ${stake.toFixed(2)}`;
+        if (data.multiplier === 0) {
+          resultEl.textContent = `×0 — You lost KSh ${stake.toFixed(2)}`;
+          resultEl.className = "lose";
+        } else {
+          resultEl.textContent = `×${data.multiplier} — You won KSh ${data.payout.toFixed(2)}!`;
+          resultEl.className = "";
+        }
+      } catch (err) {
+        console.error("Error updating spin result UI:", err);
+        resultEl.textContent = "Spin complete, but display failed to update.";
         resultEl.className = "lose";
-      } else {
-        resultEl.textContent = `×${data.multiplier} — You won KSh ${data.payout.toFixed(2)}!`;
-        resultEl.className = "";
+      } finally {
+        spinBtn.disabled = false;
       }
-      spinBtn.disabled = false;
     }, 4100);
   } catch (err) {
     console.error(err);

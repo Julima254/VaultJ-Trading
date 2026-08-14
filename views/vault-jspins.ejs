@@ -2,186 +2,368 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vault Jspins</title>
+
   <style>
     :root {
-      --darkblue: #0B1F4D;
-      --gold: #D4AF37;
-      --green: #1E7B34;
-      --lightgray: #D3D3D3;
+      --dark-blue: #0b1f4d;
+      --dark-blue-light: #14306e;
+      --gold: #d4af37;
+      --gold-light: #f1cd5c;
+      --green: #1e8f4e;
+      --light-gray: #f2f3f5;
+      --gray-border: #dcdfe4;
+      --text-dark: #16213e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--light-gray);
+      color: var(--text-dark);
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
     }
 
     body {
-      background: var(--darkblue);
-      color: var(--lightgray);
-      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    .game-content {
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px;
+      justify-content: flex-start;
+      padding: 8px 10px;
+      overflow: hidden;
+      width: 100%;
     }
 
-    h1 { color: var(--gold); }
+    h1 {
+      color: var(--dark-blue);
+      font-size: clamp(1.1rem, 2.6vw, 1.7rem);
+      text-align: center;
+      margin: 4px 0;
+      letter-spacing: 0.5px;
+      flex: 0 0 auto;
+    }
 
     .balances {
       display: flex;
-      gap: 30px;
-      margin-bottom: 10px;
-      font-size: 1.1rem;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 6px;
+      flex: 0 0 auto;
     }
 
-    .balances span { color: var(--gold); font-weight: bold; }
+    .balance-pill {
+      background: #ffffff;
+      border: 1px solid var(--gray-border);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: 600;
+      color: var(--dark-blue);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      font-size: clamp(0.75rem, 1.7vw, 0.9rem);
+      white-space: nowrap;
+    }
+
+    #walletBalance {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    #poolBalance {
+      color: var(--dark-blue-light);
+      font-weight: 700;
+    }
 
     .pool-warning {
-      background: #4a1414;
-      color: #ff9d9d;
-      border: 1px solid #e05555;
-      padding: 8px 16px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
       display: none;
+      background: #fff3e0;
+      color: #b25a00;
+      border: 1px solid #ffcc80;
+      border-radius: 8px;
+      padding: 5px 14px;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      text-align: center;
+      flex: 0 0 auto;
     }
 
-    .pool-warning.show { display: block; }
+    .pool-warning.active {
+      display: block;
+    }
 
     .wheel-wrap {
       position: relative;
-      width: 320px;
-      height: 320px;
-      margin: 20px auto;
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 0;
     }
 
     .pointer {
       position: absolute;
-      top: -12px;
+      top: 2px;
       left: 50%;
       transform: translateX(-50%);
-      width: 0; height: 0;
+      width: 0;
+      height: 0;
       border-left: 14px solid transparent;
       border-right: 14px solid transparent;
       border-top: 22px solid var(--gold);
-      z-index: 5;
+      z-index: 10;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
     }
 
     .wheel {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      border: 6px solid var(--gold);
       position: relative;
-      transition: transform 4s cubic-bezier(0.15, 0.7, 0.25, 1);
+      height: 100%;
+      width: auto;
+      aspect-ratio: 1 / 1;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 50%;
       background: conic-gradient(
-        var(--darkblue)   0deg    51.43deg,
-        var(--gold)        51.43deg 102.86deg,
-        var(--green)       102.86deg 154.29deg,
-        var(--lightgray)   154.29deg 205.71deg,
-        var(--darkblue)    205.71deg 257.14deg,
-        var(--gold)        257.14deg 308.57deg,
-        var(--green)       308.57deg 360deg
+        var(--dark-blue) 0deg 51.43deg,
+        var(--dark-blue-light) 51.43deg 102.86deg,
+        var(--dark-blue) 102.86deg 154.29deg,
+        var(--dark-blue-light) 154.29deg 205.71deg,
+        var(--dark-blue) 205.71deg 257.14deg,
+        var(--dark-blue-light) 257.14deg 308.57deg,
+        var(--dark-blue) 308.57deg 360deg
       );
+      border: 6px solid var(--gold);
+      box-shadow: 0 0 0 3px var(--dark-blue), 0 6px 16px rgba(0,0,0,0.25);
+      transition: transform 4s cubic-bezier(0.17, 0.67, 0.32, 1.02);
     }
 
-    /* Zero-size wrapper pinned exactly at wheel center — rotating a
-       point is always correct, unlike rotating an offset box. */
-    .label-wrap {
+    .wheel::after {
+      content: "";
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 0;
-      height: 0;
+      width: 18%;
+      aspect-ratio: 1 / 1;
+      background: var(--gold);
+      border: 3px solid var(--dark-blue);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+    }
+
+    .label-wrap {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 50%;
+      transform-origin: bottom center;
     }
 
     .label {
       position: absolute;
-      left: 8px;
-      top: -10px;
-      width: 100px;
-      text-align: right;
-      padding-right: 10px;
-      font-weight: bold;
-      font-size: 0.95rem;
-      color: #fff;
+      top: 14%;
+      left: 50%;
+      font-weight: 700;
+      font-size: clamp(0.65rem, 1.6vw, 0.9rem);
+      color: var(--gold-light);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
       white-space: nowrap;
     }
 
     .controls {
-      margin-top: 30px;
+      width: 100%;
+      max-width: 380px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      padding: 6px 0 2px;
+      flex: 0 0 auto;
     }
 
-    input[type="number"] {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 2px solid var(--gold);
-      background: #fff;
-      color: var(--darkblue);
-      width: 160px;
-      font-size: 1rem;
+    #stakeInput {
+      width: 100%;
+      padding: 9px 14px;
+      border: 2px solid var(--gray-border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #ffffff;
+      color: var(--text-dark);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #stakeInput:focus {
+      border-color: var(--gold);
+    }
+
+    #stakeInput.invalid {
+      border-color: #c0392b;
+    }
+
+    #stakeError {
+      color: #c0392b;
+      font-size: 0.78rem;
+      min-height: 14px;
       text-align: center;
     }
 
-    button {
-      background: var(--gold);
-      color: var(--darkblue);
+    #spinBtn {
+      width: 100%;
+      padding: 11px 14px;
       border: none;
-      padding: 10px 28px;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--dark-blue), var(--dark-blue-light));
+      color: var(--gold-light);
       font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(11,31,77,0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #spinBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba(11,31,77,0.45);
+    }
+
+    #spinBtn:active {
+      transform: translateY(0);
+    }
+
+    #spinBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     #result {
-      margin-top: 16px;
-      font-size: 1.2rem;
-      min-height: 28px;
+      min-height: 20px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-align: center;
       color: var(--green);
-      font-weight: bold;
     }
 
-    #result.lose { color: #e05555; }
+    #result.lose {
+      color: #c0392b;
+    }
+
+    @media (max-width: 360px) {
+      .balance-pill {
+        padding: 5px 10px;
+        font-size: 0.72rem;
+      }
+      #spinBtn, #stakeInput {
+        font-size: 0.88rem;
+        padding: 9px 10px;
+      }
+    }
   </style>
 </head>
 <body>
     <%- include('partials/header') %>
-  <h1>Vault Jspins</h1>
 
-  <div class="balances">
-    <div>Wallet: KSh <span id="walletBalance"><%= walletBalance.toFixed(2) %></span></div>
-    
-  </div>
+  <div class="game-content">
+    <h1>Vault Jspins</h1>
 
-  <div id="poolWarning" class="pool-warning">
-    The game is temporarily unavailable. Please check back later.
-  </div>
-
-  <div class="wheel-wrap">
-    <div class="pointer"></div>
-    <div class="wheel" id="wheel">
-      <div class="label-wrap" style="transform: rotate(25.71deg);"><div class="label">×0</div></div>
-      <div class="label-wrap" style="transform: rotate(77.14deg);"><div class="label">×0.5</div></div>
-      <div class="label-wrap" style="transform: rotate(128.57deg);"><div class="label">×1</div></div>
-      <div class="label-wrap" style="transform: rotate(180deg);"><div class="label">×1.5</div></div>
-      <div class="label-wrap" style="transform: rotate(231.43deg);"><div class="label">×2</div></div>
-      <div class="label-wrap" style="transform: rotate(282.86deg);"><div class="label">×5</div></div>
-      <div class="label-wrap" style="transform: rotate(334.29deg);"><div class="label">×10</div></div>
+    <div class="balances">
+      <div class="balance-pill">Wallet: KSh <span id="walletBalance"><%= walletBalance.toFixed(2) %></span></div>
+     
     </div>
-  </div>
 
-  <div class="controls">
-    <input type="number" id="stakeInput" min="1" step="1" placeholder="Stake amount (KSh)" />
-    <button id="spinBtn">Spin</button>
-    <div id="result"></div>
+    <div id="poolWarning" class="pool-warning<%= poolAvailable ? '' : ' active' %>">
+      The game is temporarily unavailable. Please check back later.
+    </div>
+
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <div class="wheel" id="wheel">
+        <div class="label-wrap" style="transform: rotate(25.71deg);"><div class="label" style="transform: translateX(-50%) rotate(-25.71deg);">×0</div></div>
+        <div class="label-wrap" style="transform: rotate(77.14deg);"><div class="label" style="transform: translateX(-50%) rotate(-77.14deg);">×0.5</div></div>
+        <div class="label-wrap" style="transform: rotate(128.57deg);"><div class="label" style="transform: translateX(-50%) rotate(-128.57deg);">×1</div></div>
+        <div class="label-wrap" style="transform: rotate(180deg);"><div class="label" style="transform: translateX(-50%) rotate(-180deg);">×1.5</div></div>
+        <div class="label-wrap" style="transform: rotate(231.43deg);"><div class="label" style="transform: translateX(-50%) rotate(-231.43deg);">×2</div></div>
+        <div class="label-wrap" style="transform: rotate(282.86deg);"><div class="label" style="transform: translateX(-50%) rotate(-282.86deg);">×5</div></div>
+        <div class="label-wrap" style="transform: rotate(334.29deg);"><div class="label" style="transform: translateX(-50%) rotate(-334.29deg);">×10</div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="number" id="stakeInput" min="5" step="1" placeholder="Stake amount (min KSh 5)" />
+      <div id="stakeError"></div>
+      <button id="spinBtn">Spin</button>
+      <div id="result"></div>
+    </div>
   </div>
 
   <script>
     window.__initialPoolBalance = <%- poolBalance %>;
+
+    (function () {
+      const MIN_STAKE = 5;
+      const stakeInput = document.getElementById('stakeInput');
+      const stakeError = document.getElementById('stakeError');
+      const spinBtn = document.getElementById('spinBtn');
+
+      function validateStake() {
+        const raw = stakeInput.value.trim();
+        const value = parseFloat(raw);
+
+        if (raw === '') {
+          stakeError.textContent = '';
+          stakeInput.classList.remove('invalid');
+          return false;
+        }
+
+        if (isNaN(value) || value < MIN_STAKE) {
+          stakeError.textContent = `Minimum stake is KSh ${MIN_STAKE}`;
+          stakeInput.classList.add('invalid');
+          return false;
+        }
+
+        stakeError.textContent = '';
+        stakeInput.classList.remove('invalid');
+        return true;
+      }
+
+      stakeInput.addEventListener('input', validateStake);
+
+      stakeInput.addEventListener('blur', function () {
+        const value = parseFloat(stakeInput.value);
+        if (stakeInput.value.trim() !== '' && (isNaN(value) || value < MIN_STAKE)) {
+          stakeInput.value = MIN_STAKE;
+          validateStake();
+        }
+      });
+
+      spinBtn.addEventListener('click', function (e) {
+        if (!validateStake()) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      }, true);
+    })();
   </script>
   <script src="/js/vault-jspins.js"></script>
   <%- include('partials/footer') %>
