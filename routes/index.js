@@ -15,7 +15,7 @@ router.get("/landing", (req, res) => {
 });
 
 router.get("/register", (req, res) => {
-  res.render("register", { error: null });
+  res.render("register", { error: null, prefillCode: req.query.ref || "" });
 });
 
 router.get("/login", (req, res) => {
