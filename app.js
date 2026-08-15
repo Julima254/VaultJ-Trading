@@ -13,6 +13,8 @@ const vaultJspinsRoutes = require("./routes/vaultJspins");
 const teamRoutes = require("./routes/team");
 const withdrawRoutes = require("./routes/withdraw");
 const darajaCallbackRoutes = require("./routes/darajaCallbacks");
+const transactionsRoutes = require("./routes/transactions");
+const profileRoutes = require("./routes/profile");
 
 const app = express();
 
@@ -73,6 +75,8 @@ app.use("/", vaultJspinsRoutes);
 app.use("/", teamRoutes);
 app.use("/", withdrawRoutes);
 app.use("/", darajaCallbackRoutes);
+app.use("/", transactionsRoutes);
+app.use("/", profileRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

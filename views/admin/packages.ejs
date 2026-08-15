@@ -1,503 +1,608 @@
-<%- include('../partials/adminHeader') %>
-
-<style>
-  :root {
-    --dark-blue: #0a1f44;
-    --dark-blue-light: #12305e;
-    --gold: #d4af37;
-    --gold-light: #e8c96b;
-    --green: #1f9d55;
-    --green-light: #e6f6ec;
-    --red: #b42318;
-    --red-light: #fdecec;
-    --light-gray: #f4f5f7;
-    --border-gray: #e1e3e8;
-    --text-muted: #6b7280;
-  }
-
-  .admin-content-wrap,
-  .admin-content-wrap * {
-    font-family: inherit;
-  }
-
-  .admin-content-wrap {
-    background: var(--light-gray);
-    min-height: 100vh;
-    padding: 24px;
-  }
-
-  @media (min-width: 992px) {
-    .admin-content-wrap {
-      margin-left: 260px;
-      padding: 32px 40px;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Packages — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
     }
-  }
 
-  .pkg-page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
+    * { box-sizing: border-box; }
 
-  .pkg-page-header h1 {
-    color: var(--dark-blue);
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 0;
-  }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
 
-  .pkg-page-header p {
-    color: var(--text-muted);
-    margin: 4px 0 0;
-    font-size: 0.92rem;
-  }
+    /* ---- Fixed sidebar (matches payments.ejs) ---- */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
 
-  .pkg-summary-bar {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
 
-  .pkg-summary-chip {
-    background: #fff;
-    border: 1px solid var(--border-gray);
-    border-left: 4px solid var(--gold);
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 0.85rem;
-    color: var(--dark-blue);
-  }
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
 
-  .pkg-summary-chip strong {
-    display: block;
-    font-size: 1.1rem;
-    color: var(--dark-blue);
-  }
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
 
-  .pkg-summary-chip.chip-neutral { border-left-color: var(--text-muted); }
-  .pkg-summary-chip.chip-warn { border-left-color: var(--red); }
-  .pkg-summary-chip.chip-good { border-left-color: var(--green); }
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
 
-  .pkg-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 32px;
-  }
+    /* ---- Main content ---- */
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
 
-  .pkg-card {
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid var(--border-gray);
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(10, 31, 68, 0.06);
-    display: flex;
-    flex-direction: column;
-  }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
 
-  .pkg-card-top {
-    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--dark-blue-light) 100%);
-    color: #fff;
-    padding: 18px 20px;
-    position: relative;
-  }
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
 
-  .pkg-card-top::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--gold);
-  }
+    .page-header p {
+      color: var(--text-muted);
+      margin: 4px 0 0;
+      font-size: 13px;
+    }
 
-  .pkg-card-top .pkg-key {
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    color: var(--gold-light);
-    font-weight: 600;
-  }
+    /* ---- Summary cards (matches payments.ejs .cards) ---- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
 
-  .pkg-card-top h3 {
-    margin: 4px 0 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
 
-  .pkg-card-body {
-    padding: 18px 20px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+    .card.neutral { border-top-color: var(--text-muted); }
+    .card.warn { border-top-color: var(--red); }
+    .card.good { border-top-color: var(--green); }
+    .card.gold { border-top-color: var(--gold); }
 
-  .pkg-price {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--dark-blue);
-  }
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
 
-  .pkg-price span {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
-  }
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
 
-  .pkg-meta-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    border-top: 1px dashed var(--border-gray);
-    padding-top: 10px;
-  }
+    /* ---- Package cards ---- */
+    .pkg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
 
-  .pkg-meta-row strong {
-    color: var(--dark-blue);
-  }
+    .pkg-card {
+      background: var(--white);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+    }
 
-  .pkg-badge-green {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--green-light);
-    color: var(--green);
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 999px;
-    width: fit-content;
-  }
+    .pkg-card-top {
+      background: linear-gradient(135deg, var(--dark-blue) 0%, var(--dark-blue-light) 100%);
+      color: var(--white);
+      padding: 18px 20px;
+      position: relative;
+    }
 
-  .pkg-badge-green::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-  }
+    .pkg-card-top::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gold);
+    }
 
-  .pkg-card-footer {
-    padding: 14px 20px;
-    border-top: 1px solid var(--border-gray);
-    display: flex;
-    gap: 8px;
-  }
+    .pkg-key {
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      font-weight: 600;
+    }
 
-  .pkg-btn {
-    flex: 1;
-    text-align: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: opacity 0.15s ease;
-  }
+    .pkg-card-top h3 {
+      margin: 4px 0 0;
+      font-size: 19px;
+      font-weight: 700;
+    }
 
-  .pkg-btn:hover { opacity: 0.88; }
+    .pkg-card-body {
+      padding: 18px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-  .pkg-btn-gold {
-    background: var(--gold);
-    color: var(--dark-blue);
-  }
+    .pkg-price {
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--dark-blue);
+    }
 
-  .pkg-btn-outline {
-    background: #fff;
-    color: var(--dark-blue);
-    border: 1px solid var(--border-gray);
-  }
+    .pkg-price span {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
 
-  .pkg-two-col {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
+    .pkg-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+    }
 
-  @media (max-width: 900px) {
-    .pkg-two-col { grid-template-columns: 1fr; }
-  }
+    .pkg-meta-row strong {
+      color: var(--dark-blue);
+    }
 
-  .pkg-table-section {
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid var(--border-gray);
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      width: fit-content;
+      background: #e3f5ec;
+      color: var(--green);
+    }
 
-  .pkg-table-section h2 {
-    color: var(--dark-blue);
-    font-size: 1.05rem;
-    margin: 0;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border-gray);
-  }
+    .badge::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
 
-  table.pkg-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+    .pkg-card-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
 
-  table.pkg-table thead th {
-    background: var(--dark-blue);
-    color: #fff;
-    text-align: left;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 12px 16px;
-  }
+    .btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--dark-blue);
+      background: var(--white);
+      cursor: pointer;
+    }
 
-  table.pkg-table tbody td {
-    padding: 14px 16px;
-    font-size: 0.9rem;
-    color: var(--dark-blue);
-    border-bottom: 1px solid var(--border-gray);
-  }
+    .btn:hover { background: var(--light-gray); }
 
-  table.pkg-table tbody tr:hover {
-    background: var(--light-gray);
-  }
+    .btn-primary {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
 
-  .pkg-table-name {
-    font-weight: 600;
-  }
+    .btn-primary:hover { background: var(--dark-blue-light); }
 
-  .pkg-table-key {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 400;
-  }
+    /* ---- Two column layout ---- */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
 
-  .pkg-table-link {
-    color: var(--dark-blue);
-    font-weight: 600;
-    font-size: 0.82rem;
-    text-decoration: none;
-  }
+    /* ---- Table (matches payments.ejs table-wrap) ---- */
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
 
-  .pkg-table-link:hover { text-decoration: underline; }
+    .table-wrap h2 {
+      font-size: 16px;
+      margin: 0;
+      padding: 16px 20px;
+      color: var(--dark-blue);
+      border-bottom: 1px solid var(--border);
+    }
 
-  .pkg-empty {
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--text-muted);
-  }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
 
-  .pkg-activity-list {
-    list-style: none;
-    margin: 0;
-    padding: 8px 0;
-  }
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
 
-  .pkg-activity-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border-gray);
-    font-size: 0.85rem;
-  }
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
 
-  .pkg-activity-item:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafbfc; }
 
-  .pkg-activity-user {
-    font-weight: 600;
-    color: var(--dark-blue);
-  }
+    .table-name { font-weight: 600; color: var(--text-dark); }
 
-  .pkg-activity-pkg {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    display: block;
-  }
+    .table-key {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
 
-  .pkg-activity-date {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    white-space: nowrap;
-  }
+    .table-link {
+      color: var(--dark-blue);
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+    }
 
-  .alert-box {
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 0.9rem;
-  }
+    .table-link:hover { text-decoration: underline; }
 
-  .alert-error {
-    background: #fdecec;
-    color: #b42318;
-    border: 1px solid #f3c1bd;
-  }
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
 
-  .alert-success {
-    background: var(--green-light);
-    color: var(--green);
-    border: 1px solid #b7e5c6;
-  }
-</style>
+    /* ---- Activity list ---- */
+    .activity-list {
+      list-style: none;
+      margin: 0;
+      padding: 8px 0;
+    }
 
-<div class="admin-content-wrap">
+    .activity-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
 
-  <div class="pkg-page-header">
-    <div>
-      <h1>Manage Packages</h1>
-      <p>Overview of all packages configured on the platform.</p>
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-user { font-weight: 600; color: var(--dark-blue); }
+
+    .activity-pkg {
+      color: var(--text-muted);
+      font-size: 12px;
+      display: block;
+    }
+
+    .activity-date {
+      color: var(--text-muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* ---- Alerts ---- */
+    .alert-box {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .alert-error {
+      background: #fbe6e3;
+      color: var(--red);
+      border: 1px solid #f3c1bd;
+    }
+
+    .alert-success {
+      background: #e3f5ec;
+      color: var(--green);
+      border: 1px solid #b7e5c6;
+    }
+
+    /* ---- Responsive (matches payments.ejs breakpoints) ---- */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .two-col { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+
+      .table-wrap table { background: transparent; box-shadow: none; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead { position: absolute; top: -9999px; left: -9999px; }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin: 10px 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Manage Packages</h1>
+        <p>Overview of all packages configured on the platform.</p>
+      </div>
     </div>
 
-    <div class="pkg-summary-bar">
-      <div class="pkg-summary-chip">
-        Total Packages
-        <strong><%= Object.keys(packages).length %></strong>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert-box alert-error"><%= error %></div>
+    <% } %>
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="alert-box alert-success"><%= success %></div>
+    <% } %>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="label">Total Packages</div>
+        <div class="value"><%= Object.keys(packages).length %></div>
       </div>
       <% if (typeof totalUsers !== 'undefined') { %>
-        <div class="pkg-summary-chip">
-          Total Users
-          <strong><%= totalUsers %></strong>
+        <div class="card">
+          <div class="label">Total Users</div>
+          <div class="value"><%= totalUsers %></div>
         </div>
-        <div class="pkg-summary-chip chip-good">
-          With a Package
-          <strong><%= usersWithPackage %></strong>
+        <div class="card good">
+          <div class="label">With a Package</div>
+          <div class="value"><%= usersWithPackage %></div>
         </div>
-        <div class="pkg-summary-chip chip-warn">
-          No Package
-          <strong><%= usersWithNoPackage %></strong>
+        <div class="card warn">
+          <div class="label">No Package</div>
+          <div class="value"><%= usersWithNoPackage %></div>
         </div>
-        <div class="pkg-summary-chip chip-neutral">
-          Adoption Rate
-          <strong><%= adoptionRate %>%</strong>
+        <div class="card neutral">
+          <div class="label">Adoption Rate</div>
+          <div class="value"><%= adoptionRate %>%</div>
         </div>
       <% } %>
       <% if (typeof stats !== 'undefined' && stats) { %>
-        <div class="pkg-summary-chip">
-          Total Revenue
-          <strong>
-            Ksh <%= Object.values(stats).reduce((sum, s) => sum + (s.revenue || 0), 0).toLocaleString() %>
-          </strong>
+        <div class="card gold">
+          <div class="label">Total Revenue</div>
+          <div class="value">
+            KES <%= Object.values(stats).reduce((sum, s) => sum + (s.revenue || 0), 0).toLocaleString() %>
+          </div>
         </div>
       <% } %>
     </div>
-  </div>
 
-  <% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert-box alert-error"><%= error %></div>
-  <% } %>
-  <% if (typeof success !== 'undefined' && success) { %>
-    <div class="alert-box alert-success"><%= success %></div>
-  <% } %>
-
-  <% if (!packages || Object.keys(packages).length === 0) { %>
-    <div class="pkg-table-section">
-      <div class="pkg-empty">No packages configured yet.</div>
-    </div>
-  <% } else { %>
-
-    <div class="pkg-grid">
-      <% Object.entries(packages).forEach(([key, pkg]) => { %>
-        <div class="pkg-card">
-          <div class="pkg-card-top">
-            <span class="pkg-key"><%= key %></span>
-            <h3><%= pkg.name %></h3>
-          </div>
-          <div class="pkg-card-body">
-            <div class="pkg-price">
-              Ksh <%= pkg.price?.toLocaleString() %>
-              <span>/ activation</span>
-            </div>
-
-            <div class="pkg-badge-green">
-              <%= ((pkg.referral || 0) * 100).toFixed(0) %>% referral commission
-            </div>
-
-            <% if (typeof stats !== 'undefined' && stats && stats[key]) { %>
-              <div class="pkg-meta-row">
-                <span>Active users</span>
-                <strong><%= stats[key].activeUsers || 0 %></strong>
-              </div>
-              <div class="pkg-meta-row">
-                <span>Revenue generated</span>
-                <strong>Ksh <%= (stats[key].revenue || 0).toLocaleString() %></strong>
-              </div>
-            <% } %>
-          </div>
-          <div class="pkg-card-footer">
-            <a href="/admin/packages/<%= key %>/users" class="pkg-btn pkg-btn-outline">View Users</a>
-          </div>
-        </div>
-      <% }); %>
-    </div>
-
-    <div class="pkg-two-col">
-      <div class="pkg-table-section">
-        <h2>All Packages</h2>
-        <table class="pkg-table">
-          <thead>
-            <tr>
-              <th>Package</th>
-              <th>Price (Ksh)</th>
-              <th>Referral %</th>
-              <% if (typeof stats !== 'undefined' && stats) { %>
-                <th>Active Users</th>
-                <th>Revenue</th>
-              <% } %>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% Object.entries(packages).forEach(([key, pkg]) => { %>
-              <tr>
-                <td>
-                  <span class="pkg-table-name"><%= pkg.name %></span>
-                  <span class="pkg-table-key"><%= key %></span>
-                </td>
-                <td><%= pkg.price?.toLocaleString() %></td>
-                <td><%= ((pkg.referral || 0) * 100).toFixed(0) %>%</td>
-                <% if (typeof stats !== 'undefined' && stats) { %>
-                  <td><%= stats[key]?.activeUsers || 0 %></td>
-                  <td>Ksh <%= (stats[key]?.revenue || 0).toLocaleString() %></td>
-                <% } %>
-                <td><a href="/admin/packages/<%= key %>/users" class="pkg-table-link">View users →</a></td>
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
+    <% if (!packages || Object.keys(packages).length === 0) { %>
+      <div class="table-wrap">
+        <div class="empty-state">No packages configured yet.</div>
       </div>
+    <% } else { %>
 
-      <div class="pkg-table-section">
-        <h2>Recent Package Activity</h2>
-        <% if (typeof recentActivity !== 'undefined' && recentActivity && recentActivity.length > 0) { %>
-          <ul class="pkg-activity-list">
-            <% recentActivity.forEach((a) => { %>
-              <li class="pkg-activity-item">
-                <div>
-                  <span class="pkg-activity-user"><%= a.name %></span>
-                  <span class="pkg-activity-pkg"><%= a.packageName %> (<%= a.packageKey %>)</span>
+      <!-- Package cards -->
+      <div class="pkg-grid">
+        <% Object.entries(packages).forEach(([key, pkg]) => { %>
+          <div class="pkg-card">
+            <div class="pkg-card-top">
+              <span class="pkg-key"><%= key %></span>
+              <h3><%= pkg.name %></h3>
+            </div>
+            <div class="pkg-card-body">
+              <div class="pkg-price">
+                KES <%= pkg.price?.toLocaleString() %>
+                <span>/ activation</span>
+              </div>
+
+              <span class="badge"><%= ((pkg.referral || 0) * 100).toFixed(0) %>% referral commission</span>
+
+              <% if (typeof stats !== 'undefined' && stats && stats[key]) { %>
+                <div class="pkg-meta-row">
+                  <span>Active users</span>
+                  <strong><%= stats[key].activeUsers || 0 %></strong>
                 </div>
-                <span class="pkg-activity-date">
-                  <%= new Date(a.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) %>
-                </span>
-              </li>
-            <% }); %>
-          </ul>
-        <% } else { %>
-          <div class="pkg-empty">No recent activity.</div>
-        <% } %>
+                <div class="pkg-meta-row">
+                  <span>Revenue generated</span>
+                  <strong>KES <%= (stats[key].revenue || 0).toLocaleString() %></strong>
+                </div>
+              <% } %>
+            </div>
+            <div class="pkg-card-footer">
+              <a href="/admin/packages/<%= key %>/users" class="btn">View Users</a>
+            </div>
+          </div>
+        <% }); %>
       </div>
-    </div>
 
-  <% } %>
+      <!-- Table + activity -->
+      <div class="two-col">
+        <div class="table-wrap">
+          <h2>All Packages</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Package</th>
+                <th>Price (KES)</th>
+                <th>Referral %</th>
+                <% if (typeof stats !== 'undefined' && stats) { %>
+                  <th>Active Users</th>
+                  <th>Revenue</th>
+                <% } %>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% Object.entries(packages).forEach(([key, pkg]) => { %>
+                <tr>
+                  <td data-label="Package">
+                    <span class="table-name"><%= pkg.name %></span>
+                    <span class="table-key"><%= key %></span>
+                  </td>
+                  <td data-label="Price"><%= pkg.price?.toLocaleString() %></td>
+                  <td data-label="Referral %"><%= ((pkg.referral || 0) * 100).toFixed(0) %>%</td>
+                  <% if (typeof stats !== 'undefined' && stats) { %>
+                    <td data-label="Active Users"><%= stats[key]?.activeUsers || 0 %></td>
+                    <td data-label="Revenue">KES <%= (stats[key]?.revenue || 0).toLocaleString() %></td>
+                  <% } %>
+                  <td data-label="">
+                    <a href="/admin/packages/<%= key %>/users" class="table-link">View users →</a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
 
-</div>
+        <div class="table-wrap">
+          <h2>Recent Package Activity</h2>
+          <% if (typeof recentActivity !== 'undefined' && recentActivity && recentActivity.length > 0) { %>
+            <ul class="activity-list">
+              <% recentActivity.forEach((a) => { %>
+                <li class="activity-item">
+                  <div>
+                    <span class="activity-user"><%= a.name %></span>
+                    <span class="activity-pkg"><%= a.packageName %> (<%= a.packageKey %>)</span>
+                  </div>
+                  <span class="activity-date">
+                    <%= new Date(a.date).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  </span>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <div class="empty-state">No recent activity.</div>
+          <% } %>
+        </div>
+      </div>
+
+    <% } %>
+  </main>
+
+</body>
+</html>

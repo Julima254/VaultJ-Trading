@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#0a1a3f;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a1a3f" />
+  <meta name="color-scheme" content="dark" />
+  <title>My Profile | VaultJ Trading</title>
+  <style>
+    :root {
+      --dark-blue: #0a1a3f;
+      --dark-blue-light: #12275c;
+      --gold: #d4af37;
+      --green: #2ecc71;
+      --light-gray: #e6e6e6;
+      --red: #e74c3c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--dark-blue); min-height: 100%; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: var(--light-gray);
+      padding-bottom: 90px;
+    }
+
+    .profile-wrap {
+      max-width: 460px;
+      margin: 24px auto;
+      padding: 0 18px;
+    }
+
+    .card {
+      background: var(--dark-blue-light);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      color: var(--gold);
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .card-subtitle {
+      color: var(--light-gray);
+      opacity: 0.7;
+      font-size: 12.5px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      background: rgba(255,255,255,0.04);
+      color: var(--light-gray);
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    input:focus { outline: none; border-color: var(--gold); }
+
+    input[readonly] {
+      opacity: 0.85;
+      cursor: default;
+    }
+
+    .btn {
+      width: 100%;
+      background: var(--gold);
+      color: var(--dark-blue);
+      border: none;
+      padding: 13px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .status-box {
+      display: none;
+      text-align: center;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    .status-box.pending { display: block; background: rgba(212,175,55,0.1); color: var(--gold); }
+    .status-box.success { display: block; background: rgba(46,204,113,0.1); color: var(--green); }
+    .status-box.failed { display: block; background: rgba(231,76,60,0.1); color: var(--red); }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(212,175,55,0.3);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .note {
+      font-size: 12px;
+      opacity: 0.7;
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .divider {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gold);
+      opacity: 0.6;
+      margin: 18px 0;
+    }
+
+    /* --- Account overview grid --- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-item {
+      background: rgba(212, 175, 55, 0.06);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--gold);
+      opacity: 0.8;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .stat-value {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--light-gray);
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 4px;
+    }
+
+    .status-pill.active { background: rgba(46,204,113,0.15); color: var(--green); }
+    .status-pill.inactive { background: rgba(231,76,60,0.15); color: var(--red); }
+
+    /* --- Referral code copy row --- */
+    .copy-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .copy-row input {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      width: auto;
+      padding: 12px 16px;
+      background: var(--gold);
+      color: var(--dark-blue);
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .copy-btn.copied {
+      background: var(--green);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('partials/header') %>
+
+  <div class="profile-wrap">
+
+    <!-- ACCOUNT OVERVIEW -->
+    <div class="card">
+      <div class="card-title">Account Overview</div>
+      <div class="card-subtitle">A quick snapshot of your account</div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-label">Wallet Balance</div>
+          <div class="stat-value">KES <%= (user.walletBalance || 0).toLocaleString() %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Deposit Balance</div>
+          <div class="stat-value">KES <%= (user.depositBalance || 0).toLocaleString() %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Active Package</div>
+          <div class="stat-value"><%= user.package %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Account Status</div>
+          <div class="stat-value">
+            <span class="status-pill <%= user.isActive ? 'active' : 'inactive' %>">
+              <%= user.isActive ? 'Active' : 'Inactive' %>
+            </span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Referral Earnings</div>
+          <div class="stat-value">KES <%= (user.referralEarnings || 0).toLocaleString() %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total Referrals</div>
+          <div class="stat-value"><%= user.totalReferrals || 0 %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Coin Balance</div>
+          <div class="stat-value"><%= (user.coinBalance || 0).toLocaleString() %></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Spinning Balance</div>
+          <div class="stat-value"><%= (user.spinningBalance || 0).toLocaleString() %></div>
+        </div>
+      </div>
+
+      <div class="note">
+        Member since <%= new Date(user.createdAt).toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+      </div>
+    </div>
+
+    <!-- REFERRAL CODE -->
+    <div class="card">
+      <div class="card-title">Your Referral Code</div>
+      <div class="card-subtitle">Share this with friends to earn referral bonuses</div>
+
+      <div class="copy-row">
+        <input type="text" id="referralCode" value="<%= user.referralCode || 'Not generated yet' %>" readonly />
+        <button type="button" class="copy-btn" id="copyBtn">Copy</button>
+      </div>
+    </div>
+
+    <!-- PERSONAL DETAILS -->
+    <div class="card">
+      <div class="card-title">Personal Details</div>
+      <div class="card-subtitle">Keep your information up to date</div>
+
+      <form id="detailsForm">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" value="<%= user.username %>" required />
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" value="<%= user.email %>" required />
+
+        <label for="phone">Phone Number</label>
+        <input type="text" id="phone" name="phone" value="<%= user.phone %>" required />
+
+        <label for="country">Country</label>
+        <input type="text" id="country" name="country" value="<%= user.country %>" required />
+
+        <button type="submit" class="btn" id="detailsBtn">Save Changes</button>
+      </form>
+
+      <div class="status-box" id="detailsStatusBox"></div>
+    </div>
+
+    <div class="divider">— — —</div>
+
+    <!-- CHANGE PASSWORD -->
+    <div class="card">
+      <div class="card-title">Change Password</div>
+      <div class="card-subtitle">Use a strong password you don't use elsewhere</div>
+
+      <form id="passwordForm">
+        <label for="currentPassword">Current Password</label>
+        <input type="password" id="currentPassword" name="currentPassword" required />
+
+        <label for="newPassword">New Password</label>
+        <input type="password" id="newPassword" name="newPassword" minlength="6" required />
+
+        <label for="confirmPassword">Confirm New Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" minlength="6" required />
+
+        <button type="submit" class="btn btn-outline" id="passwordBtn">Update Password</button>
+      </form>
+
+      <div class="status-box" id="passwordStatusBox"></div>
+      <div class="note">You'll stay logged in on this device after changing your password.</div>
+    </div>
+
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    function setStatus(box, type, html) {
+      box.className = 'status-box ' + type;
+      box.innerHTML = html;
+    }
+
+    // ---- Copy referral code ----
+    const copyBtn = document.getElementById('copyBtn');
+    const referralInput = document.getElementById('referralCode');
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(referralInput.value);
+      } catch (err) {
+        referralInput.select();
+        document.execCommand('copy');
+      }
+      copyBtn.textContent = 'Copied!';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    });
+
+    // ---- Update personal details ----
+    const detailsForm = document.getElementById('detailsForm');
+    const detailsBtn = document.getElementById('detailsBtn');
+    const detailsStatusBox = document.getElementById('detailsStatusBox');
+
+    detailsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      detailsBtn.disabled = true;
+      setStatus(detailsStatusBox, 'pending', '<span class="spinner"></span>Saving changes...');
+
+      const payload = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        country: document.getElementById('country').value,
+      };
+
+      try {
+        const res = await fetch('/profile/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          setStatus(detailsStatusBox, 'success', data.message);
+        } else {
+          setStatus(detailsStatusBox, 'failed', data.message || 'Update failed.');
+        }
+      } catch (err) {
+        setStatus(detailsStatusBox, 'failed', 'Unable to save right now. Please try again.');
+      } finally {
+        detailsBtn.disabled = false;
+      }
+    });
+
+    // ---- Change password ----
+    const passwordForm = document.getElementById('passwordForm');
+    const passwordBtn = document.getElementById('passwordBtn');
+    const passwordStatusBox = document.getElementById('passwordStatusBox');
+
+    passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      passwordBtn.disabled = true;
+      setStatus(passwordStatusBox, 'pending', '<span class="spinner"></span>Updating password...');
+
+      const payload = {
+        currentPassword: document.getElementById('currentPassword').value,
+        newPassword: document.getElementById('newPassword').value,
+        confirmPassword: document.getElementById('confirmPassword').value,
+      };
+
+      try {
+        const res = await fetch('/profile/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          setStatus(passwordStatusBox, 'success', data.message);
+          passwordForm.reset();
+        } else {
+          setStatus(passwordStatusBox, 'failed', data.message || 'Password update failed.');
+        }
+      } catch (err) {
+        setStatus(passwordStatusBox, 'failed', 'Unable to update password right now. Please try again.');
+      } finally {
+        passwordBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

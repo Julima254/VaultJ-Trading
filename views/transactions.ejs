@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #f0f0f0;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background: #0a1f44;
+      color: #fff;
+      padding: 25px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      color: #ffd700;
+      font-size: 26px;
+    }
+    .status-banner {
+      max-width: 900px;
+      margin: 20px auto 0;
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .status-error {
+      background: #ffe0e0;
+      color: #a10000;
+      border: 1px solid #a10000;
+    }
+    .status-success {
+      background: #e3f8e6;
+      color: #1a7a2e;
+      border: 1px solid #1a7a2e;
+    }
+
+    /* ---- Stat cards ---- */
+    .stats-grid {
+      max-width: 1100px;
+      margin: 30px auto 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 0 20px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      border-left: 6px solid #0a1f44;
+    }
+    .stat-card .label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b7280;
+      font-weight: bold;
+    }
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0a1f44;
+      margin-top: 6px;
+    }
+    .stat-card.deposited { border-left-color: #1a7a2e; }
+    .stat-card.deposited .value { color: #1a7a2e; }
+
+    .stat-card.withdrawn { border-left-color: #a10000; }
+    .stat-card.withdrawn .value { color: #a10000; }
+
+    .stat-card.earned { border-left-color: #ffd700; }
+    .stat-card.earned .value { color: #b8860b; }
+
+    .stat-card.pending { border-left-color: #00c9d1; }
+    .stat-card.pending .value { color: #0891a3; }
+    .stat-card .sub {
+      font-size: 12px;
+      color: #9aa5b1;
+      margin-top: 4px;
+    }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      max-width: 1100px;
+      margin: 30px auto 0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+    .filter-bar form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-end;
+    }
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 140px;
+    }
+    .filter-field label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #0a1f44;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .filter-field select,
+    .filter-field input {
+      padding: 9px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+    }
+    .filter-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .filter-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #0a1f44;
+      color: #ffd700;
+      font-size: 14px;
+    }
+    .filter-btn:hover { filter: brightness(1.2); }
+    .filter-clear {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      background: #f0f0f0;
+      color: #333;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .filter-clear:hover { background: #e2e2e2; }
+
+    /* ---- Transaction table ---- */
+    .table-wrap {
+      max-width: 1100px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      padding: 0 20px 20px;
+    }
+    .table-wrap h3 {
+      color: #0a1f44;
+      padding-top: 20px;
+      margin: 0 0 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      background: #0a1f44;
+      color: #ffd700;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    thead th:first-child { border-radius: 8px 0 0 8px; }
+    thead th:last-child { border-radius: 0 8px 8px 0; }
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+    tbody tr:hover { background: #fafafa; }
+    .type-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+    .type-deposit { background: #e3f8e6; color: #1a7a2e; }
+    .type-withdraw { background: #ffe0e0; color: #a10000; }
+    .type-upgrade { background: #fff4cc; color: #b8860b; }
+    .type-referral { background: #e0f7ff; color: #0891a3; }
+    .type-spin { background: #f0e6ff; color: #6d28d9; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+    .status-completed { background: #e3f8e6; color: #1a7a2e; }
+    .status-pending { background: #fff4cc; color: #b8860b; }
+    .status-failed { background: #ffe0e0; color: #a10000; }
+
+    .empty-row td {
+      text-align: center;
+      padding: 30px;
+      color: #9aa5b1;
+      font-style: italic;
+    }
+
+    /* ---- Pagination ---- */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .pagination a, .pagination span {
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .pagination a {
+      background: #f0f0f0;
+      color: #0a1f44;
+    }
+    .pagination a:hover { background: #e2e2e2; }
+    .pagination .active {
+      background: #0a1f44;
+      color: #ffd700;
+    }
+
+    /* ---- Mobile ---- */
+    @media (max-width: 700px) {
+      .table-wrap { padding: 0 10px 15px; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tbody tr {
+        margin-bottom: 12px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        padding: 8px 0;
+      }
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: none;
+        padding: 8px 14px;
+      }
+      tbody td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #0a1f44;
+        margin-right: 10px;
+      }
+      .filter-bar form { flex-direction: column; align-items: stretch; }
+      .filter-field { min-width: 100%; }
+      .filter-actions { flex-direction: column; }
+      .filter-btn, .filter-clear { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <div class="header">
+    <h1>Transaction History</h1>
+  </div>
+
+  <% if (error) { %>
+    <div class="status-banner status-error"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="status-banner status-success"><%= success %></div>
+  <% } %>
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card deposited">
+      <div class="label">Total Deposited</div>
+      <div class="value">Ksh <%= summary.totalDeposited.toLocaleString() %></div>
+    </div>
+    <div class="stat-card withdrawn">
+      <div class="label">Total Withdrawn</div>
+      <div class="value">Ksh <%= summary.totalWithdrawn.toLocaleString() %></div>
+    </div>
+    <div class="stat-card earned">
+      <div class="label">Total Earned</div>
+      <div class="value">Ksh <%= summary.totalEarned.toLocaleString() %></div>
+    </div>
+    <div class="stat-card pending">
+      <div class="label">Pending</div>
+      <div class="value">Ksh <%= summary.pendingAmount.toLocaleString() %></div>
+      <div class="sub"><%= summary.pendingCount %> transaction<%= summary.pendingCount === 1 ? '' : 's' %></div>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <form action="/transactions" method="GET">
+      <div class="filter-field">
+        <label>Type</label>
+        <select name="type">
+          <option value="">All</option>
+          <option value="deposit" <%= filters.type === 'deposit' ? 'selected' : '' %>>Deposit</option>
+          <option value="withdraw" <%= filters.type === 'withdraw' ? 'selected' : '' %>>Withdraw</option>
+          <option value="upgrade" <%= filters.type === 'upgrade' ? 'selected' : '' %>>Upgrade</option>
+          <option value="referral" <%= filters.type === 'referral' ? 'selected' : '' %>>Referral</option>
+          <option value="spin" <%= filters.type === 'spin' ? 'selected' : '' %>>Spin</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>Status</label>
+        <select name="status">
+          <option value="">All</option>
+          <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+          <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+          <option value="failed" <%= filters.status === 'failed' ? 'selected' : '' %>>Failed</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>Method</label>
+        <select name="method">
+          <option value="">All</option>
+          <option value="stk" <%= filters.method === 'stk' ? 'selected' : '' %>>STK Push</option>
+          <option value="manual" <%= filters.method === 'manual' ? 'selected' : '' %>>Manual</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label>From</label>
+        <input type="date" name="startDate" value="<%= filters.startDate || '' %>">
+      </div>
+
+      <div class="filter-field">
+        <label>To</label>
+        <input type="date" name="endDate" value="<%= filters.endDate || '' %>">
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="filter-btn">Apply Filter</button>
+        <a href="/transactions" class="filter-clear">Clear</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Transaction Table -->
+  <div class="table-wrap">
+    <h3>Recent Transactions</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Method</th>
+          <th>Amount</th>
+          <th>Code</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (transactions.length === 0) { %>
+          <tr class="empty-row">
+            <td colspan="6">No transactions found for the selected filters.</td>
+          </tr>
+        <% } else { %>
+          <% transactions.forEach(tx => { %>
+            <tr>
+              <td data-label="Date"><%= new Date(tx.createdAt).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+              <td data-label="Type"><span class="type-badge type-<%= tx.type %>"><%= tx.type %></span></td>
+              <td data-label="Method"><%= tx.method === 'stk' ? 'STK Push' : 'Manual' %></td>
+              <td data-label="Amount">Ksh <%= tx.amount.toLocaleString() %></td>
+              <td data-label="Code"><%= tx.code || '—' %></td>
+              <td data-label="Status"><span class="status-badge status-<%= tx.status %>"><%= tx.status %></span></td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+
+    <% if (totalPages > 1) { %>
+      <div class="pagination">
+        <% for (let p = 1; p <= totalPages; p++) { %>
+          <% const qs = new URLSearchParams({ ...filters, page: p }).toString(); %>
+          <% if (p === currentPage) { %>
+            <span class="active"><%= p %></span>
+          <% } else { %>
+            <a href="/transactions?<%= qs %>"><%= p %></a>
+          <% } %>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
