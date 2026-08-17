@@ -15,6 +15,7 @@ const withdrawRoutes = require("./routes/withdraw");
 const darajaCallbackRoutes = require("./routes/darajaCallbacks");
 const transactionsRoutes = require("./routes/transactions");
 const profileRoutes = require("./routes/profile");
+const vaultCoinRoutes = require("./routes/vaultCoin");
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use("/", withdrawRoutes);
 app.use("/", darajaCallbackRoutes);
 app.use("/", transactionsRoutes);
 app.use("/", profileRoutes);
+app.use("/", vaultCoinRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

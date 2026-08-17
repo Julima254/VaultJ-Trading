@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VaultJ Coin Exchange</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0d1526;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #e5eaf5;
+    }
+    .header {
+      background: #0a1f44;
+      color: #fff;
+      padding: 25px 20px;
+      text-align: center;
+      border-bottom: 1px solid #1e2f52;
+    }
+    .header h1 { margin: 0; color: #ffd700; font-size: 26px; }
+    .header p { margin: 6px 0 0; color: #7d8cad; font-size: 13px; }
+
+    .status-banner {
+      max-width: 1100px;
+      margin: 20px auto 0;
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .status-error { background: #3a1414; color: #ff8080; border: 1px solid #a10000; }
+    .status-success { background: #123420; color: #4ade80; border: 1px solid #1a7a2e; }
+
+    /* ---- Trading terminal card ---- */
+    .terminal {
+      max-width: 1100px;
+      margin: 20px auto;
+      background: #111b33;
+      border: 1px solid #223057;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    }
+    .terminal-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #1e2f52;
+      background: linear-gradient(135deg, #0a1f44, #111b33);
+    }
+    .coin-identity {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .coin-identity img {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      box-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
+      border: 2px solid #ffd700;
+      object-fit: cover;
+    }
+    .coin-identity .name { font-size: 20px; font-weight: bold; color: #fff; }
+    .coin-identity .ticker { font-size: 12px; color: #7d8cad; letter-spacing: 1px; }
+
+    .price-block { text-align: right; }
+    .price-block .value {
+      font-size: 34px;
+      font-weight: bold;
+      color: #fff;
+      line-height: 1;
+    }
+    .price-block .change {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .change.up { color: #22c55e; }
+    .change.down { color: #ef4444; }
+    .change.flat { color: #9fb0d1; }
+
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      border-bottom: 1px solid #1e2f52;
+    }
+    .stat-cell {
+      flex: 1;
+      min-width: 110px;
+      padding: 14px 18px;
+      border-right: 1px solid #1e2f52;
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-cell .label { font-size: 10px; color: #7d8cad; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-cell .val { font-size: 15px; font-weight: bold; margin-top: 3px; color: #fff; }
+    .stat-cell .val.green { color: #22c55e; }
+    .stat-cell .val.red { color: #ef4444; }
+    .stat-cell .val.gold { color: #ffd700; }
+
+    /* ---- Chart ---- */
+    .chart-wrap {
+      padding: 20px 24px 8px;
+      position: relative;
+    }
+    #priceChart {
+      width: 100%;
+      height: 260px;
+      display: block;
+    }
+    .chart-empty {
+      text-align: center;
+      color: #7d8cad;
+      padding: 40px 0;
+      font-size: 13px;
+    }
+
+    /* ---- Balances + actions ---- */
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 18px 24px 24px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .balances { display: flex; gap: 24px; flex-wrap: wrap; }
+    .balance-block .label { font-size: 11px; color: #7d8cad; text-transform: uppercase; }
+    .balance-block .value { font-size: 18px; font-weight: bold; color: #fff; }
+    .balance-block.coin .value { color: #ffd700; }
+
+    .sell-btn {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #fff;
+      border: none;
+      padding: 13px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+    }
+    .sell-btn:hover { filter: brightness(1.1); }
+
+    /* ---- Admin price control ---- */
+    .admin-box {
+      max-width: 1100px;
+      margin: 0 auto 20px;
+      background: #1a1608;
+      border: 1px dashed #b8860b;
+      border-radius: 8px;
+      padding: 14px 24px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .admin-box strong { color: #ffd700; }
+    .admin-box input {
+      padding: 8px 10px;
+      border: 1px solid #3a3320;
+      background: #111b33;
+      color: #fff;
+      border-radius: 6px;
+      width: 120px;
+    }
+    .admin-box button {
+      background: #ffd700;
+      color: #0a1f44;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .section h2 {
+      color: #fff;
+      font-size: 18px;
+      border-left: 4px solid #ffd700;
+      padding-left: 10px;
+      margin-bottom: 14px;
+    }
+
+    /* ---- Order book table ---- */
+    .order-table-wrap {
+      background: #111b33;
+      border: 1px solid #223057;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    table.order-book { width: 100%; border-collapse: collapse; }
+    table.order-book th {
+      background: #0a1f44;
+      color: #ffd700;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.order-book td {
+      padding: 12px 14px;
+      border-top: 1px solid #1e2f52;
+      font-size: 14px;
+      color: #e5eaf5;
+    }
+    table.order-book tr:hover { background: #16213f; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge-active { background: #123420; color: #4ade80; }
+    .badge-partial { background: #3a2f08; color: #ffd700; }
+    .badge-warning { background: #3a1414; color: #ff8080; }
+
+    .price-cell.up { color: #22c55e; font-weight: bold; }
+    .price-cell.down { color: #ef4444; font-weight: bold; }
+
+    .buy-row-btn {
+      background: #16a34a;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .buy-row-btn:hover { filter: brightness(1.1); }
+
+    .cancel-row-btn {
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .cancel-row-btn:hover { filter: brightness(1.1); }
+
+    .empty-state {
+      padding: 30px;
+      text-align: center;
+      color: #7d8cad;
+      font-size: 14px;
+    }
+
+    /* ---- Trades list ---- */
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      background: #111b33;
+      border: 1px solid #223057;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      border-left: 4px solid #9aa5b1;
+    }
+    .trade-item.as-buyer { border-left-color: #22c55e; }
+    .trade-item.as-seller { border-left-color: #ef4444; }
+    .trade-item .t-main { color: #fff; font-weight: bold; }
+    .trade-item .t-sub { color: #7d8cad; }
+
+    /* ---- Modals ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 10, 20, 0.75);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 15px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #111b33;
+      border: 1px solid #223057;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      animation: modalPop 0.2s ease;
+    }
+    @keyframes modalPop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      background: #0a1f44;
+      color: #ffd700;
+      padding: 18px 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .modal-header.sell { background: linear-gradient(135deg, #0a1f44, #16a34a); }
+    .modal-header.buy { background: linear-gradient(135deg, #0a1f44, #16a34a); }
+    .modal-body { padding: 20px; color: #cdd6ea; line-height: 1.7; }
+    .modal-body label {
+      display: block;
+      font-size: 12px;
+      color: #7d8cad;
+      text-transform: uppercase;
+      margin: 12px 0 4px;
+    }
+    .modal-body input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #223057;
+      background: #0d1526;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .modal-summary {
+      background: #0d1526;
+      border: 1px solid #1e2f52;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+    .modal-summary div { display: flex; justify-content: space-between; margin: 4px 0; }
+    .modal-summary .green { color: #22c55e; font-weight: bold; }
+    .modal-summary .red { color: #ef4444; font-weight: bold; }
+    .modal-actions { display: flex; border-top: 1px solid #223057; }
+    .modal-actions button {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .modal-cancel { background: #1a2440; color: #cdd6ea; }
+    .modal-cancel:hover { background: #223057; }
+    .modal-confirm { background: #16a34a; color: #fff; }
+    .modal-confirm:hover { filter: brightness(1.1); }
+
+    @media (max-width: 700px) {
+      .terminal-top { flex-direction: column; align-items: flex-start; }
+      .price-block { text-align: left; }
+      .stats-row { flex-wrap: wrap; }
+      .stat-cell { min-width: 33%; border-bottom: 1px solid #1e2f52; }
+      .action-row { flex-direction: column; align-items: stretch; }
+      .sell-btn { width: 100%; }
+      table.order-book { font-size: 12px; }
+      table.order-book th, table.order-book td { padding: 8px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <div class="header">
+    <h1>VaultJ Coin Exchange</h1>
+    <p>Peer-to-peer order book &middot; escrow-secured &middot; 5% platform fee</p>
+  </div>
+
+  <% if (error) { %>
+    <div class="status-banner status-error"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+    <div class="status-banner status-success"><%= success %></div>
+  <% } %>
+
+  <!-- Trading terminal -->
+  <div class="terminal">
+    <div class="terminal-top">
+      <div class="coin-identity">
+        <img src="/images/logocoin2.png" alt="VaultJ Coin">
+        <div>
+          <div class="name">VaultJ Coin</div>
+          <div class="ticker">VJC / KSH</div>
+        </div>
+      </div>
+      <div class="price-block">
+        <div class="value">Ksh <%= market.currentPrice %></div>
+        <div class="change <%= priceDirection %>">
+          <% if (priceDirection === 'up') { %>&#9650; +<%= changePct %>%<% } %>
+          <% if (priceDirection === 'down') { %>&#9660; <%= changePct %>%<% } %>
+          <% if (priceDirection === 'flat') { %>&#9679; 0.00%<% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="label">High</div>
+        <div class="val green">Ksh <%= high %></div>
+      </div>
+      <div class="stat-cell">
+        <div class="label">Low</div>
+        <div class="val red">Ksh <%= low %></div>
+      </div>
+      <div class="stat-cell">
+        <div class="label">Change</div>
+        <div class="val <%= priceDirection === 'down' ? 'red' : 'green' %>"><%= changePct %>%</div>
+      </div>
+      <div class="stat-cell">
+        <div class="label">Open Listings</div>
+        <div class="val gold"><%= openOrders.length %></div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="priceChart"></canvas>
+      <div class="chart-empty" id="chartEmptyMsg" style="display:none;">Not enough price history yet to draw a chart.</div>
+    </div>
+
+    <div class="action-row">
+      <div class="balances">
+        <div class="balance-block coin">
+          <div class="label">Coin Balance</div>
+          <div class="value"><%= user.coinBalance %> VJC</div>
+        </div>
+        <div class="balance-block">
+          <div class="label">Wallet Balance</div>
+          <div class="value">Ksh <%= user.walletBalance %></div>
+        </div>
+      </div>
+      <button type="button" class="sell-btn" onclick="openSellModal()">+ List Sell Order</button>
+    </div>
+  </div>
+
+
+
+  <!-- My open sell orders -->
+  <% if (myOrders.length) { %>
+  <div class="section">
+    <h2>My Sell Orders</h2>
+    <div class="order-table-wrap">
+      <table class="order-book">
+        <thead>
+          <tr>
+            <th>Listed</th>
+            <th>Remaining</th>
+            <th>Baseline</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% myOrders.forEach(o => { const dropped = market.currentPrice < o.baselinePrice; %>
+          <tr>
+            <td><%= o.coinsAmount %> VJC</td>
+            <td><%= o.coinsRemaining %> VJC</td>
+            <td>Ksh <%= o.baselinePrice %></td>
+            <td>
+              <% if (dropped) { %>
+                <span class="badge badge-warning">Price dropped &mdash; will fill at Ksh <%= market.currentPrice %></span>
+              <% } else if (o.status === 'partial') { %>
+                <span class="badge badge-partial">Partially filled</span>
+              <% } else { %>
+                <span class="badge badge-active">Active</span>
+              <% } %>
+            </td>
+            <td>
+              <form action="/vault-coin/cancel/<%= o._id %>" method="POST" onsubmit="return confirm('Cancel this order and return coins to your wallet?');">
+                <button type="submit" class="cancel-row-btn">Cancel</button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Open market order book -->
+  <div class="section">
+    <h2>Order Book &mdash; Live Sell Listings</h2>
+    <div class="order-table-wrap">
+      <% if (openOrders.length) { %>
+      <table class="order-book">
+        <thead>
+          <tr>
+            <th>Seller</th>
+            <th>Available</th>
+            <th>Baseline</th>
+            <th>Executes At</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% openOrders.forEach(o => {
+               const executesAt = market.currentPrice >= o.baselinePrice ? o.baselinePrice : market.currentPrice;
+               const cls = market.currentPrice >= o.baselinePrice ? 'up' : 'down';
+          %>
+          <tr>
+            <td><%= o.seller.username %></td>
+            <td><%= o.coinsRemaining %> VJC</td>
+            <td>Ksh <%= o.baselinePrice %></td>
+            <td class="price-cell <%= cls %>">Ksh <%= market.currentPrice %></td>
+            <td>
+              <button
+                type="button"
+                class="buy-row-btn"
+                onclick="openBuyModal('<%= o._id %>', '<%= o.seller.username %>', <%= o.coinsRemaining %>, <%= market.currentPrice %>)"
+              >
+                Buy
+              </button>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+        <div class="empty-state">No active sell orders right now. Be the first to list one.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Recent trades -->
+  <% if (recentTrades.length) { %>
+  <div class="section">
+    <h2>My Recent Trades</h2>
+    <% recentTrades.forEach(t => {
+         const isBuyer = String(t.buyer) === String(user._id);
+    %>
+      <div class="trade-item <%= isBuyer ? 'as-buyer' : 'as-seller' %>">
+        <div>
+          <div class="t-main"><%= isBuyer ? 'Bought' : 'Sold' %> <%= t.coinsTraded %> VJC</div>
+          <div class="t-sub">@ Ksh <%= t.executionPrice %>/coin &middot; <%= new Date(t.createdAt).toLocaleString() %></div>
+        </div>
+        <div class="t-main" style="color:<%= isBuyer ? '#22c55e' : '#ef4444' %>">
+          <%= isBuyer ? '-Ksh ' + t.buyerPaidCash.toFixed(2) : '+Ksh ' + t.sellerReceivedCash.toFixed(2) %>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+
+  <!-- Sell Modal -->
+  <div class="modal-overlay" id="sellModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header sell">List a Sell Order</div>
+      <div class="modal-body">
+        <p>Your coins will be locked in escrow at the current market price as your baseline.</p>
+        <label>Coins to sell (you have <%= user.coinBalance %> VJC)</label>
+        <input type="number" id="sellCoinsAmount" step="0.01" min="0.01" max="<%= user.coinBalance %>" placeholder="e.g. 1.5">
+        <div class="modal-summary">
+          <div><span>Baseline price</span><span>Ksh <%= market.currentPrice %>/coin</span></div>
+          <div><span>Estimated value</span><span id="sellEstValue" class="green">Ksh 0.00</span></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" onclick="closeSellModal()">Cancel</button>
+        <button type="button" class="modal-confirm" onclick="confirmSell()">List Order</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="sellForm" action="/vault-coin/sell" method="POST" style="display:none;">
+    <input type="hidden" name="coinsAmount" id="sellFormCoinsAmount">
+  </form>
+
+  <!-- Buy Modal -->
+  <div class="modal-overlay" id="buyModalOverlay">
+    <div class="modal-box">
+      <div class="modal-header buy">Buy VaultJ Coin</div>
+      <div class="modal-body">
+        <p>Buying from <strong id="buySellerName"></strong> &middot; <span id="buyAvailable"></span> VJC available.</p>
+        <label>Amount to buy</label>
+        <input type="number" id="buyCoinsAmount" step="0.01" min="0.01" oninput="updateBuySummary()">
+        <div class="modal-summary">
+          <div><span>Live price</span><span id="buyLivePrice">Ksh 0/coin</span></div>
+          <div><span>You pay (cash)</span><span id="buyTotalCash" class="red">Ksh 0.00</span></div>
+          <div><span>You receive (after 5% fee)</span><span id="buyCoinsReceived" class="green">0.00 VJC</span></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" onclick="closeBuyModal()">Cancel</button>
+        <button type="button" class="modal-confirm" onclick="confirmBuy()">Confirm Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="buyForm" method="POST" style="display:none;">
+    <input type="hidden" name="coinsAmount" id="buyFormCoinsAmount">
+  </form>
+
+  <script>
+    const marketPrice = <%= market.currentPrice %>;
+    const priceHistory = <%- JSON.stringify(market.priceHistory.map(h => h.price)) %>;
+
+    // ---- Draw trading chart (red/green line + fill) ----
+    function drawChart() {
+      const canvas = document.getElementById('priceChart');
+      const emptyMsg = document.getElementById('chartEmptyMsg');
+      const data = priceHistory.length >= 2 ? priceHistory : [marketPrice, marketPrice];
+
+      if (priceHistory.length < 2) {
+        emptyMsg.style.display = 'block';
+      }
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = 260 * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const W = rect.width;
+      const H = 260;
+      const padding = { top: 20, right: 20, bottom: 24, left: 50 };
+      const chartW = W - padding.left - padding.right;
+      const chartH = H - padding.top - padding.bottom;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const max = Math.max(...data);
+      const min = Math.min(...data);
+      const range = (max - min) || 1;
+
+      function xFor(i) { return padding.left + (i / (data.length - 1)) * chartW; }
+      function yFor(v) { return padding.top + chartH - ((v - min) / range) * chartH; }
+
+      // Grid lines
+      ctx.strokeStyle = '#1e2f52';
+      ctx.lineWidth = 1;
+      for (let g = 0; g <= 4; g++) {
+        const y = padding.top + (chartH / 4) * g;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(W - padding.right, y);
+        ctx.stroke();
+
+        const val = max - (range / 4) * g;
+        ctx.fillStyle = '#7d8cad';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText('Ksh ' + val.toFixed(1), padding.left - 8, y + 4);
+      }
+
+      const overallUp = data[data.length - 1] >= data[0];
+      const lineColor = overallUp ? '#22c55e' : '#ef4444';
+      const fillColorTop = overallUp ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)';
+      const fillColorBottom = overallUp ? 'rgba(34,197,94,0)' : 'rgba(239,68,68,0)';
+
+      // Area fill
+      const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+      gradient.addColorStop(0, fillColorTop);
+      gradient.addColorStop(1, fillColorBottom);
+
+      ctx.beginPath();
+      ctx.moveTo(xFor(0), yFor(data[0]));
+      data.forEach((v, i) => ctx.lineTo(xFor(i), yFor(v)));
+      ctx.lineTo(xFor(data.length - 1), padding.top + chartH);
+      ctx.lineTo(xFor(0), padding.top + chartH);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Segmented red/green line (per-step direction)
+      for (let i = 1; i < data.length; i++) {
+        ctx.beginPath();
+        ctx.moveTo(xFor(i - 1), yFor(data[i - 1]));
+        ctx.lineTo(xFor(i), yFor(data[i]));
+        ctx.strokeStyle = data[i] >= data[i - 1] ? '#22c55e' : '#ef4444';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+
+      // Points
+      data.forEach((v, i) => {
+        ctx.beginPath();
+        ctx.arc(xFor(i), yFor(v), 3, 0, Math.PI * 2);
+        ctx.fillStyle = i === data.length - 1 ? '#ffd700' : lineColor;
+        ctx.fill();
+      });
+
+      // Current price dashed line
+      const lastY = yFor(data[data.length - 1]);
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, lastY);
+      ctx.lineTo(W - padding.right, lastY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    window.addEventListener('load', drawChart);
+    window.addEventListener('resize', drawChart);
+
+    // ---- Sell modal ----
+    function openSellModal() {
+      document.getElementById('sellCoinsAmount').value = '';
+      document.getElementById('sellEstValue').textContent = 'Ksh 0.00';
+      document.getElementById('sellModalOverlay').classList.add('open');
+    }
+    function closeSellModal() {
+      document.getElementById('sellModalOverlay').classList.remove('open');
+    }
+    document.getElementById('sellCoinsAmount').addEventListener('input', function () {
+      const amt = parseFloat(this.value) || 0;
+      document.getElementById('sellEstValue').textContent = 'Ksh ' + (amt * marketPrice).toFixed(2);
+    });
+    function confirmSell() {
+      const amt = parseFloat(document.getElementById('sellCoinsAmount').value);
+      if (!amt || amt <= 0) { alert('Enter a valid coin amount.'); return; }
+      document.getElementById('sellFormCoinsAmount').value = amt;
+      document.getElementById('sellForm').submit();
+    }
+
+    // ---- Buy modal ----
+    let currentBuyOrderId = null;
+    let currentBuyMax = 0;
+    let currentBuyPrice = 0;
+
+    function openBuyModal(orderId, sellerName, available, livePrice) {
+      currentBuyOrderId = orderId;
+      currentBuyMax = available;
+      currentBuyPrice = livePrice;
+
+      document.getElementById('buySellerName').textContent = sellerName;
+      document.getElementById('buyAvailable').textContent = available;
+      document.getElementById('buyLivePrice').textContent = 'Ksh ' + livePrice + '/coin';
+      document.getElementById('buyCoinsAmount').value = '';
+      document.getElementById('buyCoinsAmount').max = available;
+      document.getElementById('buyTotalCash').textContent = 'Ksh 0.00';
+      document.getElementById('buyCoinsReceived').textContent = '0.00 VJC';
+      document.getElementById('buyForm').action = '/vault-coin/buy/' + orderId;
+      document.getElementById('buyModalOverlay').classList.add('open');
+    }
+    function closeBuyModal() {
+      document.getElementById('buyModalOverlay').classList.remove('open');
+    }
+    function updateBuySummary() {
+      let amt = parseFloat(document.getElementById('buyCoinsAmount').value) || 0;
+      if (amt > currentBuyMax) amt = currentBuyMax;
+      document.getElementById('buyTotalCash').textContent = 'Ksh ' + (amt * currentBuyPrice).toFixed(2);
+      document.getElementById('buyCoinsReceived').textContent = (amt * 0.95).toFixed(2) + ' VJC';
+    }
+    function confirmBuy() {
+      const amt = parseFloat(document.getElementById('buyCoinsAmount').value);
+      if (!amt || amt <= 0 || amt > currentBuyMax) { alert('Enter a valid amount (up to ' + currentBuyMax + ').'); return; }
+      document.getElementById('buyFormCoinsAmount').value = amt;
+      document.getElementById('buyForm').submit();
+    }
+
+    // Close modals on outside click
+    document.getElementById('sellModalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeSellModal();
+    });
+    document.getElementById('buyModalOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeBuyModal();
+    });
+  </script>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

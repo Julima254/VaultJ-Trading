@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultJ Coin — Admin</title>
+  <style>
+    :root {
+      --dark-blue: #0b1f3a;
+      --dark-blue-light: #14294d;
+      --gold: #d4af37;
+      --green: #1e8e5a;
+      --light-gray: #f4f5f7;
+      --white: #ffffff;
+      --text-dark: #1a2333;
+      --text-muted: #6b7280;
+      --red: #c0392b;
+      --border: #e3e6eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--light-gray);
+      color: var(--text-dark);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--dark-blue);
+      color: var(--white);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      z-index: 100;
+    }
+
+    .sidebar .brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      padding: 0 24px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 16px;
+    }
+
+    .sidebar nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar nav a:hover {
+      background: var(--dark-blue-light);
+      color: var(--white);
+    }
+
+    .sidebar nav a.active {
+      background: var(--dark-blue-light);
+      color: var(--gold);
+      border-left-color: var(--gold);
+      font-weight: 600;
+    }
+
+    .main {
+      margin-left: 240px;
+      padding: 28px 32px;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+      margin: 0;
+      color: var(--dark-blue);
+    }
+
+    .page-header .price-tag {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .price-tag.up { color: var(--green); }
+    .price-tag.down { color: var(--red); }
+    .price-tag.flat { color: var(--text-muted); }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 18px 20px;
+      border-top: 4px solid var(--dark-blue);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .card.price { border-top-color: var(--gold); }
+    .card.range { border-top-color: var(--dark-blue); }
+    .card.volume { border-top-color: var(--green); }
+    .card.treasury { border-top-color: var(--red); }
+
+    .card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .card .subvalue {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card .value.green { color: var(--green); }
+    .card .value.red { color: var(--red); }
+
+    /* ---- Price editor (lives inside the price card) ---- */
+    .price-edit {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .price-edit input {
+      flex: 1;
+      padding: 7px 9px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      min-width: 0;
+    }
+
+    .price-edit button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .price-edit button:hover { background: var(--dark-blue-light); }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark-blue);
+      margin: 30px 0 14px;
+    }
+
+    /* ---- Filter bar ---- */
+    .filter-bar {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+
+    .filter-bar button {
+      background: var(--dark-blue);
+      color: var(--white);
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .filter-bar button:hover { background: var(--dark-blue-light); }
+
+    .filter-bar a.clear {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      align-self: center;
+    }
+
+    .chips { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      background: var(--white);
+    }
+
+    .chip.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    .table-wrap {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+    thead th {
+      background: var(--light-gray);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover { background: #fafbfc; }
+
+    .amount { font-weight: 700; }
+    .amount.positive { color: var(--green); }
+    .amount.negative { color: var(--red); }
+
+    .status-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-tag.active { background: #e6f6ee; color: var(--green); }
+    .status-tag.partial { background: #fdf4dd; color: #8a6d1a; }
+
+    .exec-cell {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .empty-state {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 18px 0 4px;
+      flex-wrap: wrap;
+    }
+
+    .pagination a {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-dark);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .pagination a.active {
+      background: var(--dark-blue);
+      color: var(--white);
+      border-color: var(--dark-blue);
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .cards { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .main { padding: 16px; }
+
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-group select,
+      .filter-group input { min-width: 0; width: 100%; }
+      .filter-bar button { width: 100%; }
+      .filter-bar a.clear { align-self: center; }
+
+      .table-wrap { background: transparent; box-shadow: none; overflow: visible; }
+
+      table, thead, tbody, th, td, tr { display: block; width: 100%; }
+
+      thead {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tbody tr {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+      }
+
+      tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--light-gray);
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      tbody td:last-child { border-bottom: none; }
+
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        text-align: left;
+        padding-right: 12px;
+        flex-shrink: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <%- include('../partials/adminHeader') %>
+
+  <main class="main">
+    <div class="page-header">
+      <h1>VaultJ Coin — Exchange Overview</h1>
+      <span class="price-tag <%= priceDirection %>">
+        Ksh <%= market.currentPrice %>/coin
+        <% if (priceDirection === 'up') { %>&#9650;<% } %>
+        <% if (priceDirection === 'down') { %>&#9660;<% } %>
+        <% if (priceDirection === 'flat') { %>&#9679;<% } %>
+      </span>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="cards">
+      <div class="card price">
+        <div class="label">Current Market Price</div>
+        <div class="value" id="currentPriceValue">Ksh <%= market.currentPrice %></div>
+        <div class="price-edit">
+          <input type="number" id="priceInput" min="0.01" step="0.01" placeholder="New price" />
+          <button onclick="updatePrice()">Update</button>
+        </div>
+      </div>
+      <div class="card range">
+        <div class="label">Price Range (All Time)</div>
+        <div class="value">Ksh <%= low %> &ndash; <%= high %></div>
+        <div class="subvalue">Low &ndash; High</div>
+      </div>
+      <div class="card volume">
+        <div class="label">Total Volume Traded</div>
+        <div class="value"><%= totalVolumeCoins.toLocaleString() %> VJC</div>
+        <div class="subvalue">Ksh <%= totalVolumeCash.toLocaleString() %> cash moved</div>
+      </div>
+      <div class="card treasury">
+        <div class="label">Treasury Revenue</div>
+        <div class="value green">Ksh <%= market.treasuryCash.toLocaleString() %></div>
+        <div class="subvalue"><%= market.treasuryCoins.toLocaleString() %> VJC in fees</div>
+      </div>
+    </div>
+
+    <!-- Open sell orders -->
+    <div class="section-title">Open Sell Orders (<%= openOrders.length %>)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Seller</th>
+            <th>Listed</th>
+            <th>Remaining</th>
+            <th>Baseline</th>
+            <th>Status</th>
+            <th>Listed On</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (openOrders.length === 0) { %>
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">No active sell orders on the exchange.</div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% openOrders.forEach(function(o) { %>
+              <tr>
+                <td data-label="Seller"><%= o.seller ? (o.seller.username || o.seller.email) : 'Unknown user' %></td>
+                <td data-label="Listed"><%= o.coinsAmount %> VJC</td>
+                <td data-label="Remaining" class="amount"><%= o.coinsRemaining %> VJC</td>
+                <td data-label="Baseline">Ksh <%= o.baselinePrice %></td>
+                <td data-label="Status">
+                  <span class="status-tag <%= o.status %>"><%= o.status === 'partial' ? 'Partial' : 'Active' %></span>
+                </td>
+                <td data-label="Listed On"><%= new Date(o.createdAt).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Filter bar for transactions -->
+    <div class="section-title">Trade History</div>
+
+    <div class="chips">
+      <% ['all','today','7d','30d'].forEach(function(r) { %>
+        <a class="chip <%= filters.range === r ? 'active' : '' %>"
+           href="/admin/vault?range=<%= r %>&search=<%= filters.search %>">
+          <%= r === 'all' ? 'All Time' : r === 'today' ? 'Today' : r === '7d' ? 'Last 7 Days' : 'Last 30 Days' %>
+        </a>
+      <% }) %>
+    </div>
+
+    <form class="filter-bar" method="GET" action="/admin/vault">
+      <input type="hidden" name="range" value="<%= filters.range %>" />
+      <div class="filter-group">
+        <label>Search (buyer or seller)</label>
+        <input type="text" name="search" value="<%= filters.search %>" placeholder="e.g. jane@doe.com" />
+      </div>
+
+      <button type="submit">Apply</button>
+      <a class="clear" href="/admin/vault">Clear</a>
+    </form>
+
+    <!-- Transactions table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Buyer</th>
+            <th>Seller</th>
+            <th>Coins Traded</th>
+            <th>Execution Price</th>
+            <th>Buyer Paid</th>
+            <th>Seller Received</th>
+            <th>Fee (Coins)</th>
+            <th>Spread (Cash)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (transactions.length === 0) { %>
+            <tr>
+              <td colspan="9">
+                <div class="empty-state">No trades match these filters.</div>
+              </td>
+            </tr>
+          <% } else { %>
+            <% transactions.forEach(function(t) { %>
+              <tr>
+                <td data-label="Date"><%= new Date(t.createdAt).toLocaleString() %></td>
+                <td data-label="Buyer"><%= t.buyer ? (t.buyer.username || t.buyer.email) : 'Unknown' %></td>
+                <td data-label="Seller"><%= t.seller ? (t.seller.username || t.seller.email) : 'Unknown' %></td>
+                <td data-label="Coins Traded" class="amount"><%= t.coinsTraded %> VJC</td>
+                <td data-label="Execution Price">
+                  Ksh <%= t.executionPrice %>
+                  <div class="exec-cell">baseline Ksh <%= t.baselinePrice %></div>
+                </td>
+                <td data-label="Buyer Paid" class="amount negative">Ksh <%= t.buyerPaidCash.toLocaleString() %></td>
+                <td data-label="Seller Received" class="amount positive">Ksh <%= t.sellerReceivedCash.toLocaleString() %></td>
+                <td data-label="Fee (Coins)"><%= t.feeCoins %> VJC</td>
+                <td data-label="Spread (Cash)" class="amount <%= t.spreadCash > 0 ? 'positive' : '' %>">
+                  Ksh <%= t.spreadCash.toLocaleString() %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <% for (let p = 1; p <= pagination.totalPages; p++) { %>
+        <a class="<%= p === pagination.currentPage ? 'active' : '' %>"
+           href="/admin/vault?range=<%= filters.range %>&search=<%= filters.search %>&page=<%= p %>">
+          <%= p %>
+        </a>
+      <% } %>
+    </div>
+  </main>
+
+  <script>
+    async function updatePrice() {
+      const input = document.getElementById("priceInput");
+      const value = parseFloat(input.value);
+
+      if (!Number.isFinite(value) || value <= 0) {
+        alert("Enter a valid price.");
+        return;
+      }
+
+      if (!confirm(`Set VaultJ Coin market price to Ksh ${value}?`)) return;
+
+      try {
+        const res = await fetch("/admin/vault/price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ price: value }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("currentPriceValue").textContent = "Ksh " + data.price;
+          input.value = "";
+        } else {
+          alert(data.message || "Something went wrong.");
+        }
+      } catch (err) {
+        alert("Network error. Please try again.");
+      }
+    }
+  </script>
+</body>
+</html>

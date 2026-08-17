@@ -7,6 +7,9 @@ const Transaction = require("../models/Transaction");
 const PrizePool = require("../models/PrizePool");
 const PACKAGES = require("../config/packages");
 const SpinLog = require("../models/SpinLog");
+const VaultMarket = require("../models/VaultMarket");
+const VaultOrder = require("../models/VaultOrder");
+const VaultTransaction = require("../models/VaultTransaction");
 
 
 router.get("/admin", requireAdmin, async (req, res) => {
@@ -570,6 +573,133 @@ router.get("/admin/withdrawals", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("Error loading admin withdrawals:", err);
     res.status(500).send("Server error");
+  }
+});
+
+// ---- VaultJ Coin: exchange overview page ----
+router.get("/admin/vault", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const range = req.query.range || "all";
+    const search = (req.query.search || "").trim();
+
+    // ---- Date range filter ----
+    let dateFilter = {};
+    const now = new Date();
+    if (range === "today") {
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    } else if (range === "7d") {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    } else if (range === "30d") {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 29);
+      start.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: start } };
+    }
+
+    // ---- User search (buyer or seller username/email) ----
+    let userFilter = {};
+    if (search) {
+      const matchedUsers = await User.find({
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      })
+        .select("_id")
+        .lean();
+      const ids = matchedUsers.map((u) => u._id);
+      userFilter = { $or: [{ buyer: { $in: ids } }, { seller: { $in: ids } }] };
+    }
+
+    const query = { ...dateFilter, ...userFilter };
+
+    const market = await VaultMarket.getSingleton();
+
+    // ---- Price direction + high/low from history ----
+    const hist = market.priceHistory;
+    let priceDirection = "flat";
+    if (hist.length >= 2) {
+      const prev = hist[hist.length - 2].price;
+      if (market.currentPrice > prev) priceDirection = "up";
+      else if (market.currentPrice < prev) priceDirection = "down";
+    }
+    const priceValues = hist.map((h) => h.price);
+    const high = priceValues.length ? Math.max(...priceValues) : market.currentPrice;
+    const low = priceValues.length ? Math.min(...priceValues) : market.currentPrice;
+
+    const [transactions, totalCount, openOrders, volumeAgg] = await Promise.all([
+      VaultTransaction.find(query)
+        .populate("buyer", "username email")
+        .populate("seller", "username email")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      VaultTransaction.countDocuments(query),
+      VaultOrder.find({ status: { $in: ["active", "partial"] } })
+        .populate("seller", "username email")
+        .sort({ createdAt: -1 })
+        .lean(),
+      VaultTransaction.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalCoins: { $sum: "$coinsTraded" },
+            totalCash: { $sum: "$buyerPaidCash" },
+          },
+        },
+      ]),
+    ]);
+
+    const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
+
+    res.render("admin/vault", {
+      currentPage: "vault",
+      market,
+      priceDirection,
+      high,
+      low,
+      transactions,
+      openOrders,
+      totalVolumeCoins: volumeAgg[0]?.totalCoins || 0,
+      totalVolumeCash: volumeAgg[0]?.totalCash || 0,
+      filters: { range, search },
+      pagination: { currentPage: page, totalPages },
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading admin vault page:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// ---- VaultJ Coin: admin price update (AJAX, mirrors the pool-edit pattern) ----
+router.post("/admin/vault/price", requireAdmin, async (req, res) => {
+  try {
+    const newPrice = Number(req.body.price);
+    if (!Number.isFinite(newPrice) || newPrice <= 0) {
+      return res.status(400).json({ ok: false, message: "Enter a valid price." });
+    }
+
+    const market = await VaultMarket.getSingleton();
+    market.currentPrice = newPrice;
+    market.priceHistory.push({ price: newPrice, changedBy: req.session.userId });
+    await market.save();
+
+    res.json({ ok: true, price: market.currentPrice });
+  } catch (err) {
+    console.error("Error updating vault price:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
   }
 });
 

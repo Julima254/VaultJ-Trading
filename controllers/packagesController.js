@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const PACKAGES = require("../config/packages");
+const COIN_REWARDS = require("../config/vaultCoinRewards");
 
 exports.getPackages = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
@@ -76,6 +77,10 @@ exports.buyPackage = async (req, res) => {
       user.walletBalance -= price;
     }
 
+    // ---- Award VaultJ Coins for this purchase ----
+    const coinsAwarded = COIN_REWARDS[packageKey] || 0;
+    user.coinBalance += coinsAwarded;
+
     user.package = selected.name;
     user.packagePrice = price;
     user.isActive = true;
@@ -101,7 +106,7 @@ exports.buyPackage = async (req, res) => {
       packages: PACKAGES,
       user,
       error: null,
-      success: `You have successfully activated the ${selected.name} package!`,
+      success: `You have successfully activated the ${selected.name} package! You earned ${coinsAwarded} VaultJ Coin.`,
     });
   } catch (err) {
     console.error("Error purchasing package:", err);
