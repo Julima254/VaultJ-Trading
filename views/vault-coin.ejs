@@ -462,18 +462,7 @@
     </div>
   </div>
 
-  <% if (user.isAdmin) { %>
-  <div class="admin-box">
-    <div class="admin-box-inner">
-      <strong>Admin:</strong> Set market price
-      <form action="/vault-coin/admin/price" method="POST" style="display:flex; gap:8px; align-items:center;">
-        <input type="number" step="0.01" min="0.01" name="price" placeholder="Ksh" required>
-        <button type="submit">Update Price</button>
-      </form>
-    </div>
-  </div>
-  <% } %>
-
+  
   <!-- Main grid: chart + trade panel -->
   <div class="layout">
     <!-- Chart card -->

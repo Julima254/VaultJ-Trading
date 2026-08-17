@@ -704,4 +704,189 @@ router.post("/admin/vault/price", requireAdmin, async (req, res) => {
 });
 
 
+
+// ---- User management: list/search/filter ----
+router.get("/admin/users", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
+    const search = (req.query.search || "").trim();
+    const status = req.query.status || "all"; // all | active | inactive
+    const pkg = req.query.package || "all"; // all | <package key/name> | none
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (status === "active") query.isActive = true;
+    else if (status === "inactive") query.isActive = false;
+
+    if (pkg === "none") {
+      query.package = "No Active Package";
+    } else if (pkg !== "all") {
+      query.package = { $regex: new RegExp(`^${pkg}$`, "i") };
+    }
+
+    const [users, totalCount, totalUsers, activeUsers] = await Promise.all([
+      User.find(query)
+        .select(
+          "username email phone package isActive walletBalance depositBalance coinBalance isAdmin createdAt"
+        )
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(query),
+      User.countDocuments(),
+      User.countDocuments({ isActive: true }),
+    ]);
+
+    const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
+
+    res.render("admin/users", {
+      currentPage: "users",
+      users,
+      packages: PACKAGES,
+      summary: {
+        totalUsers,
+        activeUsers,
+        inactiveUsers: totalUsers - activeUsers,
+        filteredCount: totalCount,
+      },
+      filters: { search, status, package: pkg },
+      pagination: { currentPage: page, totalPages },
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading admin users:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// ---- User management: toggle active status ----
+router.post("/admin/users/:id/toggle-active", requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.json({ ok: true, isActive: user.isActive });
+  } catch (err) {
+    console.error("Error toggling user active status:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// ---- User management: toggle admin status ----
+router.post("/admin/users/:id/toggle-admin", requireAdmin, async (req, res) => {
+  try {
+    // Prevent an admin from demoting themselves and locking everyone out
+    if (req.params.id === String(req.session.userId)) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "You can't change your own admin status." });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    user.isAdmin = !user.isAdmin;
+    await user.save();
+
+    res.json({ ok: true, isAdmin: user.isAdmin });
+  } catch (err) {
+    console.error("Error toggling user admin status:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// ---- User management: manually adjust wallet balance ----
+router.post("/admin/users/:id/wallet", requireAdmin, async (req, res) => {
+  try {
+    const amount = Number(req.body.amount);
+    const mode = req.body.mode === "set" ? "set" : "adjust"; // "adjust" (+/-) or "set" (absolute)
+
+    if (!Number.isFinite(amount)) {
+      return res.status(400).json({ ok: false, message: "Enter a valid amount." });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    const before = user.walletBalance;
+    user.walletBalance = mode === "set" ? amount : before + amount;
+
+    if (user.walletBalance < 0) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Wallet balance can't go negative." });
+    }
+
+    await user.save();
+
+    // Optional audit trail — mirrors how deposits/withdrawals are logged elsewhere
+    await Transaction.create({
+      userId: user._id,
+      type: "deposit",
+      method: "manual",
+      amount: user.walletBalance - before,
+      status: "completed",
+      note: `Admin wallet adjustment (${mode}) by ${req.session.userId}`,
+      reviewedBy: req.session.userId,
+      reviewedAt: new Date(),
+    });
+
+    res.json({ ok: true, walletBalance: user.walletBalance });
+  } catch (err) {
+    console.error("Error adjusting user wallet balance:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
+// ---- User management: single user detail (optional deep-dive page) ----
+router.get("/admin/users/:id", requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).lean();
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    const [transactions, referrals] = await Promise.all([
+      Transaction.find({ userId: user._id }).sort({ createdAt: -1 }).limit(20).lean(),
+      User.find({ referredBy: user._id })
+        .select("username email isActive createdAt")
+        .lean(),
+    ]);
+
+    res.render("admin/userDetail", {
+      currentPage: "users",
+      viewedUser: user,
+      transactions,
+      referrals,
+      error: null,
+      success: null,
+    });
+  } catch (err) {
+    console.error("Error loading user detail:", err);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;
