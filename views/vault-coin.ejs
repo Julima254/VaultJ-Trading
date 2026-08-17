@@ -872,28 +872,15 @@
     }
 
     function submitQuickBuy() {
-      const amt = parseFloat(document.getElementById('quickBuyAmount').value);
-      if (!amt || amt <= 0) { alert('Enter a valid amount to buy.'); return; }
+  const amt = parseFloat(document.getElementById('quickBuyAmount').value);
+  if (!amt || amt <= 0) { alert('Enter a valid amount to buy.'); return; }
 
-      const sorted = openOrdersData.slice().sort((a, b) => a.baseline - b.baseline);
-      const match = sorted.find(o => o.remaining >= amt);
+  if (!confirm('Place a buy order for ' + amt + ' VJC at ~Ksh ' + marketPrice + '/coin?')) return;
 
-      if (!match) {
-        const totalAvailable = sorted.reduce((sum, o) => sum + o.remaining, 0);
-        if (totalAvailable === 0) {
-          alert('No open sell orders available right now.');
-        } else {
-          alert('No single seller has ' + amt + ' VJC available. Total across all sellers is ' + totalAvailable.toFixed(2) + ' VJC — buy in smaller amounts from the Order Book below.');
-        }
-        return;
-      }
-
-      if (!confirm('Buy ' + amt + ' VJC from ' + match.seller + ' at Ksh ' + marketPrice + '/coin?')) return;
-
-      document.getElementById('buyFormCoinsAmount').value = amt;
-      document.getElementById('buyForm').action = '/vault-coin/buy/' + match.id;
-      document.getElementById('buyForm').submit();
-    }
+  document.getElementById('buyFormCoinsAmount').value = amt;
+  document.getElementById('buyForm').action = '/vault-coin/buy';
+  document.getElementById('buyForm').submit();
+}
 
     // ---- Quick Sell ----
     function updateQuickSell() {

@@ -2,9 +2,33 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const VaultMarket = require("../models/VaultMarket");
 const VaultOrder = require("../models/VaultOrder");
+const VaultBuyOrder = require("../models/VaultBuyOrder");
 const VaultTransaction = require("../models/VaultTransaction");
 
-// ---------- helper: compute direction + high/low/change stats from history ----------
+// ---------- helpers ----------
+function round2(n) {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+const PRICE_IMPACT = {
+  buyPct: 0.35,    // % price increase per coin actually bought (demand)
+  buyCap: 10,      // max % move from a single trade chunk
+  listPct: 0.2,    // % price decrease per coin newly listed for sale (supply)
+  listCap: 6,
+  cancelPct: 0.15, // % price move when supply/demand is pulled off the market
+  cancelCap: 5,
+  minPrice: 0.5,
+};
+
+function applyPriceImpact(market, coins, direction, pctPerCoin, cap) {
+  if (!coins || coins <= 0) return;
+  const impactPct = Math.min(coins * pctPerCoin, cap);
+  const multiplier = direction === "up" ? 1 + impactPct / 100 : 1 - impactPct / 100;
+  const newPrice = Math.max(round2(market.currentPrice * multiplier), PRICE_IMPACT.minPrice);
+  market.currentPrice = newPrice;
+  market.priceHistory.push({ price: newPrice });
+}
+
 function computeMarketStats(market) {
   const hist = market.priceHistory;
 
@@ -24,59 +48,119 @@ function computeMarketStats(market) {
   return { priceDirection, high, low, changePct };
 }
 
-// ---------- GET /vault-coin ----------
-exports.getVaultCoin = async (req, res) => {
-  if (!req.session.userId) return res.redirect("/login");
+// ---------- core matching: one chunk between one sell order and one buy order ----------
+async function executeTrade(session, market, sellOrder, buyOrder, seller, buyer) {
+  const tradeAmount = round2(
+    Math.min(sellOrder.coinsRemaining, buyOrder.coinsWanted - buyOrder.coinsFilled)
+  );
+  if (tradeAmount <= 0) return 0;
 
-  try {
-    const user = await User.findById(req.session.userId);
-    const market = await VaultMarket.getSingleton();
-    const { priceDirection, high, low, changePct } = computeMarketStats(market);
+  const livePrice = market.currentPrice;
 
-    const openOrders = await VaultOrder.find({
-      status: { $in: ["active", "partial"] },
-      seller: { $ne: user._id },
-    })
-      .populate("seller", "username")
-      .sort({ createdAt: -1 })
-      .lean();
+  // Buyer always pays the current live price at the moment their coins actually fill —
+  // if price rose since they placed the order, they pay more (extra pulled from wallet
+  // below); if price fell, they pay less (refunded below).
+  const buyerExecPrice = livePrice;
 
-    const myOrders = await VaultOrder.find({
-      seller: user._id,
-      status: { $in: ["active", "partial"] },
-    })
-      .sort({ createdAt: -1 })
-      .lean();
+  // Seller always gets the lower of what they listed at vs. the current live price —
+  // they don't benefit from a price rise above their ask, but they do bear a price drop.
+  const sellerExecPrice = livePrice >= sellOrder.baselinePrice ? sellOrder.baselinePrice : livePrice;
 
-    const recentTrades = await VaultTransaction.find({
-      $or: [{ buyer: user._id }, { seller: user._id }],
-    })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+  const buyerPays = round2(tradeAmount * buyerExecPrice);
+  const reservedForChunk = round2(tradeAmount * buyOrder.baselinePrice);
 
-    res.render("vault-coin", {
-      currentPage: "vault-coin",
-      user,
-      market,
-      priceDirection,
-      high,
-      low,
-      changePct,
-      openOrders,
-      myOrders,
-      recentTrades,
-      error: null,
-      success: null,
-    });
-  } catch (err) {
-    console.error("Error loading vault-coin:", err);
-    res.status(500).send("Server error");
+  // Positive refund = buyer gets cash back (price fell).
+  // Negative refund = extra cash is pulled from the buyer's wallet (price rose).
+  const refund = round2(reservedForChunk - buyerPays);
+
+  const feeCoins = round2(tradeAmount * 0.05);
+  const buyerReceivedCoins = round2(tradeAmount - feeCoins);
+  const sellerReceivedCash = round2(tradeAmount * sellerExecPrice);
+  const spreadCash = round2(buyerPays - sellerReceivedCash); // system profit (or loss) on this chunk
+
+  buyer.walletBalance = round2(buyer.walletBalance + refund);
+  buyer.coinBalance = round2(buyer.coinBalance + buyerReceivedCoins);
+  seller.walletBalance = round2(seller.walletBalance + sellerReceivedCash);
+
+  market.treasuryCoins = round2(market.treasuryCoins + feeCoins);
+  market.treasuryCash = round2(market.treasuryCash + spreadCash);
+
+  sellOrder.coinsRemaining = round2(sellOrder.coinsRemaining - tradeAmount);
+  sellOrder.status = sellOrder.coinsRemaining <= 0 ? "completed" : "partial";
+
+  buyOrder.coinsFilled = round2(buyOrder.coinsFilled + tradeAmount);
+  buyOrder.cashRemaining = round2(buyOrder.cashRemaining - reservedForChunk);
+  buyOrder.status = buyOrder.coinsFilled >= buyOrder.coinsWanted ? "completed" : "partial";
+
+  await buyer.save({ session });
+  await seller.save({ session });
+
+  await VaultTransaction.create(
+    [
+      {
+        order: sellOrder._id,
+        seller: seller._id,
+        buyer: buyer._id,
+        coinsTraded: tradeAmount,
+        executionPrice: livePrice,
+        baselinePrice: sellOrder.baselinePrice,
+        buyerPaidCash: buyerPays,
+        buyerReceivedCoins,
+        sellerReceivedCash,
+        feeCoins,
+        spreadCash,
+      },
+    ],
+    { session }
+  );
+
+  // A completed trade is demand being satisfied — nudge price up for the next chunk
+  applyPriceImpact(market, tradeAmount, "up", PRICE_IMPACT.buyPct, PRICE_IMPACT.buyCap);
+
+  return tradeAmount;
+}
+
+async function matchNewBuyOrder(session, market, buyOrder, buyer) {
+  const openSells = await VaultOrder.find({
+    status: { $in: ["active", "partial"] },
+    seller: { $ne: buyer._id },
+  })
+    .sort({ baselinePrice: 1, createdAt: 1 })
+    .session(session);
+
+  for (const sellOrder of openSells) {
+    if (buyOrder.coinsFilled >= buyOrder.coinsWanted) break;
+    const seller = await User.findById(sellOrder.seller).session(session);
+    const traded = await executeTrade(session, market, sellOrder, buyOrder, seller, buyer);
+    if (traded > 0) await sellOrder.save({ session });
   }
-};
 
-async function rerender(req, res, overrides) {
-  const user = await User.findById(req.session.userId);
+  await buyOrder.save({ session });
+  await market.save({ session });
+}
+
+async function matchNewSellOrder(session, market, sellOrder, seller) {
+  const pendingBuys = await VaultBuyOrder.find({
+    status: { $in: ["active", "partial"] },
+    buyer: { $ne: seller._id },
+  })
+    .sort({ createdAt: 1 })
+    .session(session);
+
+  for (const buyOrder of pendingBuys) {
+    if (sellOrder.coinsRemaining <= 0) break;
+    const buyer = await User.findById(buyOrder.buyer).session(session);
+    const traded = await executeTrade(session, market, sellOrder, buyOrder, seller, buyer);
+    if (traded > 0) await buyOrder.save({ session });
+  }
+
+  await sellOrder.save({ session });
+  await market.save({ session });
+}
+
+// ---------- shared render data ----------
+async function buildViewData(userId, overrides) {
+  const user = await User.findById(userId);
   const market = await VaultMarket.getSingleton();
   const { priceDirection, high, low, changePct } = computeMarketStats(market);
 
@@ -87,12 +171,21 @@ async function rerender(req, res, overrides) {
     .populate("seller", "username")
     .sort({ createdAt: -1 })
     .lean();
+
   const myOrders = await VaultOrder.find({
     seller: user._id,
     status: { $in: ["active", "partial"] },
   })
     .sort({ createdAt: -1 })
     .lean();
+
+  const myBuyOrders = await VaultBuyOrder.find({
+    buyer: user._id,
+    status: { $in: ["active", "partial"] },
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
   const recentTrades = await VaultTransaction.find({
     $or: [{ buyer: user._id }, { seller: user._id }],
   })
@@ -100,7 +193,7 @@ async function rerender(req, res, overrides) {
     .limit(10)
     .lean();
 
-  return res.render("vault-coin", {
+  return {
     currentPage: "vault-coin",
     user,
     market,
@@ -110,49 +203,82 @@ async function rerender(req, res, overrides) {
     changePct,
     openOrders,
     myOrders,
+    myBuyOrders,
     recentTrades,
     error: null,
     success: null,
     ...overrides,
-  });
+  };
+}
+
+// ---------- GET /vault-coin ----------
+exports.getVaultCoin = async (req, res) => {
+  if (!req.session.userId) return res.redirect("/login");
+  try {
+    const data = await buildViewData(req.session.userId, {});
+    res.render("vault-coin", data);
+  } catch (err) {
+    console.error("Error loading vault-coin:", err);
+    res.status(500).send("Server error");
+  }
+};
+
+async function rerender(req, res, overrides) {
+  const data = await buildViewData(req.session.userId, overrides);
+  return res.render("vault-coin", data);
 }
 
 // ---------- POST /vault-coin/sell ----------
 exports.createSellOrder = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
 
+  await VaultMarket.getSingleton(); // ensure the singleton exists before the transaction
+  const session = await mongoose.startSession();
   try {
-    const coinsAmount = parseFloat(req.body.coinsAmount);
-    const user = await User.findById(req.session.userId);
-    const market = await VaultMarket.getSingleton();
+    await session.withTransaction(async () => {
+      const coinsAmount = round2(parseFloat(req.body.coinsAmount));
+      if (!coinsAmount || coinsAmount <= 0) {
+        throw new Error("Enter a valid coin amount to sell.");
+      }
 
-    if (!coinsAmount || coinsAmount <= 0) {
-      return rerender(req, res, { error: "Enter a valid coin amount to sell." });
-    }
-    if (user.coinBalance < coinsAmount) {
-      return rerender(req, res, {
-        error: `Insufficient VaultJ Coin balance. You have ${user.coinBalance} coins.`,
-      });
-    }
+      const seller = await User.findById(req.session.userId).session(session);
+      const market = await VaultMarket.findOne().session(session);
 
-    // Lock coins into escrow immediately
-    user.coinBalance -= coinsAmount;
-    await user.save();
+      if (seller.coinBalance < coinsAmount) {
+        throw new Error(`Insufficient VaultJ Coin balance. You have ${seller.coinBalance.toFixed(2)} coins.`);
+      }
 
-    await VaultOrder.create({
-      seller: user._id,
-      coinsAmount,
-      coinsRemaining: coinsAmount,
-      baselinePrice: market.currentPrice,
-      status: "active",
+      seller.coinBalance = round2(seller.coinBalance - coinsAmount);
+      await seller.save({ session });
+
+      const [sellOrder] = await VaultOrder.create(
+        [
+          {
+            seller: seller._id,
+            coinsAmount,
+            coinsRemaining: coinsAmount,
+            baselinePrice: market.currentPrice,
+            status: "active",
+          },
+        ],
+        { session }
+      );
+
+      // New supply on the market nudges price down
+      applyPriceImpact(market, coinsAmount, "down", PRICE_IMPACT.listPct, PRICE_IMPACT.listCap);
+
+      // Immediately try to fill any pending buy orders against this new listing
+      await matchNewSellOrder(session, market, sellOrder, seller);
     });
 
+    session.endSession();
     return rerender(req, res, {
-      success: `Sell order listed: ${coinsAmount} VaultJ Coin(s) at Ksh ${market.currentPrice} baseline. Coins are now locked in escrow.`,
+      success: "Sell order listed and coins locked in escrow. Any matching buy orders were filled automatically.",
     });
   } catch (err) {
-    console.error("Error creating sell order:", err);
-    res.status(500).send("Server error");
+    session.endSession();
+    console.error("Error creating sell order:", err.message);
+    return rerender(req, res, { error: err.message || "Server error" });
   }
 };
 
@@ -160,145 +286,139 @@ exports.createSellOrder = async (req, res) => {
 exports.cancelSellOrder = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
 
+  const session = await mongoose.startSession();
   try {
-    const order = await VaultOrder.findById(req.params.orderId);
-    const user = await User.findById(req.session.userId);
+    await session.withTransaction(async () => {
+      const order = await VaultOrder.findById(req.params.orderId).session(session);
+      const user = await User.findById(req.session.userId).session(session);
+      const market = await VaultMarket.findOne().session(session);
 
-    if (!order || String(order.seller) !== String(user._id)) {
-      return rerender(req, res, { error: "Order not found." });
-    }
-    if (!["active", "partial"].includes(order.status)) {
-      return rerender(req, res, { error: "This order can no longer be cancelled." });
-    }
+      if (!order || String(order.seller) !== String(user._id)) {
+        throw new Error("Order not found.");
+      }
+      if (!["active", "partial"].includes(order.status)) {
+        throw new Error("This order can no longer be cancelled.");
+      }
 
-    // Release remaining escrowed coins back to seller
-    user.coinBalance += order.coinsRemaining;
-    await user.save();
+      user.coinBalance = round2(user.coinBalance + order.coinsRemaining);
+      await user.save({ session });
 
-    order.status = "cancelled";
-    order.coinsRemaining = 0;
-    await order.save();
+      // Removing supply from the market nudges price back up
+      applyPriceImpact(market, order.coinsRemaining, "up", PRICE_IMPACT.cancelPct, PRICE_IMPACT.cancelCap);
+      await market.save({ session });
 
+      order.status = "cancelled";
+      order.coinsRemaining = 0;
+      await order.save({ session });
+    });
+
+    session.endSession();
     return rerender(req, res, { success: "Sell order cancelled. Coins returned to your wallet." });
   } catch (err) {
-    console.error("Error cancelling order:", err);
-    res.status(500).send("Server error");
+    session.endSession();
+    console.error("Error cancelling order:", err.message);
+    return rerender(req, res, { error: err.message || "Server error" });
   }
 };
 
-// ---------- POST /vault-coin/buy/:orderId ----------
-exports.buyCoins = async (req, res) => {
+// ---------- POST /vault-coin/buy ----------
+// Places (and immediately tries to fill) a buy order. No specific seller is targeted —
+// the engine matches against the cheapest open sell orders first.
+exports.createBuyOrder = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
 
+  await VaultMarket.getSingleton();
   const session = await mongoose.startSession();
   try {
-    let result = null;
+    let placedAmount = 0;
 
     await session.withTransaction(async () => {
-      const order = await VaultOrder.findById(req.params.orderId).session(session);
-      const market = await VaultMarket.findOne().session(session);
+      const coinsAmount = round2(parseFloat(req.body.coinsAmount));
+      if (!coinsAmount || coinsAmount <= 0) {
+        throw new Error("Enter a valid coin amount to buy.");
+      }
+
       const buyer = await User.findById(req.session.userId).session(session);
+      const market = await VaultMarket.findOne().session(session);
 
-      if (!order || !["active", "partial"].includes(order.status)) {
-        throw new Error("This order is no longer available.");
-      }
-      if (String(order.seller) === String(buyer._id)) {
-        throw new Error("You cannot buy your own sell order.");
-      }
+      const baselinePrice = market.currentPrice;
+      const cashNeeded = round2(coinsAmount * baselinePrice);
 
-      const coinsAmount = parseFloat(req.body.coinsAmount);
-      if (!coinsAmount || coinsAmount <= 0 || coinsAmount > order.coinsRemaining) {
-        throw new Error("Invalid coin amount.");
-      }
-
-      const seller = await User.findById(order.seller).session(session);
-      const pLive = market.currentPrice;
-      const baseline = order.baselinePrice;
-
-      const buyerPaidCash = coinsAmount * pLive;
-      const feeCoins = coinsAmount * 0.05;
-      const buyerReceivedCoins = coinsAmount * 0.95;
-      const sellerReceivedCash = pLive >= baseline ? coinsAmount * baseline : coinsAmount * pLive;
-      const spreadCash = pLive > baseline ? coinsAmount * (pLive - baseline) : 0;
-
-      if (buyer.walletBalance < buyerPaidCash) {
+      if (buyer.walletBalance < cashNeeded) {
         throw new Error(
-          `Insufficient wallet balance. You need Ksh ${buyerPaidCash.toFixed(2)} to buy ${coinsAmount} coin(s) at Ksh ${pLive}/coin.`
+          `Insufficient wallet balance. You need Ksh ${cashNeeded.toFixed(2)} to place this buy order at Ksh ${baselinePrice}/coin.`
         );
       }
 
-      // Atomic settlement
-      buyer.walletBalance -= buyerPaidCash;
-      buyer.coinBalance += buyerReceivedCoins;
-      seller.walletBalance += sellerReceivedCash;
-
-      market.treasuryCoins += feeCoins;
-      market.treasuryCash += spreadCash;
-
-      order.coinsRemaining -= coinsAmount;
-      order.status = order.coinsRemaining <= 0 ? "completed" : "partial";
-
+      buyer.walletBalance = round2(buyer.walletBalance - cashNeeded);
       await buyer.save({ session });
-      await seller.save({ session });
-      await market.save({ session });
-      await order.save({ session });
 
-      await VaultTransaction.create(
+      const [buyOrder] = await VaultBuyOrder.create(
         [
           {
-            order: order._id,
-            seller: seller._id,
             buyer: buyer._id,
-            coinsTraded: coinsAmount,
-            executionPrice: pLive,
-            baselinePrice: baseline,
-            buyerPaidCash,
-            buyerReceivedCoins,
-            sellerReceivedCash,
-            feeCoins,
-            spreadCash,
+            coinsWanted: coinsAmount,
+            coinsFilled: 0,
+            baselinePrice,
+            cashEscrowed: cashNeeded,
+            cashRemaining: cashNeeded,
+            status: "active",
           },
         ],
         { session }
       );
 
-      result = { coinsAmount, pLive };
+      await matchNewBuyOrder(session, market, buyOrder, buyer);
+      placedAmount = coinsAmount;
     });
 
     session.endSession();
     return rerender(req, res, {
-      success: `Purchase complete: you bought ${result.coinsAmount} coin(s) at Ksh ${result.pLive}/coin.`,
+      success: `Buy order placed for ${placedAmount.toFixed(2)} VJC. Available coins were purchased immediately at the best price; any remainder will fill automatically as new sell orders come in.`,
     });
   } catch (err) {
     session.endSession();
-    console.error("Error executing buy order:", err.message);
+    console.error("Error placing buy order:", err.message);
     return rerender(req, res, { error: err.message || "Transaction failed." });
   }
 };
 
-// ---------- POST /vault-coin/admin/price ----------
-exports.setMarketPrice = async (req, res) => {
+// ---------- POST /vault-coin/buy-order/cancel/:orderId ----------
+exports.cancelBuyOrder = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
 
+  const session = await mongoose.startSession();
   try {
-    const user = await User.findById(req.session.userId);
-    if (!user.isAdmin) {
-      return rerender(req, res, { error: "Not authorized." });
-    }
+    await session.withTransaction(async () => {
+      const order = await VaultBuyOrder.findById(req.params.orderId).session(session);
+      const user = await User.findById(req.session.userId).session(session);
+      const market = await VaultMarket.findOne().session(session);
 
-    const newPrice = parseFloat(req.body.price);
-    if (!newPrice || newPrice <= 0) {
-      return rerender(req, res, { error: "Enter a valid price." });
-    }
+      if (!order || String(order.buyer) !== String(user._id)) {
+        throw new Error("Order not found.");
+      }
+      if (!["active", "partial"].includes(order.status)) {
+        throw new Error("This order can no longer be cancelled.");
+      }
 
-    const market = await VaultMarket.getSingleton();
-    market.currentPrice = newPrice;
-    market.priceHistory.push({ price: newPrice, changedBy: user._id });
-    await market.save();
+      user.walletBalance = round2(user.walletBalance + order.cashRemaining);
+      await user.save({ session });
 
-    return rerender(req, res, { success: `Market price updated to Ksh ${newPrice}/coin.` });
+      const unfilledCoins = round2(order.coinsWanted - order.coinsFilled);
+      // Removing demand from the market nudges price back down
+      applyPriceImpact(market, unfilledCoins, "down", PRICE_IMPACT.cancelPct, PRICE_IMPACT.cancelCap);
+      await market.save({ session });
+
+      order.status = "cancelled";
+      order.cashRemaining = 0;
+      await order.save({ session });
+    });
+
+    session.endSession();
+    return rerender(req, res, { success: "Buy order cancelled. Remaining cash returned to your wallet." });
   } catch (err) {
-    console.error("Error updating market price:", err);
-    res.status(500).send("Server error");
+    session.endSession();
+    console.error("Error cancelling buy order:", err.message);
+    return rerender(req, res, { error: err.message || "Server error" });
   }
 };

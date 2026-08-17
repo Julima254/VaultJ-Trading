@@ -1,5 +1,4 @@
 // Coins awarded to a user's coinBalance when they activate/purchase a package.
-// NOTE: "platinum" wasn't in your spec — set to 5 coins as a guess, adjust freely.
 module.exports = {
   starter: 0.5,
   bronze: 1,

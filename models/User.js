@@ -16,12 +16,12 @@ const userSchema = new mongoose.Schema(
     package: { type: String, default: "No Active Package" },
     packagePrice: { type: Number, default: 0 },
     isActive: { type: Boolean, default: false }, // becomes true after first package purchase
-    walletBalance: { type: Number, default: 0 },
+    walletBalance: { type: Number, default: 0, set: v => Math.round(v * 100) / 100 },
     referralEarnings: { type: Number, default: 0 },
     totalReferrals: { type: Number, default: 0 },
     depositBalance: { type: Number, default: 0 },
     spinningBalance: { type: Number, default: 0 },
-    coinBalance: { type: Number, default: 0 },
+    coinBalance: { type: Number, default: 0, set: v => Math.round(v * 100) / 100 },
 
     // ---- Referral linkage ----
     referralCode: { type: String, unique: true, sparse: true }, // this user's own shareable code

@@ -205,7 +205,7 @@
 
     <div class="stat-card">
       <div class="stat-label">Coin Balance</div>
-      <div class="stat-value"><%= user.coinBalance || 0 %> VJC</div>
+      <div class="stat-value"><%= (user.coinBalance || 0).toFixed(2) %> VJC</div>
     </div>
   </div>
 
