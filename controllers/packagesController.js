@@ -10,6 +10,7 @@ exports.getPackages = async (req, res) => {
     res.render("packages", {
       currentPage: "packages",
       packages: PACKAGES,
+      coinRewards: COIN_REWARDS,
       user,
       error: null,
       success: null,
@@ -34,6 +35,7 @@ exports.buyPackage = async (req, res) => {
       return res.render("packages", {
         currentPage: "packages",
         packages: PACKAGES,
+        coinRewards: COIN_REWARDS,
         user,
         error: "Invalid package selected.",
         success: null,
@@ -49,6 +51,7 @@ exports.buyPackage = async (req, res) => {
         return res.render("packages", {
           currentPage: "packages",
           packages: PACKAGES,
+          coinRewards: COIN_REWARDS,
           user,
           error: `Insufficient deposit balance. You need Ksh ${price} in your deposit balance to activate the ${selected.name} package.`,
           success: null,
@@ -68,6 +71,7 @@ exports.buyPackage = async (req, res) => {
         return res.render("packages", {
           currentPage: "packages",
           packages: PACKAGES,
+          coinRewards: COIN_REWARDS,
           user,
           error: `Insufficient wallet balance. You need Ksh ${price} in your wallet to purchase the ${selected.name} package.`,
           success: null,
@@ -104,6 +108,7 @@ exports.buyPackage = async (req, res) => {
     res.render("packages", {
       currentPage: "packages",
       packages: PACKAGES,
+      coinRewards: COIN_REWARDS,
       user,
       error: null,
       success: `You have successfully activated the ${selected.name} package! You earned ${coinsAwarded} VaultJ Coin.`,

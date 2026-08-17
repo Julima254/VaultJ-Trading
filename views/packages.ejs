@@ -112,6 +112,26 @@
       color: #0a1f44;
       margin: 10px 0;
     }
+
+
+
+    .coin-reward {
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #b8860b;
+      font-size: 14px;
+    }
+    .coin-reward .coin-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff5cc, #ffd700 60%, #b8860b);
+      vertical-align: middle;
+      margin-right: 4px;
+      box-shadow: 0 0 4px rgba(255, 215, 0, 0.6);
+    }
+
     .referral {
       font-weight: bold;
       margin-bottom: 15px;
@@ -401,6 +421,7 @@
         <div class="card-body">
           <div class="price">Ksh <%= pkg.price %></div>
           <div class="referral"><%= pkg.referral * 100 %>% Referral Earning</div>
+          <div class="coin-reward"><span class="coin-icon"></span><%= coinRewards[key] %> VaultJ Coin<%= coinRewards[key] === 1 ? '' : 's' %></div>
         </div>
         <% if (isCurrent) { %>
           <div class="active-badge">✓ Current Package</div>
