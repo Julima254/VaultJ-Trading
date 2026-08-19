@@ -372,6 +372,7 @@
         <button class="toggle-admin-btn" onclick="toggleAdmin('<%= viewedUser._id %>')">
           <%= viewedUser.isAdmin ? 'Remove Admin' : 'Make Admin' %>
         </button>
+        <button class="wallet-btn" onclick="changePassword('<%= viewedUser._id %>')">Change Password</button>
         <button class="wallet-btn" onclick="adjustWallet('<%= viewedUser._id %>')">Adjust Wallet</button>
       </div>
     </div>
@@ -506,6 +507,32 @@
         alert("Network error. Please try again.");
       }
     }
+
+    async function changePassword(id) {
+  const password = prompt("Enter new password for this user (min 6 characters):");
+  if (password === null) return;
+  if (password.length < 6) {
+    alert("Password must be at least 6 characters.");
+    return;
+  }
+  if (!confirm("Are you sure you want to change this user's password?")) return;
+
+  try {
+    const res = await fetch(`/admin/users/${id}/password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert("Password updated successfully.");
+    } else {
+      alert(data.message || "Something went wrong.");
+    }
+  } catch (err) {
+    alert("Network error. Please try again.");
+  }
+}
   </script>
 </body>
 </html>

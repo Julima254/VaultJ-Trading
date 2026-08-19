@@ -889,4 +889,30 @@ router.get("/admin/users/:id", requireAdmin, async (req, res) => {
   }
 });
 
+// ---- User management: admin-set password ----
+router.post("/admin/users/:id/password", requireAdmin, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password || typeof password !== "string" || password.length < 6) {
+      return res
+        .status(400)
+        .json({ ok: false, message: "Password must be at least 6 characters." });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    user.password = password; // pre-save hook in User.js will hash this
+    await user.save();
+
+    res.json({ ok: true, message: "Password updated." });
+  } catch (err) {
+    console.error("Error changing user password:", err);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+});
+
 module.exports = router;
