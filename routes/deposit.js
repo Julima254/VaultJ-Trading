@@ -108,6 +108,7 @@ router.get("/deposit/status/:checkoutRequestId", requireLogin, async (req, res) 
 
 // POST /daraja/callback — Safaricom calls this (no auth, no login — it's not the user's browser)
 router.post("/daraja/callback", express.json(), async (req, res) => {
+  console.log("Callback hit at", new Date().toISOString(), JSON.stringify(req.body));
   try {
     const callback = req.body?.Body?.stkCallback;
     if (!callback) return res.json({ ResultCode: 0, ResultDesc: "Ignored" });
