@@ -67,6 +67,7 @@ router.post("/deposit/stk", requireLogin, async (req, res) => {
     await Transaction.create({
       userId: req.session.userId,
       type: "deposit",
+      method: "stk", // explicit — so admin views can reliably filter/branch on method
       amount: amt,
       phone: daraja.formatPhone(phone),
       checkoutRequestId: result.CheckoutRequestID,
@@ -218,8 +219,11 @@ router.post("/admin/deposits/:id/approve", requireLogin, requireAdmin, async (re
   try {
     // Atomically claim the transaction the same way the callback does, so a
     // double-click or duplicate request can't run creditDeposit twice.
+    // method: "manual" guard — this legacy admin route must never be able to
+    // approve an STK transaction, which should only ever be settled by the
+    // Safaricom callback.
     const tx = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, status: "pending" },
+      { _id: req.params.id, status: "pending", method: "manual" },
       {
         $set: {
           status: "completed",
@@ -247,7 +251,7 @@ router.post("/admin/deposits/:id/approve", requireLogin, requireAdmin, async (re
 router.post("/admin/deposits/:id/reject", requireLogin, requireAdmin, async (req, res) => {
   try {
     const tx = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, status: "pending" },
+      { _id: req.params.id, status: "pending", method: "manual" },
       {
         $set: {
           status: "failed",

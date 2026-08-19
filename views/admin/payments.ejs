@@ -482,10 +482,12 @@
                 <td data-label="Amount" class="amount">KES <%= tx.amount.toLocaleString() %></td>
                 <td data-label="Code"><%= tx.code || '—' %></td>
                 <td data-label="Status"><span class="badge <%= tx.status %>"><%= tx.status %></span></td>
-                <td data-label="Action" class="actions">
-                  <% if (tx.status === 'pending') { %>
+                                <td data-label="Action" class="actions">
+                  <% if (tx.status === 'pending' && tx.method === 'manual') { %>
                     <button class="approve" onclick="reviewPayment('<%= tx._id %>', 'approve')">Approve</button>
                     <button class="reject" onclick="reviewPayment('<%= tx._id %>', 'reject')">Reject</button>
+                  <% } else if (tx.status === 'pending') { %>
+                    <span style="color:#8a6d1a;font-size:12px;">Awaiting M-Pesa confirmation</span>
                   <% } else { %>
                     <span style="color:#9aa1ab;font-size:12px;">Reviewed</span>
                   <% } %>

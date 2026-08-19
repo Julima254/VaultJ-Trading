@@ -94,8 +94,16 @@ router.post("/admin/payments/:id/approve", requireAdmin, async (req, res) => {
   try {
     // Atomically claim the transaction (status: "pending" in the filter) so a
     // double-click or duplicate request can't process — or credit — it twice.
+    //
+    // method: { $ne: "stk" } guard — STK push deposits must ONLY ever be
+    // settled by the Safaricom /daraja/callback handler, which is the sole
+    // source of truth for whether the money actually arrived. An admin
+    // clicking "Approve" here has no way to verify an STK payment really
+    // happened, so this route must never be able to credit one. Anything
+    // without a method (legacy rows) or explicitly "manual" is fair game;
+    // "stk" is excluded.
     const tx = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, status: "pending" },
+      { _id: req.params.id, status: "pending", method: { $ne: "stk" } },
       {
         $set: {
           status: "completed",
@@ -109,7 +117,7 @@ router.post("/admin/payments/:id/approve", requireAdmin, async (req, res) => {
     if (!tx) {
       return res
         .status(400)
-        .json({ success: false, message: "Transaction not found or already reviewed." });
+        .json({ success: false, message: "Transaction not found, already reviewed, or is an STK push payment that must be confirmed automatically by M-Pesa." });
     }
 
     // Deposits: credit the user on approval — goes to depositBalance while
@@ -130,8 +138,11 @@ router.post("/admin/payments/:id/approve", requireAdmin, async (req, res) => {
 // POST /admin/payments/:id/reject
 router.post("/admin/payments/:id/reject", requireAdmin, async (req, res) => {
   try {
+    // Same method: { $ne: "stk" } guard as approve — admins should not be able
+    // to force-fail an in-flight STK transaction either; let the callback (or
+    // its timeout/reconciliation job) resolve it.
     const tx = await Transaction.findOneAndUpdate(
-      { _id: req.params.id, status: "pending" },
+      { _id: req.params.id, status: "pending", method: { $ne: "stk" } },
       {
         $set: {
           status: "failed",
@@ -146,7 +157,7 @@ router.post("/admin/payments/:id/reject", requireAdmin, async (req, res) => {
     if (!tx) {
       return res
         .status(400)
-        .json({ success: false, message: "Transaction not found or already reviewed." });
+        .json({ success: false, message: "Transaction not found, already reviewed, or is an STK push payment that must be confirmed automatically by M-Pesa." });
     }
 
     // Withdrawals: refund the held amount back to the wallet on rejection.
