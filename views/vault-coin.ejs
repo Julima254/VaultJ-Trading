@@ -54,6 +54,54 @@
     .tb-stat .val.up { color: #0ecb81; }
     .tb-stat .val.down { color: #f6465d; }
 
+    /* ---- Awaiting Match section ---- */
+    .awaiting-wrap {
+      max-width: 1400px;
+      margin: 20px auto 0;
+      padding: 0 20px;
+    }
+    .awaiting-card {
+      background: #12161f;
+      border: 1px solid #1f2430;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .awaiting-card h3 {
+      margin: 0;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #f0b90b;
+      border-bottom: 1px solid #1f2430;
+      background: #0b0e14;
+    }
+    .awaiting-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 16px;
+      border-top: 1px solid #1f2430;
+      flex-wrap: wrap;
+    }
+    .awaiting-row:first-of-type { border-top: none; }
+    .aw-stat { display: flex; flex-direction: column; gap: 2px; min-width: 90px; }
+    .aw-stat .label { font-size: 10px; color: #848e9c; text-transform: uppercase; }
+    .aw-stat .val { font-size: 14px; font-weight: 700; color: #eaecef; }
+    .aw-stat .val.matched { color: #0ecb81; }
+    .aw-stat .val.awaiting { color: #f0b90b; }
+    .aw-bar-wrap { flex: 1; min-width: 140px; }
+    .aw-bar-track {
+      background: #0b0e14;
+      border: 1px solid #1f2430;
+      border-radius: 6px;
+      height: 8px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .aw-bar-fill { height: 100%; border-radius: 6px; }
+    .aw-bar-fill.buy { background: #0ecb81; }
+    .aw-bar-fill.sell { background: #f6465d; }
+
     /* ---- Layout grid ---- */
     .layout {
       max-width: 1400px;
@@ -408,6 +456,7 @@
       .topbar-inner { gap: 16px; }
       table.order-book { font-size: 11px; }
       table.order-book th, table.order-book td { padding: 8px 8px; }
+      .awaiting-row { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -462,7 +511,77 @@
     </div>
   </div>
 
-  
+  <!-- Awaiting Match -->
+  <% if (myBuyOrders.length || myOrders.length) { %>
+  <div class="awaiting-wrap">
+    <% if (myBuyOrders.length) { %>
+    <div class="awaiting-card">
+      <h3>Awaiting Match &mdash; My Buy Orders</h3>
+      <% myBuyOrders.forEach(o => {
+           const requested = o.coinsWanted;
+           const matched = o.coinsFilled;
+           const awaiting = round2ish(requested - matched);
+           const pct = requested ? Math.min(100, (matched / requested) * 100) : 0;
+
+           function round2ish(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+      %>
+      <div class="awaiting-row">
+        <div class="aw-stat">
+          <div class="label">Requested</div>
+          <div class="val"><%= requested.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-stat">
+          <div class="label">Matched</div>
+          <div class="val matched"><%= matched.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-stat">
+          <div class="label">Awaiting Match</div>
+          <div class="val awaiting"><%= awaiting.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-bar-wrap">
+          <div class="aw-bar-track">
+            <div class="aw-bar-fill buy" style="width: <%= pct.toFixed(1) %>%;"></div>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (myOrders.length) { %>
+    <div class="awaiting-card">
+      <h3>Awaiting Match &mdash; My Sell Orders</h3>
+      <% myOrders.forEach(o => {
+           const requested = o.coinsAmount;
+           const remaining = o.coinsRemaining;
+           const matched = Math.round(((requested - remaining) + Number.EPSILON) * 100) / 100;
+           const pct = requested ? Math.min(100, (matched / requested) * 100) : 0;
+      %>
+      <div class="awaiting-row">
+        <div class="aw-stat">
+          <div class="label">Requested</div>
+          <div class="val"><%= requested.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-stat">
+          <div class="label">Matched</div>
+          <div class="val matched"><%= matched.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-stat">
+          <div class="label">Awaiting Match</div>
+          <div class="val awaiting"><%= remaining.toFixed(2) %> VJC</div>
+        </div>
+        <div class="aw-bar-wrap">
+          <div class="aw-bar-track">
+            <div class="aw-bar-fill sell" style="width: <%= pct.toFixed(1) %>%;"></div>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+  <% } %>
+
   <!-- Main grid: chart + trade panel -->
   <div class="layout">
     <!-- Chart card -->
@@ -536,10 +655,10 @@
         </div>
 
         <div class="rate-row"><span>Live rate</span><span class="rv">Ksh <%= market.currentPrice %> / VJC</span></div>
-        <div class="rate-row"><span>After 5% fee you receive</span><span class="rv" id="quickBuyReceive">0.00 VJC</span></div>
+        <div class="rate-row"><span>You receive</span><span class="rv" id="quickBuyReceive">0.00 VJC</span></div>
 
         <button type="button" class="trade-submit-btn buy" onclick="submitQuickBuy()">Buy VJC</button>
-        <div class="trade-hint">Matched against the lowest-priced open sell order(s) below. Large orders may need to be split across multiple sellers.</div>
+        <div class="trade-hint">Matched against the lowest-priced open sell order(s) below. You always receive the full coin amount purchased. Large orders may need to be split across multiple sellers.</div>
       </div>
 
       <!-- Sell tab -->
@@ -573,12 +692,13 @@
         </div>
 
         <div class="rate-row"><span>Baseline price</span><span class="rv">Ksh <%= market.currentPrice %> / VJC</span></div>
+        <div class="rate-row"><span>You'll receive (after 5% platform fee)</span><span class="rv" id="quickSellReceive">0.00 KSH</span></div>
 
         <form id="sellForm" action="/vault-coin/sell" method="POST">
           <input type="hidden" name="coinsAmount" id="sellFormCoinsAmount">
           <button type="button" class="trade-submit-btn sell" onclick="confirmQuickSell()">List Sell Order</button>
         </form>
-        <div class="trade-hint">Your coins lock into escrow immediately at today's price as your baseline. If the market later drops below it, you'll be alerted before it fills.</div>
+        <div class="trade-hint">Your coins lock into escrow immediately at today's price as your baseline. A 5% platform fee is deducted from your cash proceeds when the order fills — not from your coins. If the market later drops below your baseline, you'll be alerted before it fills.</div>
       </div>
     </div>
   </div>
@@ -701,7 +821,7 @@
         <div class="modal-summary">
           <div><span>Live price</span><span id="buyLivePrice">Ksh 0/coin</span></div>
           <div><span>You pay (cash)</span><span id="buyTotalCash" class="red">Ksh 0.00</span></div>
-          <div><span>You receive (after 5% fee)</span><span id="buyCoinsReceived" class="green">0.00 VJC</span></div>
+          <div><span>You receive (coins)</span><span id="buyCoinsReceived" class="green">0.00 VJC</span></div>
         </div>
       </div>
       <div class="modal-actions">
@@ -865,27 +985,31 @@
     }
 
     // ---- Quick Buy (matches against cheapest open orders) ----
+    // Buyer now always receives the FULL coin amount purchased — no coin fee.
     function updateQuickBuy() {
       const amt = parseFloat(document.getElementById('quickBuyAmount').value) || 0;
       document.getElementById('quickBuySpend').value = (amt * marketPrice).toFixed(2);
-      document.getElementById('quickBuyReceive').textContent = (amt * 0.95).toFixed(2) + ' VJC';
+      document.getElementById('quickBuyReceive').textContent = amt.toFixed(2) + ' VJC';
     }
 
     function submitQuickBuy() {
-  const amt = parseFloat(document.getElementById('quickBuyAmount').value);
-  if (!amt || amt <= 0) { alert('Enter a valid amount to buy.'); return; }
+      const amt = parseFloat(document.getElementById('quickBuyAmount').value);
+      if (!amt || amt <= 0) { alert('Enter a valid amount to buy.'); return; }
 
-  if (!confirm('Place a buy order for ' + amt + ' VJC at ~Ksh ' + marketPrice + '/coin?')) return;
+      if (!confirm('Place a buy order for ' + amt + ' VJC at ~Ksh ' + marketPrice + '/coin?')) return;
 
-  document.getElementById('buyFormCoinsAmount').value = amt;
-  document.getElementById('buyForm').action = '/vault-coin/buy';
-  document.getElementById('buyForm').submit();
-}
+      document.getElementById('buyFormCoinsAmount').value = amt;
+      document.getElementById('buyForm').action = '/vault-coin/buy';
+      document.getElementById('buyForm').submit();
+    }
 
     // ---- Quick Sell ----
+    // Seller now receives 95% of the cash value of the coins sold (5% platform fee on cash, not coins).
     function updateQuickSell() {
       const amt = parseFloat(document.getElementById('quickSellAmount').value) || 0;
-      document.getElementById('quickSellValue').value = (amt * marketPrice).toFixed(2);
+      const grossValue = amt * marketPrice;
+      document.getElementById('quickSellValue').value = grossValue.toFixed(2);
+      document.getElementById('quickSellReceive').textContent = (grossValue * 0.95).toFixed(2) + ' KSH';
     }
     function setSellMax() {
       document.getElementById('quickSellAmount').value = userCoinBalance;
@@ -924,7 +1048,7 @@
       let amt = parseFloat(document.getElementById('buyCoinsAmount').value) || 0;
       if (amt > currentBuyMax) amt = currentBuyMax;
       document.getElementById('buyTotalCash').textContent = 'Ksh ' + (amt * currentBuyPrice).toFixed(2);
-      document.getElementById('buyCoinsReceived').textContent = (amt * 0.95).toFixed(2) + ' VJC';
+      document.getElementById('buyCoinsReceived').textContent = amt.toFixed(2) + ' VJC';
     }
     function confirmBuy() {
       const amt = parseFloat(document.getElementById('buyCoinsAmount').value);

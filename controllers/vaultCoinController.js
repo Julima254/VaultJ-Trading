@@ -73,17 +73,25 @@ async function executeTrade(session, market, sellOrder, buyOrder, seller, buyer)
   // Negative refund = extra cash is pulled from the buyer's wallet (price rose).
   const refund = round2(reservedForChunk - buyerPays);
 
-  const feeCoins = round2(tradeAmount * 0.05);
-  const buyerReceivedCoins = round2(tradeAmount - feeCoins);
-  const sellerReceivedCash = round2(tradeAmount * sellerExecPrice);
-  const spreadCash = round2(buyerPays - sellerReceivedCash); // system profit (or loss) on this chunk
+  // Buyer receives the FULL amount of coins they purchased — no coin fee is deducted here.
+  const buyerReceivedCoins = tradeAmount;
+
+  // The 5% platform fee is taken out of the SELLER'S CASH proceeds instead of out of coins.
+  // Seller keeps 95% of the money value of the coins they sold.
+  const sellerGrossCash = round2(tradeAmount * sellerExecPrice);
+  const feeCash = round2(sellerGrossCash * 0.05);
+  const sellerReceivedCash = round2(sellerGrossCash - feeCash);
+
+  // System profit = the 5% fee + any spread between what the buyer paid and the
+  // seller's gross cash value (from price-impact movement between exec prices).
+  const spreadCash = round2(buyerPays - sellerGrossCash);
+  const systemProfitCash = round2(feeCash + spreadCash);
 
   buyer.walletBalance = round2(buyer.walletBalance + refund);
   buyer.coinBalance = round2(buyer.coinBalance + buyerReceivedCoins);
   seller.walletBalance = round2(seller.walletBalance + sellerReceivedCash);
 
-  market.treasuryCoins = round2(market.treasuryCoins + feeCoins);
-  market.treasuryCash = round2(market.treasuryCash + spreadCash);
+  market.treasuryCash = round2(market.treasuryCash + systemProfitCash);
 
   sellOrder.coinsRemaining = round2(sellOrder.coinsRemaining - tradeAmount);
   sellOrder.status = sellOrder.coinsRemaining <= 0 ? "completed" : "partial";
@@ -107,7 +115,7 @@ async function executeTrade(session, market, sellOrder, buyOrder, seller, buyer)
         buyerPaidCash: buyerPays,
         buyerReceivedCoins,
         sellerReceivedCash,
-        feeCoins,
+        feeCash,
         spreadCash,
       },
     ],
